@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -318,7 +318,6 @@ public:
 
         // atomic_add(..., 0) is used to load values atomically
         flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
-        ::rocprim::detail::memory_fence_device();
         while(flag == PREFIX_EMPTY)
         {
             if (UseSleep)
@@ -334,8 +333,8 @@ public:
             }
 
             flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
-            ::rocprim::detail::memory_fence_device();
         }
+        ::rocprim::detail::memory_fence_device();
 
         if(flag == PREFIX_PARTIAL)
             value = prefixes_partial_values[padding + block_id];
