@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -885,13 +885,13 @@ struct onesweep_lookback_state
 
     ROCPRIM_DEVICE ROCPRIM_INLINE static onesweep_lookback_state load(onesweep_lookback_state* ptr)
     {
-        underlying_type state = ::rocprim::detail::atomic_add(&ptr->state, 0);
+        underlying_type state = ::rocprim::detail::atomic_load(&ptr->state);
         return onesweep_lookback_state(state);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE void store(onesweep_lookback_state* ptr) const
     {
-        ::rocprim::detail::atomic_exch(&ptr->state, this->state);
+        ::rocprim::detail::atomic_store(&ptr->state, this->state);
     }
 };
 

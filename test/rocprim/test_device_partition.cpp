@@ -829,7 +829,7 @@ public:
         const size_t expected_index = is_mod ? value / modulo_ : size_ - value + value / modulo_;
         if(current_index_ != expected_index)
         {
-            rocprim::detail::atomic_exch(incorrect_flag_, 1);
+            rocprim::detail::atomic_store(incorrect_flag_, 1);
         }
         return *this;
     }
@@ -858,7 +858,7 @@ public:
         const size_t expected_index = value / modulo_;
         if(!is_mod || current_index_ != expected_index)
         {
-            rocprim::detail::atomic_exch(incorrect_flag_, 1);
+            rocprim::detail::atomic_store(incorrect_flag_, 1);
         }
         return *this;
     }
@@ -893,7 +893,7 @@ public:
         const size_t expected_index = value / modulo_ - value / (modulo_exclude_ * modulo_) - 1;
         if(!is_mod || current_index_ != expected_index)
         {
-            rocprim::detail::atomic_exch(incorrect_flag_, 1);
+            rocprim::detail::atomic_store(incorrect_flag_, 1);
         }
         return *this;
     }
@@ -925,7 +925,7 @@ public:
         const size_t expected_index = value - value / modulo_ - 1;
         if(is_mod || current_index_ != expected_index)
         {
-            rocprim::detail::atomic_exch(incorrect_flag_, 1);
+            rocprim::detail::atomic_store(incorrect_flag_, 1);
         }
         return *this;
     }
