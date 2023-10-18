@@ -37,7 +37,6 @@
 
 #include "device_scan_common.hpp"
 #include "lookback_scan_state.hpp"
-#include "ordered_block_id.hpp"
 
 BEGIN_ROCPRIM_NAMESPACE
 
