@@ -3,10 +3,10 @@ Warp-Level Operations
 
 .. toctree::
 
+   exchange
    load
-   store
    reduce
    scan
-   sort
    shuffle
-   exchange
+   sort
+   store
