@@ -18,3 +18,4 @@ Device-Wide Operations
    adjacent_difference
    binary_search
    histogram
+   memcpy
