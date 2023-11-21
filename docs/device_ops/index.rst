@@ -6,15 +6,16 @@ Device-Wide Operations
 
    config
 
-   transform
-   unique
-   sort
-   merge
-   partition
-   run_length_encoding
-   scan
-   select
-   reduce
    adjacent_difference
    binary_search
    histogram
+   memcpy
+   merge
+   partition
+   reduce
+   run_length_encoding
+   scan
+   select
+   sort
+   transform
+   unique
