@@ -1,3 +1,23 @@
+# Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 # Anywhere {branch} is used, the branch name will be substituted.
 # These comments will also be removed.
 root: index
@@ -6,8 +26,45 @@ subtrees:
     - file: intro
     - file: ops_summary
     - file: device_ops/index
+      entries:
+          - file: device_ops/config
+          - file: device_ops/adjacent_difference
+          - file: device_ops/binary_search
+          - file: device_ops/histogram
+          - file: device_ops/memcpy
+          - file: device_ops/merge
+          - file: device_ops/partition
+          - file: device_ops/reduce
+          - file: device_ops/run_length_encoding
+          - file: device_ops/scan
+          - file: device_ops/select
+          - file: device_ops/sort
+          - file: device_ops/transform
+          - file: device_ops/unique
     - file: block_ops/index
+      entries:
+      - file: block_ops/data_mov_funcs
+      - file: block_ops/ops_classes/index
+        entries:
+        - file: block_ops/ops_classes/adjacent_difference
+        - file: block_ops/ops_classes/discontinuity
+        - file: block_ops/ops_classes/exchange
+        - file: block_ops/ops_classes/histogram
+        - file: block_ops/ops_classes/load
+        - file: block_ops/ops_classes/reduce
+        - file: block_ops/ops_classes/scan
+        - file: block_ops/ops_classes/shuffle
+        - file: block_ops/ops_classes/sort
+        - file: block_ops/ops_classes/store
     - file: warp_ops/index
+      entries:
+      - file: warp_ops/exchange
+      - file: warp_ops/load
+      - file: warp_ops/reduce
+      - file: warp_ops/scan
+      - file: warp_ops/shuffle
+      - file: warp_ops/sort
+      - file: warp_ops/store
     - file: thread_ops
     - file: iterators
     - file: intrinsics
