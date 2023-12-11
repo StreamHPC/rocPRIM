@@ -2,6 +2,10 @@
 
 Full documentation for rocPRIM is available at [https://rocprim.readthedocs.io/en/latest/](https://rocprim.readthedocs.io/en/latest/)
 
+## [Unreleased rocPRIM-3.x.x for ROCm 6.x.x]
+### Changed
+- The internal accumulator type of `inclusive_scan` and `exclusive_scan` is now dependent on the return type of the binary operator instead of the type of the inputs (inclusive) or initial value (exclusive).
+
 ## [Unreleased rocPRIM-3.0.0 for ROCm 6.1.0]
 ### Added
  - Added new primitive: `block_run_length_decode`.
