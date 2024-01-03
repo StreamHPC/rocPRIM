@@ -5,7 +5,8 @@ Full documentation for rocPRIM is available at [https://rocprim.readthedocs.io/e
 ## [Unreleased rocPRIM-3.x.x for ROCm 6.x.x]
 ### Changed
 - The internal accumulator type of `inclusive_scan(_by_key)` and `exclusive_scan(_by_key)` is now exposed as an optional type parameter.
-  - The default type is the type of the inputs (inclusive) or initial value (exclusive).
+  - The default accumulator type is still the value type of the input iterator (inclusive scan) or the initial value's type (exclusive scan).
+    This is the same behaviour as before this change.
 
 ## [Unreleased rocPRIM-3.0.0 for ROCm 6.1.0]
 ### Added
