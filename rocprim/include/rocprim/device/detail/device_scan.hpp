@@ -99,10 +99,10 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     lookback_scan_kernel_impl(InputIterator,
                               OutputIterator     output,
                               const size_t       size,
-                              AccType            initial_value,
+                              AccType            ,
                               BinaryFunction     scan_op,
                               LookbackScanState  scan_state,
-                              const unsigned int number_of_blocks,
+                              const unsigned int,
                               AccType*                                 = nullptr,
                               AccType*                                 = nullptr,
                               bool                                     = false,
@@ -135,7 +135,8 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     const auto         flat_block_thread_id = ::rocprim::detail::block_thread_id<0>();
     const auto         flat_block_id        = ::rocprim::detail::block_id<0>();
     const unsigned int block_offset         = flat_block_id * items_per_block;
-    const auto         valid_in_last_block  = size - items_per_block * (number_of_blocks - 1);
+    const auto         valid_in_block
+        = std::min(static_cast<unsigned int>(size - block_offset), items_per_block);
 
     // For input values
     AccType values[items_per_thread];
@@ -145,16 +146,9 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 
     if(flat_block_id == 0)
     {
-        AccType reduction;
-        lookback_block_scan<Exclusive, block_scan_type>(values, // input/output
-                                                        initial_value,
-                                                        reduction,
-                                                        storage.scan,
-                                                        scan_op);
-
         if(flat_block_thread_id == 0)
         {
-            scan_state.set_complete(flat_block_id, reduction);
+            scan_state.set_complete(0, values[0]);
         }
     }
     else
@@ -168,15 +162,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     }
     ::rocprim::syncthreads(); // sync threads to reuse shared memory
 
-    // Save values into output array
-    if(flat_block_id == (number_of_blocks - 1)) // last block
-    {
-        block_store_type().store(output + block_offset, values, valid_in_last_block, storage.store);
-    }
-    else
-    {
-        block_store_type().store(output + block_offset, values, storage.store);
-    }
+    block_store_type().store(output + block_offset, values, valid_in_block, storage.store);
 }
 
 } // end of namespace detail
