@@ -371,7 +371,7 @@ public:
                         __ATOMIC_ACQUIRE,
                         __HIP_MEMORY_SCOPE_AGENT);
             __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
-        } while(flag == PREFIX_EMPTY);
+        } while(rocprim::detail::warp_any(flag == PREFIX_EMPTY));
 
         value.load(&prefixes_partial_values[padding + block_id]);
     }
@@ -435,7 +435,7 @@ public:
     {
         flag_type flag;
         T partial_prefix{0};
-        unsigned int previous_block_id = block_id_ - ::rocprim::lane_id() - 1;
+        unsigned int previous_block_id = block_id_ - block_thread_id<0>() - 1;
 
         // reduce last warp_size() number of prefixes to
         // get the complete prefix for this block.
@@ -456,7 +456,7 @@ public:
     T operator()(T reduction)
     {
         // Set partial prefix for next block
-        if(::rocprim::lane_id() == 0)
+        if(block_thread_id<0>() == 0)
         {
             scan_state_.set_partial(block_id_, reduction);
         }

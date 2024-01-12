@@ -132,7 +132,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
         if (rocprim::warp_id(flat_block_thread_id) == 0) {
             auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
             AccType prefix = prefix_op(AccType{0});
-            if (rocprim::lane_id() == 0)
+            if (flat_block_thread_id % 32 == 0)
                 output[flat_block_id] = prefix;
         }
     }
