@@ -38,6 +38,7 @@
 #include "device_scan_common.hpp"
 #include "lookback_scan_state.hpp"
 #include "ordered_block_id.hpp"
+#include "rocprim/intrinsics/thread.hpp"
 
 BEGIN_ROCPRIM_NAMESPACE
 
@@ -116,20 +117,16 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     constexpr auto         items_per_thread = params.kernel_config.items_per_thread;
     constexpr unsigned int items_per_block  = block_size * items_per_thread;
 
-    using block_load_type
-        = ::rocprim::block_load<AccType, block_size, items_per_thread, params.block_load_method>;
     using block_store_type
         = ::rocprim::block_store<AccType, block_size, items_per_thread, params.block_store_method>;
-    using block_scan_type = ::rocprim::block_scan<AccType, block_size, params.block_scan_method>;
 
     using lookback_scan_prefix_op_type
         = lookback_scan_prefix_op<AccType, BinaryFunction, LookbackScanState>;
 
     ROCPRIM_SHARED_MEMORY union
     {
-        typename block_load_type::storage_type  load;
         typename block_store_type::storage_type store;
-        typename block_scan_type::storage_type  scan;
+        rocprim::detail::raw_storage<AccType> prefix;
     } storage;
 
     const auto         flat_block_thread_id = ::rocprim::detail::block_thread_id<0>();
@@ -148,17 +145,23 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     {
         if(flat_block_thread_id == 0)
         {
-            scan_state.set_complete(0, values[0]);
+            scan_state.set_complete(0, AccType{0});
         }
     }
     else
     {
         // Scan of block values
-        auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
-        lookback_block_scan<Exclusive, block_scan_type>(values, // input/output
-                                                        storage.scan,
-                                                        prefix_op,
-                                                        scan_op);
+        if (rocprim::warp_id(flat_block_thread_id) == 0) {
+            auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
+            AccType prefix = prefix_op(AccType{0});
+            if (rocprim::lane_id() == 0)
+                storage.prefix.get() = prefix;
+        }
+        ::rocprim::syncthreads();
+
+        for(unsigned i = 0; i < items_per_thread; ++i) {
+            values[i] = storage.prefix.get();
+        }
     }
     ::rocprim::syncthreads(); // sync threads to reuse shared memory
 
