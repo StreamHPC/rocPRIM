@@ -193,7 +193,7 @@ inline auto scan_impl(void*               temporary_storage,
                       const size_t        size,
                       BinaryFunction      scan_op,
                       const hipStream_t   stream,
-                      bool                debug_synchronous)
+                      bool)
 {
     using config = wrapped_scan_config<Config, AccType>;
 
@@ -206,7 +206,6 @@ inline auto scan_impl(void*               temporary_storage,
     const scan_config_params params = dispatch_target_arch<config>(target_arch);
 
     using scan_state_type            = detail::lookback_scan_state<AccType>;
-    using scan_state_with_sleep_type = detail::lookback_scan_state<AccType, true>;
 
     const unsigned int block_size       = params.kernel_config.block_size;
     const unsigned int items_per_thread = params.kernel_config.items_per_thread;
@@ -246,166 +245,44 @@ inline auto scan_impl(void*               temporary_storage,
     {
         return partition_result;
     }
-
-    // Start point for time measurements
-    std::chrono::high_resolution_clock::time_point start;
-
-    if( number_of_blocks == 0u )
-        return hipSuccess;
-
-    if(number_of_blocks > 1 || use_limited_size)
+    // Create and initialize lookback_scan_state obj
+    scan_state_type scan_state{};
+    result = scan_state_type::create(scan_state, scan_state_storage, number_of_blocks, stream);
+    if(result != hipSuccess)
     {
-        // Create and initialize lookback_scan_state obj
-        scan_state_type scan_state{};
-        hipError_t      result
-            = scan_state_type::create(scan_state, scan_state_storage, number_of_blocks, stream);
-        scan_state_with_sleep_type scan_state_with_sleep{};
-        result = scan_state_with_sleep_type::create(scan_state_with_sleep,
-                                                    scan_state_storage,
-                                                    number_of_blocks,
-                                                    stream);
-        if(result != hipSuccess)
-        {
-            return result;
-        }
-
-        hipDeviceProp_t prop;
-        int deviceId;
-        static_cast<void>(hipGetDevice(&deviceId));
-        static_cast<void>(hipGetDeviceProperties(&prop, deviceId));
-
-        if(debug_synchronous) start = std::chrono::high_resolution_clock::now();
-
-#if HIP_VERSION >= 307
-        int asicRevision = prop.asicRevision;
-#else
-        int asicRevision = 0;
-#endif
-
-        size_t number_of_launch = (size + limited_size - 1)/limited_size;
-        for (size_t i = 0, offset = 0; i < number_of_launch; i++, offset+=limited_size )
-        {
-            size_t current_size = std::min<size_t>(size - offset, limited_size);
-            number_of_blocks = (current_size + items_per_block - 1)/items_per_block;
-            auto grid_size = (number_of_blocks + block_size - 1)/block_size;
-
-            if(debug_synchronous)
-            {
-                std::cout << "use_limited_size " << use_limited_size << '\n';
-                std::cout << "aligned_size_limit " << aligned_size_limit << '\n';
-                std::cout << "number_of_launch " << number_of_launch << '\n';
-                std::cout << "index " << i << '\n';
-                std::cout << "size " << current_size << '\n';
-                std::cout << "block_size " << block_size << '\n';
-                std::cout << "number of blocks " << number_of_blocks << '\n';
-                std::cout << "items_per_block " << items_per_block << '\n';
-            }
-
-            if(std::string(prop.gcnArchName).find("908") != std::string::npos && asicRevision < 2)
-            {
-                init_lookback_scan_state_kernel<scan_state_with_sleep_type>
-                    <<<dim3(grid_size), dim3(block_size), 0, stream>>>(scan_state_with_sleep,
-                                                                       number_of_blocks);
-            } else
-            {
-                init_lookback_scan_state_kernel<scan_state_type>
-                    <<<dim3(grid_size), dim3(block_size), 0, stream>>>(scan_state,
-                                                                       number_of_blocks);
-            }
-            ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("init_lookback_scan_state_kernel", number_of_blocks, start)
-
-            if(debug_synchronous) start = std::chrono::high_resolution_clock::now();
-            grid_size = number_of_blocks;
-            if(std::string(prop.gcnArchName).find("908") != std::string::npos && asicRevision < 2)
-            {
-                lookback_scan_kernel<Exclusive, // flag for exclusive scan operation
-                                     config,
-                                     InputIterator,
-                                     OutputIterator,
-                                     BinaryFunction,
-                                     InitValueType,
-                                     AccType,
-                                     scan_state_with_sleep_type>
-                    <<<dim3(grid_size), dim3(block_size), 0, stream>>>(input + offset,
-                                                                       output + offset,
-                                                                       current_size,
-                                                                       initial_value,
-                                                                       scan_op,
-                                                                       scan_state_with_sleep,
-                                                                       number_of_blocks,
-                                                                       previous_last_element,
-                                                                       new_last_element,
-                                                                       i != size_t(0),
-                                                                       number_of_launch > 1);
-            }
-            else
-            {
-                if(debug_synchronous)
-                {
-                    std::cout << "use_limited_size " << use_limited_size << '\n';
-                    std::cout << "aligned_size_limit " << aligned_size_limit << '\n';
-                    std::cout << "size " << current_size << '\n';
-                    std::cout << "block_size " << block_size << '\n';
-                    std::cout << "number of blocks " << number_of_blocks << '\n';
-                    std::cout << "items_per_block " << items_per_block << '\n';
-                }
-
-                lookback_scan_kernel<Exclusive, // flag for exclusive scan operation
-                                     config,
-                                     InputIterator,
-                                     OutputIterator,
-                                     BinaryFunction,
-                                     InitValueType,
-                                     AccType,
-                                     scan_state_type>
-                    <<<dim3(grid_size), dim3(block_size), 0, stream>>>(input + offset,
-                                                                       output + offset,
-                                                                       current_size,
-                                                                       initial_value,
-                                                                       scan_op,
-                                                                       scan_state,
-                                                                       number_of_blocks,
-                                                                       previous_last_element,
-                                                                       new_last_element,
-                                                                       i != size_t(0),
-                                                                       number_of_launch > 1);
-            }
-            ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("lookback_scan_kernel", current_size, start)
-
-            // Swap the last_elements
-            if(number_of_launch > 1)
-            {
-                hipError_t error = ::rocprim::transform(new_last_element,
-                                                        previous_last_element,
-                                                        1,
-                                                        ::rocprim::identity<AccType>(),
-                                                        stream,
-                                                        debug_synchronous);
-                if(error != hipSuccess) return error;
-            }
-        }
+        return result;
     }
-    else
-    {
-        if(debug_synchronous)
-        {
-            std::cout << "size " << size << '\n';
-            std::cout << "block_size " << block_size << '\n';
-            std::cout << "number of blocks " << number_of_blocks << '\n';
-            std::cout << "items_per_block " << items_per_block << '\n';
-            start = std::chrono::high_resolution_clock::now();
-        }
 
-        single_scan_kernel<Exclusive, // flag for exclusive scan operation
-                           config,
-                           InputIterator,
-                           OutputIterator,
-                           BinaryFunction,
-                           InitValueType,
-                           AccType>
-            <<<dim3(1), dim3(block_size), 0, stream>>>(input, size, initial_value, output, scan_op);
-        ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("single_scan_kernel", size, start);
-    }
+    size_t number_of_launch = (size + limited_size - 1)/limited_size;
+    size_t current_size = std::min<size_t>(size, limited_size);
+    number_of_blocks = (current_size + items_per_block - 1)/items_per_block;
+    auto grid_size = (number_of_blocks + block_size - 1)/block_size;
+
+    init_lookback_scan_state_kernel<scan_state_type>
+        <<<dim3(grid_size), dim3(block_size), 0, stream>>>(scan_state,
+                                                            number_of_blocks);
+
+    grid_size = number_of_blocks;
+
+    lookback_scan_kernel<Exclusive, // flag for exclusive scan operation
+                         config,
+                         InputIterator,
+                         OutputIterator,
+                         BinaryFunction,
+                         InitValueType,
+                         AccType,
+                         scan_state_type>
+        <<<dim3(grid_size), dim3(block_size), 0, stream>>>(input,
+                                                           output,
+                                                           current_size,
+                                                           initial_value,
+                                                           scan_op,
+                                                           scan_state,
+                                                           number_of_blocks,
+                                                           previous_last_element,
+                                                           new_last_element,
+                                                           false,
+                                                           number_of_launch > 1);
     return hipSuccess;
 }
 
