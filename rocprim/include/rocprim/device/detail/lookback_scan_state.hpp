@@ -449,7 +449,7 @@ public:
         {
             previous_block_id -= ::rocprim::device_warp_size();
             reduce_partial_prefixes(previous_block_id, flag, partial_prefix);
-            prefix = scan_op_(partial_prefix, prefix);
+            prefix = partial_prefix.values[0] != 0 ? partial_prefix : prefix;
         }
         return prefix;
     }
