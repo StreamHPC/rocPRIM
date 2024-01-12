@@ -190,14 +190,24 @@ struct custom_test_array_type
         ~custom_test_array_type() {}
 
     ROCPRIM_HOST_DEVICE inline
-        custom_test_array_type& operator=(const custom_test_array_type& other)
-    {
+        custom_test_array_type& operator=(const custom_test_array_type& other) = default;
+
+    ROCPRIM_HOST_DEVICE
+    void store(custom_test_array_type* dst) const {
 #pragma unroll 1
         for(size_t i = 0; i < N; i++)
         {
-            values[i] = other.values[i];
+            dst->values[i] = values[i];
         }
-        return *this;
+    }
+
+    ROCPRIM_HOST_DEVICE
+    void load(const custom_test_array_type* src) {
+#pragma unroll 1
+        for(size_t i = 0; i < N; i++)
+        {
+            values[i] = src->values[i];
+        }
     }
 
     ROCPRIM_HOST_DEVICE inline

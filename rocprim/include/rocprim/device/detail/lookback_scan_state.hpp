@@ -335,7 +335,7 @@ public:
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
-        prefixes_partial_values[padding + block_id] = value;
+        value.store(&prefixes_partial_values[padding + block_id]);
         __hip_atomic_store(&prefixes_flags[padding + block_id],
                            PREFIX_PARTIAL,
                            __ATOMIC_RELEASE,
@@ -347,7 +347,7 @@ public:
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
-        prefixes_complete_values[padding + block_id] = value;
+        value.store(&prefixes_complete_values[padding + block_id]);
         __hip_atomic_store(&prefixes_flags[padding + block_id],
                            PREFIX_COMPLETE,
                            __ATOMIC_RELEASE,
@@ -373,9 +373,9 @@ public:
         }
 
         if(flag == PREFIX_PARTIAL)
-            value = prefixes_partial_values[padding + block_id];
+            value.load(&prefixes_partial_values[padding + block_id]);
         else
-            value = prefixes_complete_values[padding + block_id];
+            value.load(&prefixes_complete_values[padding + block_id]);
     }
 
     /// \brief Gets the prefix value for a block. Should only be called after all
