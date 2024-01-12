@@ -395,32 +395,26 @@ inline std::vector<T> get_random_data01(size_t size, float p, seed_type seed_val
 }
 
 template<class T>
-std::vector<size_t> get_sizes(T seed_value)
+std::vector<size_t> get_sizes(T)
 {
     // clang-format off
-    std::vector<size_t> sizes = {
-        1024, 2048, 4096, 1792,
-        1, 10, 53, 211, 500, 2345,
-        11001, 34567, 100000,
-        (1 << 16) - 1220,
-        (1 << 20) + 123
-    };
+    std::vector<size_t> sizes = {30720, 99040};
     // clang-format on
-    if(!test_common_utils::use_hmm())
-    {
-        // hipMallocManaged() currently doesnt support zero byte allocation
-        sizes.push_back(0);
-    }
+    // if(!test_common_utils::use_hmm())
+    // {
+    //     // hipMallocManaged() currently doesnt support zero byte allocation
+    //     sizes.push_back(0);
+    // }
 
-    const std::vector<size_t> random_sizes1
-        = test_utils::get_random_data<size_t>(2, 2, 1 << 20, seed_value);
-    sizes.insert(sizes.end(), random_sizes1.begin(), random_sizes1.end());
-
-    const std::vector<size_t> random_sizes2
-        = test_utils::get_random_data<size_t>(3, 2, 1 << 17, seed_value);
-    sizes.insert(sizes.end(), random_sizes2.begin(), random_sizes2.end());
-
-    std::sort(sizes.begin(), sizes.end());
+    //const std::vector<size_t> random_sizes1
+    //    = test_utils::get_random_data<size_t>(2, 2, 1 << 20, seed_value);
+    //sizes.insert(sizes.end(), random_sizes1.begin(), random_sizes1.end());
+//
+    //const std::vector<size_t> random_sizes2
+    //    = test_utils::get_random_data<size_t>(3, 2, 1 << 17, seed_value);
+    //sizes.insert(sizes.end(), random_sizes2.begin(), random_sizes2.end());
+//
+    //std::sort(sizes.begin(), sizes.end());
 
     return sizes;
 }

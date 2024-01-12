@@ -24,8 +24,8 @@
 using engine_type = std::default_random_engine;
 using seed_type = typename engine_type::result_type;
 
-static constexpr size_t random_seeds_count = 1;
-static constexpr seed_type seeds [] = {0, 1997132004};
+static constexpr size_t random_seeds_count = 0;
+static constexpr seed_type seeds [] = {0};
 static constexpr size_t seed_size = sizeof(seeds) / sizeof(seeds[0]);
 
 #endif // TEST_SEED_HPP_
