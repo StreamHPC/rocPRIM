@@ -99,11 +99,11 @@ template<bool Exclusive,
 ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     lookback_scan_kernel_impl(InputIterator,
                               OutputIterator     output,
-                              const size_t       size,
+                              const size_t       ,
                               AccType            ,
                               BinaryFunction     scan_op,
                               LookbackScanState  scan_state,
-                              const unsigned int,
+                              const unsigned int ,
                               AccType*                                 = nullptr,
                               AccType*                                 = nullptr,
                               bool                                     = false,
@@ -111,42 +111,19 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 {
     static_assert(std::is_same<AccType, typename LookbackScanState::value_type>::value,
                   "value_type of LookbackScanState must be result_type");
-    static constexpr scan_config_params params = device_params<Config>();
-
-    constexpr auto         block_size       = params.kernel_config.block_size;
-    constexpr auto         items_per_thread = params.kernel_config.items_per_thread;
-    constexpr unsigned int items_per_block  = block_size * items_per_thread;
-
-    using block_store_type
-        = ::rocprim::block_store<AccType, block_size, items_per_thread, params.block_store_method>;
 
     using lookback_scan_prefix_op_type
         = lookback_scan_prefix_op<AccType, BinaryFunction, LookbackScanState>;
 
-    ROCPRIM_SHARED_MEMORY union
-    {
-        typename block_store_type::storage_type store;
-        rocprim::detail::raw_storage<AccType> prefix;
-    } storage;
-
     const auto         flat_block_thread_id = ::rocprim::detail::block_thread_id<0>();
     const auto         flat_block_id        = ::rocprim::detail::block_id<0>();
-    const unsigned int block_offset         = flat_block_id * items_per_block;
-    const auto         valid_in_block
-        = std::min(static_cast<unsigned int>(size - block_offset), items_per_block);
-
-    // For input values
-    AccType values[items_per_thread];
-    for(unsigned i = 0; i < items_per_thread; ++i) {
-        values[i] = AccType{0};
-    }
-
     if(flat_block_id == 0)
     {
         if(flat_block_thread_id == 0)
         {
             scan_state.set_complete(0, AccType{0});
         }
+        output[0] = AccType{0};
     }
     else
     {
@@ -155,17 +132,9 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
             auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
             AccType prefix = prefix_op(AccType{0});
             if (rocprim::lane_id() == 0)
-                storage.prefix.get() = prefix;
-        }
-        ::rocprim::syncthreads();
-
-        for(unsigned i = 0; i < items_per_thread; ++i) {
-            values[i] = storage.prefix.get();
+                output[flat_block_id] = prefix;
         }
     }
-    ::rocprim::syncthreads(); // sync threads to reuse shared memory
-
-    block_store_type().store(output + block_offset, values, valid_in_block, storage.store);
 }
 
 } // end of namespace detail

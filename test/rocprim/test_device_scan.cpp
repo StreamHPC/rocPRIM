@@ -421,8 +421,11 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             hipStream_t stream = 0; // default
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
+            const unsigned int items_per_block = 256;
+            unsigned int number_of_blocks = (size + items_per_block - 1) / items_per_block;
+
             // Generate data
-            std::vector<U> output(size);
+            std::vector<U> output(number_of_blocks);
 
             T * d_input = nullptr;
             U * d_output;
@@ -432,7 +435,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             scan_op_type scan_op;
 
             // Calculate expected results on host
-            std::vector<U> expected(size, T{0});
+            std::vector<U> expected(number_of_blocks, T{0});
             initial_value = acc_type{0};//test_utils::get_random_value<acc_type>(0, 0, seed_value);
 
             auto input_iterator = d_input;
@@ -462,6 +465,10 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
             }
             HIP_CHECK(hipMemsetAsync(d_temp_storage, 0xFFFF'FFFF, temp_storage_size_bytes));
+
+            using lk_scan_state = rocprim::detail::lookback_scan_state<T, false>;
+            lk_scan_state scan_state;
+            HIP_CHECK(lk_scan_state::create(scan_state, d_temp_storage, number_of_blocks, stream));
             
             // Run
             HIP_CHECK(rocprim::exclusive_scan(
@@ -486,13 +493,6 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
                 )
             );
             HIP_CHECK(hipDeviceSynchronize());
-
-            using lk_scan_state = rocprim::detail::lookback_scan_state<T, false>;
-            lk_scan_state scan_state;
-            const unsigned int items_per_block = 256;
-            unsigned int number_of_blocks = (size + items_per_block - 1) / items_per_block;
-
-            HIP_CHECK(lk_scan_state::create(scan_state, d_temp_storage, number_of_blocks, stream));
 
             // Check if output values are as expected
             if(std::memcmp(output.data(), expected.data(), output.size() * sizeof(output[0])) != 0) {
