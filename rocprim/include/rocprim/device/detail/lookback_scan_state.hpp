@@ -336,8 +336,10 @@ public:
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
         prefixes_partial_values[padding + block_id] = value;
-        ::rocprim::detail::memory_fence_device();
-        ::rocprim::detail::atomic_exch(&prefixes_flags[padding + block_id], PREFIX_PARTIAL);
+        __hip_atomic_store(&prefixes_flags[padding + block_id],
+                           PREFIX_PARTIAL,
+                           __ATOMIC_RELEASE,
+                           __HIP_MEMORY_SCOPE_AGENT);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
@@ -346,8 +348,10 @@ public:
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
         prefixes_complete_values[padding + block_id] = value;
-        ::rocprim::detail::memory_fence_device();
-        ::rocprim::detail::atomic_exch(&prefixes_flags[padding + block_id], PREFIX_COMPLETE);
+        __hip_atomic_store(&prefixes_flags[padding + block_id],
+                           PREFIX_COMPLETE,
+                           __ATOMIC_RELEASE,
+                           __HIP_MEMORY_SCOPE_AGENT);
     }
 
     // block_id must be > 0
@@ -356,13 +360,16 @@ public:
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
-        // atomic_add(..., 0) is used to load values atomically
-        flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
-        ::rocprim::detail::memory_fence_device();
+        flag = __hip_atomic_load(&prefixes_flags[padding + block_id],
+                                 __ATOMIC_ACQUIRE,
+                                 __HIP_MEMORY_SCOPE_AGENT);
+        __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
         while(flag == PREFIX_EMPTY)
         {
-            flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
-            ::rocprim::detail::memory_fence_device();
+            flag = __hip_atomic_load(&prefixes_flags[padding + block_id],
+                                    __ATOMIC_ACQUIRE,
+                                    __HIP_MEMORY_SCOPE_AGENT);
+            __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
         }
 
         if(flag == PREFIX_PARTIAL)
