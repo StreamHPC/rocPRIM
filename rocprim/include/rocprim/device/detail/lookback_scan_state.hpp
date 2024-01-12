@@ -356,26 +356,11 @@ public:
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
-        const unsigned int SLEEP_MAX = 32;
-        unsigned int times_through = 1;
-
         // atomic_add(..., 0) is used to load values atomically
         flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
         ::rocprim::detail::memory_fence_device();
         while(flag == PREFIX_EMPTY)
         {
-            if (UseSleep)
-            {
-                for (unsigned int j = 0; j < times_through; j++)
-#ifndef __HIP_CPU_RT__
-                    __builtin_amdgcn_s_sleep(1);
-#else
-                    std::this_thread::sleep_for(std::chrono::microseconds{1});
-#endif
-                if (times_through < SLEEP_MAX)
-                    times_through++;
-            }
-
             flag = ::rocprim::detail::atomic_add(&prefixes_flags[padding + block_id], 0);
             ::rocprim::detail::memory_fence_device();
         }
@@ -433,27 +418,11 @@ public:
                                  flag_type& flag,
                                  T& partial_prefix)
     {
-        // Order of reduction must be reversed, because 0th thread has
-        // prefix from the (block_id_ - 1) block, 1st thread has prefix
-        // from (block_id_ - 2) block etc.
-        using headflag_scan_op_type = reverse_binary_op_wrapper<
-            BinaryFunction, T, T
-        >;
-        using warp_reduce_prefix_type = warp_reduce_crosslane<
-            T, ::rocprim::device_warp_size(), false
-        >;
-
         T block_prefix;
         scan_state_.get(block_id, flag, block_prefix);
 
-        auto headflag_scan_op = headflag_scan_op_type(scan_op_);
-        warp_reduce_prefix_type()
-            .tail_segmented_reduce(
-                block_prefix,
-                partial_prefix,
-                (flag == PREFIX_COMPLETE),
-                headflag_scan_op
-            );
+        bool is_zero = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix == T{0};
+        partial_prefix = rocprim::detail::warp_all(is_zero) ? T{0} : T{-1};
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
