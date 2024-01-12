@@ -331,6 +331,12 @@ public:
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
+    void debug_set_partial_value(const unsigned int block_id, const T value) {
+        constexpr unsigned int padding = ::rocprim::device_warp_size();
+        prefixes_partial_values[padding + block_id] = value;
+    }
+
+    ROCPRIM_DEVICE ROCPRIM_INLINE
     void set_partial(const unsigned int block_id, const T value)
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
@@ -360,22 +366,14 @@ public:
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
-        flag = __hip_atomic_load(&prefixes_flags[padding + block_id],
-                                 __ATOMIC_ACQUIRE,
-                                 __HIP_MEMORY_SCOPE_AGENT);
-        __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
-        while(flag == PREFIX_EMPTY)
-        {
+        do {
             flag = __hip_atomic_load(&prefixes_flags[padding + block_id],
-                                    __ATOMIC_ACQUIRE,
-                                    __HIP_MEMORY_SCOPE_AGENT);
+                        __ATOMIC_ACQUIRE,
+                        __HIP_MEMORY_SCOPE_AGENT);
             __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
-        }
+        } while(flag == PREFIX_EMPTY);
 
-        if(flag == PREFIX_PARTIAL)
-            value.load(&prefixes_partial_values[padding + block_id]);
-        else
-            value.load(&prefixes_complete_values[padding + block_id]);
+        value.load(&prefixes_partial_values[padding + block_id]);
     }
 
     /// \brief Gets the prefix value for a block. Should only be called after all

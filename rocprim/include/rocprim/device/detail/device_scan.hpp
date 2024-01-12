@@ -121,6 +121,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     {
         if(flat_block_thread_id == 0)
         {
+            scan_state.debug_set_partial_value(0, AccType{0});
             scan_state.set_complete(0, AccType{0});
         }
         output[0] = AccType{0};
