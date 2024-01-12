@@ -192,14 +192,7 @@ struct custom_test_array_type
 
     template<class U>
     ROCPRIM_HOST_DEVICE inline
-        custom_test_array_type(const custom_test_array_type<U, N>& other)
-    {
-#pragma unroll 1
-        for(size_t i = 0; i < N; i++)
-        {
-            values[i] = other.values[i];
-        }
-    }
+        custom_test_array_type(const custom_test_array_type<U, N>& other) = delete;
 
     ROCPRIM_HOST_DEVICE inline
         ~custom_test_array_type() {}
@@ -225,54 +218,6 @@ struct custom_test_array_type
             result.values[i] = values[i] + other.values[i];
         }
         return result;
-    }
-
-    ROCPRIM_HOST_DEVICE inline
-        custom_test_array_type operator-(const custom_test_array_type& other) const
-    {
-        custom_test_array_type result;
-#pragma unroll 1
-        for(size_t i = 0; i < N; i++)
-        {
-            result.values[i] = values[i] - other.values[i];
-        }
-        return result;
-    }
-
-    ROCPRIM_HOST_DEVICE inline
-        bool operator<(const custom_test_array_type& other) const
-    {
-#pragma unroll 1
-        for(unsigned int i = 0; i < N; i++)
-        {
-            if(values[i] < other.values[i])
-            {
-                return true;
-            }
-            else if(other.values[i] < values[i])
-            {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    ROCPRIM_HOST_DEVICE inline
-        bool operator>(const custom_test_array_type& other) const
-    {
-#pragma unroll 1
-        for(unsigned int i = 0; i < N; i++)
-        {
-            if(values[i] > other.values[i])
-            {
-                return true;
-            }
-            else if(other.values[i] > values[i])
-            {
-                return false;
-            }
-        }
-        return false;
     }
 
     ROCPRIM_HOST_DEVICE inline
