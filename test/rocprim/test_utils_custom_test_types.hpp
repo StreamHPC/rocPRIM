@@ -171,14 +171,7 @@ struct custom_test_array_type
     T values[N];
 
     ROCPRIM_HOST_DEVICE inline
-        custom_test_array_type()
-    {
-#pragma unroll 1
-        for(size_t i = 0; i < N; i++)
-        {
-            values[i] = T(i + 1);
-        }
-    }
+        custom_test_array_type() = delete;
 
     ROCPRIM_HOST_DEVICE inline
         custom_test_array_type(T v)
@@ -211,7 +204,7 @@ struct custom_test_array_type
     ROCPRIM_HOST_DEVICE inline
         custom_test_array_type operator+(const custom_test_array_type& other) const
     {
-        custom_test_array_type result;
+        custom_test_array_type result{0};
 #pragma unroll 1
         for(size_t i = 0; i < N; i++)
         {

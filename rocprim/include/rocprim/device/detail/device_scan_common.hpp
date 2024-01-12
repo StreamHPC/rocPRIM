@@ -95,17 +95,6 @@ ROCPRIM_KERNEL
     const unsigned int block_thread_id = ::rocprim::detail::block_thread_id<0>();
     const unsigned int flat_thread_id  = (block_id * block_size) + block_thread_id;
 
-    // Save the reduction (i.e. the last prefix) from the previous user of lookback_scan_state.
-    if(save_dest != nullptr)
-    {
-        access_indexed_lookback_value(lookback_scan_state,
-                                      number_of_blocks,
-                                      save_index,
-                                      flat_thread_id,
-                                      [&](typename LookBackScanState::value_type value)
-                                      { *save_dest = value; });
-    }
-
     init_lookback_scan_state(lookback_scan_state, number_of_blocks, ordered_bid, flat_thread_id);
 }
 
@@ -121,17 +110,6 @@ ROCPRIM_KERNEL
     const unsigned int block_size      = ::rocprim::detail::block_size<0>();
     const unsigned int block_thread_id = ::rocprim::detail::block_thread_id<0>();
     const unsigned int flat_thread_id  = (block_id * block_size) + block_thread_id;
-
-    // Save the reduction (i.e. the last prefix) from the previous user of lookback_scan_state.
-    if(save_dest != nullptr)
-    {
-        access_indexed_lookback_value(lookback_scan_state,
-                                      number_of_blocks,
-                                      save_index,
-                                      flat_thread_id,
-                                      [&](typename LookBackScanState::value_type value)
-                                      { *save_dest = value; });
-    }
 
     init_lookback_scan_state(lookback_scan_state, number_of_blocks, flat_thread_id);
 }

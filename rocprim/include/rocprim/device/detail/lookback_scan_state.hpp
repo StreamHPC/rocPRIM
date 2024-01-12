@@ -418,7 +418,7 @@ public:
                                  flag_type& flag,
                                  T& partial_prefix)
     {
-        T block_prefix;
+        T block_prefix{0};
         scan_state_.get(block_id, flag, block_prefix);
 
         bool is_zero = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix == T{0};
@@ -429,7 +429,7 @@ public:
     T get_prefix()
     {
         flag_type flag;
-        T partial_prefix;
+        T partial_prefix{0};
         unsigned int previous_block_id = block_id_ - ::rocprim::lane_id() - 1;
 
         // reduce last warp_size() number of prefixes to

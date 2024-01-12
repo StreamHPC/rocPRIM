@@ -403,7 +403,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
 
     using scan_op_type = typename TestFixture::scan_op_type;
     using acc_type   = T;
-    acc_type        initial_value;
+    acc_type        initial_value = T{0};
 
     const bool            debug_synchronous     = false;
 
@@ -425,7 +425,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             unsigned int number_of_blocks = (size + items_per_block - 1) / items_per_block;
 
             // Generate data
-            std::vector<U> output(number_of_blocks);
+            std::vector<U> output(number_of_blocks, T{0});
 
             T * d_input = nullptr;
             U * d_output;
