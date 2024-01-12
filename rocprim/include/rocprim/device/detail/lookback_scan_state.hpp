@@ -489,12 +489,6 @@ public:
 
         // Get prefix
         auto prefix = get_prefix();
-
-        // Set complete prefix for next block
-        if(::rocprim::lane_id() == 0)
-        {
-            scan_state_.set_complete(block_id_, scan_op_(prefix, reduction));
-        }
         return prefix;
     }
 
