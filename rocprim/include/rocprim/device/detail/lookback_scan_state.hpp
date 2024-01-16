@@ -333,7 +333,7 @@ public:
     ROCPRIM_DEVICE ROCPRIM_INLINE
     void debug_set_partial_value(const unsigned int block_id, const T value) {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
-        prefixes_partial_values[padding + block_id] = value;
+        value.store(&prefixes_partial_values[padding + block_id]);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
@@ -437,7 +437,7 @@ public:
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    T operator()()
+    int operator()()
     {
         // Set partial prefix for next block
         if(block_thread_id<0>() == 0)
@@ -447,8 +447,7 @@ public:
         }
 
         // Get prefix
-        auto prefix = get_prefix() ? T{0x55} : T{0};
-        return prefix;
+        return get_prefix();
     }
 
 protected:

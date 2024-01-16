@@ -425,17 +425,17 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             unsigned int number_of_blocks = (size + items_per_block - 1) / items_per_block;
 
             // Generate data
-            std::vector<U> output(number_of_blocks, T{0});
+            std::vector<int> output(number_of_blocks);
 
             T * d_input = nullptr;
-            U * d_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
+            int* d_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(output[0])));
 
             // scan function
             scan_op_type scan_op;
 
             // Calculate expected results on host
-            std::vector<U> expected(number_of_blocks, T{0x55});
+            std::vector<int> expected(number_of_blocks, 1);
             initial_value = acc_type{0};//test_utils::get_random_value<acc_type>(0, 0, seed_value);
 
             auto input_iterator = d_input;
@@ -488,7 +488,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             HIP_CHECK(
                 hipMemcpy(
                     output.data(), d_output,
-                    output.size() * sizeof(U),
+                    output.size() * sizeof(output[0]),
                     hipMemcpyDeviceToHost
                 )
             );
