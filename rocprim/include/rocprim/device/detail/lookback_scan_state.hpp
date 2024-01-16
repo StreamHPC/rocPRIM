@@ -337,25 +337,11 @@ public:
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void set_partial(const unsigned int block_id, const T value)
+    void set_state(const unsigned int block_id, bool complete)
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
-
-        value.store(&prefixes_partial_values[padding + block_id]);
         __hip_atomic_store(&prefixes_flags[padding + block_id],
-                           PREFIX_PARTIAL,
-                           __ATOMIC_RELEASE,
-                           __HIP_MEMORY_SCOPE_AGENT);
-    }
-
-    ROCPRIM_DEVICE ROCPRIM_INLINE
-    void set_complete(const unsigned int block_id, const T value)
-    {
-        constexpr unsigned int padding = ::rocprim::device_warp_size();
-
-        value.store(&prefixes_complete_values[padding + block_id]);
-        __hip_atomic_store(&prefixes_flags[padding + block_id],
-                           PREFIX_COMPLETE,
+                           complete ? PREFIX_COMPLETE : PREFIX_PARTIAL,
                            __ATOMIC_RELEASE,
                            __HIP_MEMORY_SCOPE_AGENT);
     }
@@ -419,50 +405,49 @@ public:
     ~lookback_scan_prefix_op() = default;
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void reduce_partial_prefixes(unsigned int block_id,
-                                 flag_type& flag,
-                                 T& partial_prefix)
+    bool reduce_partial_prefixes(unsigned int block_id,
+                                 flag_type& flag)
     {
         T block_prefix{0};
         scan_state_.get(block_id, flag, block_prefix);
 
-        bool is_zero = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix == T{0};
-        partial_prefix = rocprim::detail::warp_all(is_zero) ? T{0} : T{-1};
+        bool is_expected = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix == T{0x55};
+        return rocprim::detail::warp_all(is_expected);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    T get_prefix()
+    bool get_prefix()
     {
         flag_type flag;
-        T partial_prefix{0};
         unsigned int previous_block_id = block_id_ - block_thread_id<0>() - 1;
 
         // reduce last warp_size() number of prefixes to
         // get the complete prefix for this block.
-        reduce_partial_prefixes(previous_block_id, flag, partial_prefix);
-        T prefix = partial_prefix;
+        if(!reduce_partial_prefixes(previous_block_id, flag))
+            return false;
 
         // while we don't load a complete prefix, reduce partial prefixes
         while(::rocprim::detail::warp_all(flag != PREFIX_COMPLETE))
         {
             previous_block_id -= ::rocprim::device_warp_size();
-            reduce_partial_prefixes(previous_block_id, flag, partial_prefix);
-            prefix = partial_prefix.values[0] != 0 ? partial_prefix : prefix;
+            if(!reduce_partial_prefixes(previous_block_id, flag))
+                return false;
         }
-        return prefix;
+        return true;
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    T operator()(T reduction)
+    T operator()()
     {
         // Set partial prefix for next block
         if(block_thread_id<0>() == 0)
         {
-            scan_state_.set_partial(block_id_, reduction);
+            scan_state_.debug_set_partial_value(block_id_, T{0x55});
+            scan_state_.set_state(block_id_, false);
         }
 
         // Get prefix
-        auto prefix = get_prefix();
+        auto prefix = get_prefix() ? T{0x55} : T{0};
         return prefix;
     }
 

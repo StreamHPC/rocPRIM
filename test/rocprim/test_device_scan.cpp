@@ -435,7 +435,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             scan_op_type scan_op;
 
             // Calculate expected results on host
-            std::vector<U> expected(number_of_blocks, T{0});
+            std::vector<U> expected(number_of_blocks, T{0x55});
             initial_value = acc_type{0};//test_utils::get_random_value<acc_type>(0, 0, seed_value);
 
             auto input_iterator = d_input;
@@ -464,7 +464,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             } else {
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
             }
-            HIP_CHECK(hipMemsetAsync(d_temp_storage, 0xFFFF'FFFF, temp_storage_size_bytes));
+            HIP_CHECK(hipMemsetAsync(d_temp_storage, 0x0, temp_storage_size_bytes));
 
             using lk_scan_state = rocprim::detail::lookback_scan_state<T, false>;
             lk_scan_state scan_state;

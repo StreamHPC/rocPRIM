@@ -121,18 +121,18 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     {
         if(flat_block_thread_id == 0)
         {
-            scan_state.debug_set_partial_value(0, AccType{0});
-            scan_state.set_complete(0, AccType{0});
+            scan_state.debug_set_partial_value(0, AccType{0x55});
+            scan_state.set_state(0, true);
         }
-        output[0] = AccType{0};
+        output[0] = AccType{0x55};
     }
     else
     {
         // Scan of block values
         if (rocprim::warp_id(flat_block_thread_id) == 0) {
             auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
-            AccType prefix = prefix_op(AccType{0});
-            if (flat_block_thread_id % 32 == 0)
+            AccType prefix = prefix_op();
+            if (flat_block_thread_id == 0)
                 output[flat_block_id] = prefix;
         }
     }
