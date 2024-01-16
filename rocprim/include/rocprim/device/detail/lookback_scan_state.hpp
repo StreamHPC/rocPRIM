@@ -419,7 +419,7 @@ public:
     bool get_prefix()
     {
         flag_type flag;
-        unsigned int previous_block_id = block_id_ - block_thread_id<0>() - 1;
+        unsigned int previous_block_id = block_id_ - (block_thread_id<0>() % 32) - 1;
 
         // reduce last warp_size() number of prefixes to
         // get the complete prefix for this block.
@@ -439,13 +439,6 @@ public:
     ROCPRIM_DEVICE ROCPRIM_INLINE
     int operator()()
     {
-        // Set partial prefix for next block
-        if(block_thread_id<0>() == 0)
-        {
-            scan_state_.debug_set_partial_value(block_id_, T{0x55});
-            scan_state_.set_state(block_id_, false);
-        }
-
         // Get prefix
         return get_prefix();
     }

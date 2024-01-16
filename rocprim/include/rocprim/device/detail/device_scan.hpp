@@ -117,6 +117,12 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 
     const auto         flat_block_thread_id = ::rocprim::detail::block_thread_id<0>();
     const auto         flat_block_id        = ::rocprim::detail::block_id<0>();
+
+    if (flat_block_thread_id == 0) {
+        //scan_state.debug_set_partial_value(flat_block_id, AccType{0x55});
+        //scan_state.set_state(flat_block_id, flat_block_id == 0);
+    }
+
     if(flat_block_id == 0)
     {
         if(flat_block_thread_id == 0)
@@ -128,6 +134,11 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
     }
     else
     {
+        if (flat_block_thread_id == 0) {
+            scan_state.debug_set_partial_value(flat_block_id, AccType{0x55});
+            scan_state.set_state(flat_block_id, false);
+        }
+
         // Scan of block values
         if (rocprim::warp_id(flat_block_thread_id) == 0) {
             auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
