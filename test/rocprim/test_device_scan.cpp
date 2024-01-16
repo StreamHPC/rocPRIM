@@ -430,12 +430,13 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             T * d_input = nullptr;
             int* d_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(output[0])));
+            HIP_CHECK(hipMemsetAsync(d_output, 0, output.size() * sizeof(output[0])));
 
             // scan function
             scan_op_type scan_op;
 
             // Calculate expected results on host
-            std::vector<int> expected(number_of_blocks, 1);
+            std::vector<int> expected(number_of_blocks, 0);
             initial_value = acc_type{0};//test_utils::get_random_value<acc_type>(0, 0, seed_value);
 
             auto input_iterator = d_input;
