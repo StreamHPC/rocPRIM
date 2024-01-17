@@ -170,8 +170,7 @@ struct custom_test_array_type
 
     T values[N];
 
-    ROCPRIM_HOST_DEVICE inline
-        custom_test_array_type() = delete;
+    custom_test_array_type() = default;
 
     ROCPRIM_HOST_DEVICE inline
         custom_test_array_type(T v)
@@ -202,31 +201,24 @@ struct custom_test_array_type
     }
 
     ROCPRIM_HOST_DEVICE
-    void load(const custom_test_array_type* src) {
+    static custom_test_array_type load(const custom_test_array_type* src) {
+        custom_test_array_type result;
 #pragma unroll 1
         for(size_t i = 0; i < N; i++)
         {
-            values[i] = src->values[i];
+            result.values[i] = src->values[i];
         }
+        return result;
     }
 
-    ROCPRIM_HOST_DEVICE inline
-        bool operator==(const custom_test_array_type& other) const
-    {
+    ROCPRIM_HOST_DEVICE
+    bool is_zero() const {
         for(size_t i = 0; i < N; i++)
         {
-            if(values[i] != other.values[i])
-            {
+            if(values[i] != 0x55)
                 return false;
-            }
         }
         return true;
-    }
-
-    ROCPRIM_HOST_DEVICE inline
-        bool operator!=(const custom_test_array_type& other) const
-    {
-        return !(*this == other);
     }
 };
 

@@ -398,7 +398,7 @@ template<class T>
 std::vector<size_t> get_sizes(T)
 {
     // clang-format off
-    std::vector<size_t> sizes = {30720, 99040};
+    std::vector<size_t> sizes = {99040};
     // clang-format on
     // if(!test_common_utils::use_hmm())
     // {

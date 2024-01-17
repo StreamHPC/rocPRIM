@@ -396,6 +396,19 @@ TYPED_TEST(RocprimDeviceScanTests, InclusiveScan)
 template <typename T>
 __attribute__((optnone)) void f(T*) {}
 
+static hipStream_t getStream() {
+    static hipStream_t stream = []() {
+        hipStream_t stream = 0; // default
+        unsigned cu_mask = -1;
+        if (std::getenv("ROCPRIM_TEST_WGP_CU_MASK")) {
+            cu_mask = 0x55'55;
+        }
+        HIP_CHECK(hipExtStreamCreateWithCUMask(&stream, 1, &cu_mask));
+        return stream;
+    }();
+    return stream;
+}
+
 TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
 {
     using T = typename TestFixture::input_type;
@@ -418,7 +431,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
 
         for(auto size : test_utils::get_sizes(seed_value))
         {
-            hipStream_t stream = 0; // default
+            hipStream_t stream = getStream();
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             const unsigned int items_per_block = 256;
@@ -465,7 +478,7 @@ TYPED_TEST(RocprimDeviceScanTests, ExclusiveScan)
             } else {
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
             }
-            HIP_CHECK(hipMemsetAsync(d_temp_storage, 0x0, temp_storage_size_bytes));
+            HIP_CHECK(hipMemsetAsync(d_temp_storage, 0, temp_storage_size_bytes));
 
             using lk_scan_state = rocprim::detail::lookback_scan_state<T, false>;
             lk_scan_state scan_state;

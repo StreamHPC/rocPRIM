@@ -348,7 +348,7 @@ public:
 
     // block_id must be > 0
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void get(const unsigned int block_id, flag_type& flag, T& value)
+    T get(const unsigned int block_id, flag_type& flag)
     {
         constexpr unsigned int padding = ::rocprim::device_warp_size();
 
@@ -359,7 +359,7 @@ public:
             __builtin_amdgcn_s_waitcnt(0x7 | (0 << 4) | (0x3f << 10));
         } while(rocprim::detail::warp_any(flag == PREFIX_EMPTY));
 
-        value.load(&prefixes_partial_values[padding + block_id]);
+        return T::load(&prefixes_partial_values[padding + block_id]);
     }
 
     /// \brief Gets the prefix value for a block. Should only be called after all
@@ -408,15 +408,14 @@ public:
     bool reduce_partial_prefixes(unsigned int block_id,
                                  flag_type& flag)
     {
-        T block_prefix{0};
-        scan_state_.get(block_id, flag, block_prefix);
+        T block_prefix = scan_state_.get(block_id, flag);
 
-        bool is_expected = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix == T{0x55};
+        bool is_expected = flag == static_cast<flag_type>(PREFIX_INVALID) || block_prefix.is_zero();
         return rocprim::detail::warp_all(is_expected);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    bool get_prefix()
+    int get_prefix()
     {
         flag_type flag;
         unsigned int previous_block_id = block_id_ - (block_thread_id<0>() % 32) - 1;
@@ -424,16 +423,16 @@ public:
         // reduce last warp_size() number of prefixes to
         // get the complete prefix for this block.
         if(!reduce_partial_prefixes(previous_block_id, flag))
-            return false;
+            return __builtin_amdgcn_readfirstlane(previous_block_id);
 
         // while we don't load a complete prefix, reduce partial prefixes
         while(::rocprim::detail::warp_all(flag != PREFIX_COMPLETE))
         {
             previous_block_id -= ::rocprim::device_warp_size();
             if(!reduce_partial_prefixes(previous_block_id, flag))
-                return false;
+                return __builtin_amdgcn_readfirstlane(previous_block_id);
         }
-        return true;
+        return 0;
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE

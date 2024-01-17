@@ -139,9 +139,9 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
         }
 
         // Scan of block values
-        if (rocprim::warp_id(flat_block_thread_id) == 0) {
+        if (flat_block_thread_id / 32 == 0) {
             auto prefix_op = lookback_scan_prefix_op_type(flat_block_id, scan_op, scan_state);
-            output[flat_block_id] = !prefix_op();
+            output[flat_block_id] = prefix_op();
         }
     }
 }
