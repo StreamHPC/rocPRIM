@@ -21,42 +21,16 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-cmake_policy(VERSION 3.16...3.25)
+cmake_policy(VERSION 3.16...3.28)
+enable_testing()
 
-# Install prefix
-set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
-
-# rocPRIM project
 project(rocprim LANGUAGES CXX)
 
-#Adding CMAKE_PREFIX_PATH
-if(WIN32)
-  set(ROCM_ROOT "$ENV{HIP_PATH}" CACHE PATH "Root directory of the ROCm installation")
-else()
-  set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
-endif()
-
-# Build options
-option(BUILD_TEST "Build tests (requires googletest)" OFF)
-option(BUILD_BENCHMARK "Build benchmarks" OFF)
-option(BUILD_EXAMPLE "Build examples" OFF)
-option(USE_HIP_CPU "Prefer HIP-CPU runtime instead of HW acceleration" OFF)
-# Disables building tests, benchmarks, examples
-option(ONLY_INSTALL "Only install" OFF)
-option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
-
-# CMake modules
-list(APPEND CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${ROCM_PATH}/lib/cmake/hip ${HIP_PATH}/cmake ${ROCM_ROOT}/lib/cmake/hip ${ROCM_ROOT}/hip/cmake # FindHIP.cmake
-)
-
-# Set a default build type if none was specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to 'Release' as none was specified.")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-endif()
+find_package(ROCmCMakeBuildTools REQUIRED)
+include(ROCmDefaults)
+include(ROCmOptions)
+include(${PROJECT_NAME}Options)
+include(${PROJECT_NAME}Dependencies)
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
 
@@ -66,9 +40,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(BUILD_SHARED_LIBS OFF) # don't build client dependencies as shared
-if(NOT USE_HIP_CPU)
-  # Get dependencies (required here to get rocm-cmake)
-  include(cmake/Dependencies.cmake)
+if(NOT ROCPRIM_USE_HIP_CPU)
   # Use target ID syntax if supported for GPU_TARGETS
   if (NOT DEFINED AMDGPU_TARGETS)
     set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
@@ -84,17 +56,10 @@ if(NOT USE_HIP_CPU)
     set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
   endif()
 
-  # TODO: Fix VerifyCompiler for HIP on Windows
-  if (NOT WIN32)
-    include(cmake/VerifyCompiler.cmake)
-  endif()
-  list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm ${ROCM_ROOT}/llvm ${ROCM_ROOT} ${ROCM_ROOT}/hip)
-  find_package(hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+  include(cmake/VerifyCompiler.cmake)
 endif()
 
-# FOR HANDLING ENABLE/DISABLE OPTIONAL BACKWARD COMPATIBILITY for FILE/FOLDER REORG
-option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" OFF)
-if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
+if(ROCPRIM_BUILD_FILE_REORG_BACKWARD_COMPAT)
   rocm_wrap_header_dir(
     "${PROJECT_SOURCE_DIR}/rocprim/include/rocprim"
     WRAPPER_LOCATIONS rocprim/include/rocprim
@@ -103,17 +68,12 @@ if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY AND NOT WIN32)
   )
 endif()
 
-if(BUILD_CODE_COVERAGE)
+if(ROCPRIM_BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
   add_link_options(--coverage)
 endif()
 
-if(USE_HIP_CPU)
-  # Get dependencies
-  include(cmake/Dependencies.cmake)
-endif()
-
-# Setup VERSION
+# 'set(VERSION_STRING' is searched for by docs (conf.py)
 set(VERSION_STRING "3.0.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
 
@@ -124,26 +84,30 @@ print_configuration_summary()
 # rocPRIM library
 add_subdirectory(rocprim)
 
-if(NOT ONLY_INSTALL AND (BUILD_TEST OR BUILD_BENCHMARK))
+if(ROCPRIM_BUILD_TESTING OR ROCPRIM_BUILD_BENCHMARKS)
   rocm_package_setup_component(clients)
 endif()
 
 # Tests
-if(BUILD_TEST AND NOT ONLY_INSTALL)
+if(ROCPRIM_BUILD_TESTING)
   rocm_package_setup_client_component(tests)
-  enable_testing()
   add_subdirectory(test)
 endif()
 
 # Benchmarks
-if(BUILD_BENCHMARK AND NOT ONLY_INSTALL)
+if(ROCPRIM_BUILD_BENCHMARKS)
   rocm_package_setup_client_component(benchmarks)
   add_subdirectory(benchmark)
 endif()
 
 # Examples
-if(BUILD_EXAMPLE AND NOT ONLY_INSTALL)
+if(ROCPRIM_BUILD_EXAMPLES)
   add_subdirectory(example)
+endif()
+
+# Docs
+if(ROCPRIM_BUILD_DOCS)
+  add_subdirectory(docs)
 endif()
 
 # Package
@@ -165,7 +129,7 @@ rocm_create_package(
 #
 # ADDITIONAL TARGETS FOR CODE COVERAGE
 #
-if(BUILD_CODE_COVERAGE)
+if(ROCPRIM_BUILD_CODE_COVERAGE)
   #
   # > make coverage_cleanup (clean coverage related files.)
   # > # run your tests

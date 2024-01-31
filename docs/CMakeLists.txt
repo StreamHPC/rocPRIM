@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-find_package(hip REQUIRED CONFIG)
+# rocPRIM documentation
 
-if(HIP_COMPILER STREQUAL "clang")
-    if(NOT (HIP_CXX_COMPILER MATCHES ".*hipcc" OR HIP_CXX_COMPILER MATCHES ".*clang\\+\\+"))
-        message(FATAL_ERROR "On ROCm platform 'hipcc' or HIP-aware Clang must be used as C++ compiler.")
-    endif()
-else()
-    message(FATAL_ERROR "HIP_COMPILER must be 'clang' (AMD ROCm platform)")
-endif()
+include(GNUInstallDirs)
+
+rocm_add_sphinx_doc(
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  BUILDER html
+  OUTPUT_DIR html
+  USE_DOXYGEN
+)
+
+install(
+  DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html"
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+)

@@ -61,7 +61,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "Global flag to cause add_library() to crea
 
 include(FetchContent)
 
-if(USE_HIP_CPU)
+if(ROCPRIM_USE_HIP_CPU)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     find_package(hip_cpu_rt QUIET)
   endif()
@@ -99,10 +99,12 @@ if(USE_HIP_CPU)
       endif()
     endif(STL_DEPENDS_ON_TBB)
   endif()
-endif(USE_HIP_CPU)
+else()
+  find_package(hip REQUIRED CONFIG)
+endif(ROCPRIM_USE_HIP_CPU)
 
 # Test dependencies
-if(BUILD_TEST)
+if(ROCPRIM_BUILD_TESTING)
   # NOTE1: Google Test has created a mess with legacy FindGTest.cmake and newer GTestConfig.cmake
   #
   # FindGTest.cmake defines:   GTest::GTest, GTest::Main, GTEST_FOUND
@@ -148,9 +150,9 @@ if(BUILD_TEST)
       add_library(GTest::Main  ALIAS GTest::gtest_main)
     endif()
   endif()
-endif(BUILD_TEST)
+endif(ROCPRIM_BUILD_TESTING)
 
-if(BUILD_BENCHMARK)
+if(ROCPRIM_BUILD_BENCHMARKS)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     find_package(benchmark CONFIG QUIET)
   endif()
@@ -172,31 +174,7 @@ if(BUILD_BENCHMARK)
   else()
     find_package(benchmark CONFIG REQUIRED)
   endif()
-endif(BUILD_BENCHMARK)
-
-if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-  find_package(ROCM 0.7.3 CONFIG QUIET PATHS "${ROCM_ROOT}")
-endif()
-if(NOT ROCM_FOUND)
-  message(STATUS "ROCm CMake not found. Fetching...")
-  # We don't really want to consume the build and test targets of ROCm CMake.
-  # CMake 3.18 allows omitting them, even though there's a CMakeLists.txt in source root.
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
-    set(SOURCE_SUBDIR_ARG SOURCE_SUBDIR "DISABLE ADDING TO BUILD")
-  else()
-    set(SOURCE_SUBDIR_ARG)
-  endif()
-  set(rocm_cmake_tag "master" CACHE STRING "rocm-cmake tag to download")
-  FetchContent_Declare(
-    rocm-cmake
-    URL  https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.tar.gz
-    ${SOURCE_SUBDIR_ARG}
-  )
-  FetchContent_MakeAvailable(rocm-cmake)
-  find_package(ROCM CONFIG REQUIRED NO_DEFAULT_PATH PATHS "${rocm-cmake_SOURCE_DIR}")
-else()
-  find_package(ROCM 0.7.3 CONFIG REQUIRED PATHS "${ROCM_ROOT}")
-endif()
+endif(ROCPRIM_BUILD_BENCHMARKS)
 
 # Restore user global state
 set(CMAKE_CXX_FLAGS ${USER_CXX_FLAGS})
@@ -215,3 +193,6 @@ include(ROCMInstallSymlinks)
 include(ROCMHeaderWrapper)
 include(ROCMCheckTargetIds)
 include(ROCMClients)
+if(ROCPRIM_BUILD_DOCS)
+  include(ROCMSphinxDoc)
+endif()
