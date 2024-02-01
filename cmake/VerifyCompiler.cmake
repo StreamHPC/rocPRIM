@@ -20,12 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-find_package(hip REQUIRED CONFIG)
-
-if(HIP_COMPILER STREQUAL "clang")
-    if(NOT (HIP_CXX_COMPILER MATCHES ".*hipcc" OR HIP_CXX_COMPILER MATCHES ".*clang\\+\\+"))
-        message(FATAL_ERROR "On ROCm platform 'hipcc' or HIP-aware Clang must be used as C++ compiler.")
+if((ROCPRIM_BUILD_TESTING OR
+    ROCPRIM_BUILD_EXAMPLES OR
+    ROCPRIM_BUILD_BENCHMARKS
+    )
+    AND NOT ROCPRIM_USE_HIP_CPU
+)
+    if(HIP_COMPILER STREQUAL "clang")
+        message(STATUS "HIP_CXX_COMPILER: ${HIP_CXX_COMPILER}")
+        if(NOT (HIP_CXX_COMPILER MATCHES ".*hipcc" OR HIP_CXX_COMPILER MATCHES ".*clang\\+\\+"))
+            message(FATAL_ERROR "On ROCm platform 'hipcc' or HIP-aware Clang must be used as C++ compiler.")
+        endif()
+    else()
+        message(FATAL_ERROR "HIP_COMPILER must be 'clang' (AMD ROCm platform)")
     endif()
-else()
-    message(FATAL_ERROR "HIP_COMPILER must be 'clang' (AMD ROCm platform)")
 endif()

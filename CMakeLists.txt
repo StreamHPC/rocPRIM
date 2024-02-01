@@ -32,6 +32,8 @@ include(ROCmOptions)
 include(${PROJECT_NAME}Options)
 include(${PROJECT_NAME}Dependencies)
 
+include(cmake/VerifyCompiler.cmake)
+
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
 
 # Set CXX flags
@@ -40,24 +42,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(BUILD_SHARED_LIBS OFF) # don't build client dependencies as shared
-if(NOT ROCPRIM_USE_HIP_CPU)
-  # Use target ID syntax if supported for GPU_TARGETS
-  if (NOT DEFINED AMDGPU_TARGETS)
-    set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
-  else()
-    set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
-  endif()
-  set_property(CACHE GPU_TARGETS PROPERTY STRINGS "all")
-
-  if(GPU_TARGETS STREQUAL "all")
-    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-      TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx940;gfx941;gfx942;gfx1030;gfx1100;gfx1101;gfx1102"
-    )
-    set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
-  endif()
-
-  include(cmake/VerifyCompiler.cmake)
-endif()
 
 if(ROCPRIM_BUILD_FILE_REORG_BACKWARD_COMPAT)
   rocm_wrap_header_dir(
