@@ -3,6 +3,12 @@
 Documentation for rocPRIM is available at
 [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+## Unreleased rocPRIM-3.x.x for ROCm 6.x.x
+
+### Fixes
+
+* Hotfix for incorrect results on the GFX10 (Navi 10/RDNA1, Navi 20/RDNA2) ISA and GFX11 ISA (Navi 30 GPUs) on device scan algorithms `rocprim::inclusive_scan(_by_key)` and `rocprim::exclusive_scan(_by_key)` with large input types.
+
 ## Unreleased rocPRIM-3.1.0 for ROCm 6.1.0
 
 ### Additions
