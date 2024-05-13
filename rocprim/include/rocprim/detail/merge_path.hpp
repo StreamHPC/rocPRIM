@@ -22,6 +22,7 @@
 #define ROCPRIM_DETAIL_MERGE_PATH_HPP_
 
 #include "../config.hpp"
+#include "../intrinsics/thread.hpp"
 
 #include <iterator>
 

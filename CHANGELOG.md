@@ -5,6 +5,10 @@ Documentation for rocPRIM is available at
 
 ## Unreleased rocPRIM-3.3.0 for ROCm 6.3.0
 
+### Additions
+
+* Added a new algorithm `rocprim::merge_inplace` that allows merging very large inputs. This algorithm prioritizes memory usage over performance.
+
 ### Fixes
 * Fixed an issue where while running rtest.py on windows and passing in an absolute path to --install_dir 
   causes FileNotFound error

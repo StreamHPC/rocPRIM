@@ -58,6 +58,7 @@
 #include "device/device_histogram.hpp"
 #include "device/device_memcpy.hpp"
 #include "device/device_merge.hpp"
+#include "device/device_merge_inplace.hpp"
 #include "device/device_merge_sort.hpp"
 #include "device/device_partition.hpp"
 #include "device/device_radix_sort.hpp"
