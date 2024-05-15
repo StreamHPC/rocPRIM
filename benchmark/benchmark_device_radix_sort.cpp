@@ -68,6 +68,10 @@ int main(int argc, char *argv[])
     add_sort_keys_benchmarks(benchmarks, stream, size);
     add_sort_pairs_benchmarks(benchmarks, stream, size);
 
+#ifdef MERGE_SORT_LIMIT
+    std::cout << "MERGE_SORT_LIMIT=" << MERGE_SORT_LIMIT << std::endl;
+#endif
+
     // Use manual timing
     for(auto& b : benchmarks)
     {

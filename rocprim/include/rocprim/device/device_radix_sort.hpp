@@ -722,7 +722,7 @@ hipError_t
     }
     // For sizeof(key_type) <= 2, onesweep is 2x/3x faster (also with values) when
     // input_size > 100K, so don't use radix_sort_merge_sort then.
-    else if(size <= merge_sort_limit && (sizeof(key_type) > 2 || size < 100000))
+    else if(size <= merge_sort_limit)
     {
         is_result_in_output = true;
         // note: Config::merge_sort_config may be default_config

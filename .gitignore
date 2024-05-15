@@ -59,3 +59,11 @@ CMakeUserPresets.json
 
 # Python
 __pycache__
+
+# Temporary include this for testing purpose
+!/build
+/build/*
+!build/_results
+build/_results/*
+!build/_results/compare.py
+!build/_bench.sh

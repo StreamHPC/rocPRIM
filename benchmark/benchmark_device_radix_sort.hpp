@@ -24,6 +24,7 @@
 #define ROCPRIM_BENCHMARK_DEVICE_RADIX_SORT_PARALLEL_HPP_
 
 #include "benchmark_utils.hpp"
+#include "rocprim/device/config_types.hpp"
 
 // Google Benchmark
 #include <benchmark/benchmark.h>
@@ -42,9 +43,18 @@
 
 namespace rp = rocprim;
 
+#ifdef MERGE_SORT_LIMIT
+using radix_sort_bench_config = rocprim::radix_sort_config<rocprim::default_config,
+                                                           rocprim::default_config,
+                                                           rocprim::default_config,
+                                                           MERGE_SORT_LIMIT>;
+#else
+using radix_sort_bench_config = rocprim::default_config;
+#endif
+
 template<typename Key    = int,
          typename Value  = rocprim::empty_type,
-         typename Config = rocprim::default_config>
+         typename Config = radix_sort_bench_config>
 struct device_radix_sort_benchmark : public config_autotune_interface
 {
     std::string name() const override
