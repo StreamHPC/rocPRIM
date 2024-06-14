@@ -299,7 +299,7 @@ struct merge_inplace_impl
         constexpr int32_t total_bits = std::numeric_limits<size_t>::digits;
         const int32_t     set_bits   = total_bits - zeroes;
 
-        return max(1, 1 + set_bits - Log2<block_merge_items_per_block>::VALUE);
+        return max(2, 2 + set_bits - Log2<block_merge_items_per_block>::VALUE);
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE void merge_inplace_agent(cooperative_groups::grid_group   grid,
