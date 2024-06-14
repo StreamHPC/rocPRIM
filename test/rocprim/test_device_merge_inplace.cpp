@@ -152,9 +152,9 @@ struct random_data_generator
                                              std::uniform_real_distribution<T>>;
 
         std::mt19937 engine{std::random_device{}()};
-        dist_type    dist{0, increment};
+        dist_type    dist{value_type{0}, value_type{increment}};
 
-        value_type value = 0;
+        value_type value = value_type{0};
 
         int operator*() const
         {
