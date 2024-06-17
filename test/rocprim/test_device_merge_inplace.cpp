@@ -128,7 +128,9 @@ struct large_sizes
 template<typename T, T start, T increment>
 struct linear_data_generator
 {
-    auto get_iterator()
+    static constexpr bool is_random = false;
+
+    auto get_iterator(seed_type /* seed */)
     {
         return rocprim::make_transform_iterator(rocprim::make_counting_iterator(0),
                                                 [](T v) { return v * increment + start; });
@@ -145,6 +147,8 @@ struct linear_data_generator
 template<typename T, T increment>
 struct random_data_generator
 {
+    static constexpr bool is_random = true;
+
     struct random_monotonic
     {
         using difference_type = std::ptrdiff_t;
@@ -161,10 +165,14 @@ struct random_data_generator
                                              std::uniform_int_distribution<dist_value_type>,
                                              std::uniform_real_distribution<T>>;
 
+        seed_type seed;
+
         std::mt19937 engine{std::random_device{}()};
         dist_type    dist{dist_value_type{0}, dist_value_type{increment}};
 
         dist_value_type value = dist_value_type{0};
+
+        random_monotonic(seed_type seed) : seed(seed) {}
 
         int operator*() const
         {
@@ -187,9 +195,9 @@ struct random_data_generator
         }
     };
 
-    auto get_iterator()
+    auto get_iterator(seed_type seed)
     {
-        return random_monotonic{};
+        return random_monotonic{seed};
     }
 
     auto get_max_size()
@@ -286,9 +294,8 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
 
     for(auto size : sizes)
     {
-        hipEvent_t start, stop;
-        HIP_CHECK(hipEventCreate(&start));
-        HIP_CHECK(hipEventCreate(&stop));
+        size_t num_seeds
+            = gen_a_type::is_random || gen_b_type::is_random ? (random_seeds_count + seed_size) : 1;
 
         size_t size_a = std::get<0>(size);
         size_t size_b = std::get<1>(size);
@@ -309,25 +316,10 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
 
         std::vector<value_type> h_data(size_a + size_b);
 
-        // generate left array
-        for(size_t i = 0; i < size_a; ++i)
-        {
-            h_data[i] = static_cast<value_type>(*(gen_a_it++));
-        }
-
-        // generate right array
-        for(size_t i = 0; i < size_b; ++i)
-        {
-            h_data[size_a + i] = static_cast<value_type>(*(gen_b_it++));
-        }
-
-        // move input to device
+        // allocate data on device
         value_type* d_data;
         size_t      total_bytes = sizeof(value_type) * (size_a + size_b);
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_data, total_bytes));
-
-        HIP_CHECK(
-            hipMemcpyWithStream(d_data, h_data.data(), total_bytes, hipMemcpyHostToDevice, stream));
 
         // allocate temporary storage
         void*  d_temp_storage = nullptr;
@@ -341,36 +333,67 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                                          stream));
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, storage_size));
 
-        // run merge in place
-        HIP_CHECK(rocprim::merge_inplace(d_temp_storage,
-                                         storage_size,
-                                         d_data,
-                                         size_a,
-                                         size_b,
-                                         compare_op,
-                                         stream));
+        for(size_t seed_index = 0; seed_index < num_seeds; seed_index++)
+        {
+            unsigned int seed_value
+                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        // compare with reference
-        std::vector<value_type> h_output(size_a + size_b);
-        HIP_CHECK(hipMemcpyWithStream(h_output.data(),
-                                      d_data,
-                                      total_bytes,
-                                      hipMemcpyDeviceToHost,
-                                      stream));
+            hipEvent_t start, stop;
+            HIP_CHECK(hipEventCreate(&start));
+            HIP_CHECK(hipEventCreate(&stop));
 
-        // compute reference
-        std::vector<value_type> h_reference(size_a + size_b);
-        std::merge(h_data.begin(),
-                   h_data.begin() + size_a,
-                   h_data.begin() + size_a,
-                   h_data.end(),
-                   h_reference.begin());
+            auto gen_a_it = gen_a.get_iterator(seed_value);
+            auto gen_b_it = gen_b.get_iterator(seed_value + 1);
 
-        ASSERT_NO_FATAL_FAILURE((test_utils::assert_eq(h_output, h_reference)));
+            // generate left array
+            for(size_t i = 0; i < size_a; ++i)
+            {
+                h_data[i] = static_cast<value_type>(*(gen_a_it++));
+            }
 
-        HIP_CHECK(hipEventDestroy(start));
-        HIP_CHECK(hipEventDestroy(stop));
+            // generate right array
+            for(size_t i = 0; i < size_b; ++i)
+            {
+                h_data[size_a + i] = static_cast<value_type>(*(gen_b_it++));
+            }
 
+            // move input to device
+            HIP_CHECK(hipMemcpyWithStream(d_data,
+                                          h_data.data(),
+                                          total_bytes,
+                                          hipMemcpyHostToDevice,
+                                          stream));
+            // run merge in place
+            HIP_CHECK(rocprim::merge_inplace(d_temp_storage,
+                                             storage_size,
+                                             d_data,
+                                             size_a,
+                                             size_b,
+                                             compare_op,
+                                             stream));
+
+            // compare with reference
+            std::vector<value_type> h_output(size_a + size_b);
+            HIP_CHECK(hipMemcpyWithStream(h_output.data(),
+                                          d_data,
+                                          total_bytes,
+                                          hipMemcpyDeviceToHost,
+                                          stream));
+
+            // compute reference
+            std::vector<value_type> h_reference(size_a + size_b);
+            std::merge(h_data.begin(),
+                       h_data.begin() + size_a,
+                       h_data.begin() + size_a,
+                       h_data.end(),
+                       h_reference.begin());
+
+            ASSERT_NO_FATAL_FAILURE((test_utils::assert_eq(h_output, h_reference)));
+
+            HIP_CHECK(hipEventDestroy(start));
+            HIP_CHECK(hipEventDestroy(stop));
+        }
         HIP_CHECK(hipFree(d_data));
         HIP_CHECK(hipFree(d_temp_storage));
     }
