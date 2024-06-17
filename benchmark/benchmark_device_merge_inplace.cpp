@@ -33,18 +33,24 @@ struct random_monotonic_iterator
     using difference_type = std::ptrdiff_t;
     using value_type      = T;
 
+    // not all integral types are valid for int distribution
+    using dist_value_type
+        = std::conditional_t<std::is_integral<T>::value && !is_valid_for_int_distribution<T>::value,
+                             int,
+                             T>;
+
     using dist_type = std::conditional_t<std::is_integral<T>::value,
-                                         std::uniform_int_distribution<T>,
+                                         std::uniform_int_distribution<dist_value_type>,
                                          std::uniform_real_distribution<T>>;
 
     std::mt19937 engine{seed};
-    dist_type    dist{value_type{0}, value_type{increment}};
+    dist_type    dist{dist_value_type{0}, dist_value_type{increment}};
 
-    value_type value = value_type{0};
+    dist_value_type value = dist_value_type{0};
 
     int operator*() const
     {
-        return value;
+        return limit_cast<value_type>(value);
     }
 
     random_monotonic_iterator& operator++()

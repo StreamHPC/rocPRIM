@@ -21,7 +21,9 @@
 // SOFTWARE.
 
 #include "../common_test_header.hpp"
+#include "test_seed.hpp"
 #include "test_utils_assertions.hpp"
+#include "test_utils_data_generation.hpp"
 
 #include <rocprim/device/device_merge_inplace.hpp>
 #include <rocprim/iterator/counting_iterator.hpp>
@@ -147,18 +149,26 @@ struct random_data_generator
     {
         using difference_type = std::ptrdiff_t;
         using value_type      = T;
-        using dist_type       = std::conditional_t<std::is_integral<T>::value,
-                                             std::uniform_int_distribution<T>,
+
+        // not all integral types are valid for int distribution
+        using dist_value_type
+            = std::conditional_t<std::is_integral<T>::value
+                                     && !test_utils::is_valid_for_int_distribution<T>::value,
+                                 int,
+                                 T>;
+
+        using dist_type = std::conditional_t<std::is_integral<T>::value,
+                                             std::uniform_int_distribution<dist_value_type>,
                                              std::uniform_real_distribution<T>>;
 
         std::mt19937 engine{std::random_device{}()};
-        dist_type    dist{value_type{0}, value_type{increment}};
+        dist_type    dist{dist_value_type{0}, dist_value_type{increment}};
 
-        value_type value = value_type{0};
+        dist_value_type value = dist_value_type{0};
 
         int operator*() const
         {
-            return value;
+            return test_utils::saturate_cast<value_type>(value);
         }
 
         random_monotonic& operator++()
