@@ -33,6 +33,7 @@
 #include "../block/block_store.hpp"
 #include "../device/config_types.hpp"
 #include "../device/device_merge_inplace_config.hpp"
+#include "../intrinsics/bit.hpp"
 #include "../intrinsics/thread.hpp"
 
 #include <hip/hip_cooperative_groups.h>
@@ -294,10 +295,8 @@ struct merge_inplace_impl
 
     ROCPRIM_HOST_DEVICE static auto get_num_global_divisions(size_t left_size, size_t right_size)
     {
-        const offset_t    max_size   = max(left_size, right_size);
-        const offset_t    zeroes     = __builtin_clzl(max_size);
-        constexpr int32_t total_bits = std::numeric_limits<size_t>::digits;
-        const int32_t     set_bits   = total_bits - zeroes;
+        const offset_t max_size = max(left_size, right_size);
+        const int32_t  set_bits = std::numeric_limits<size_t>::digits - clz(max_size);
 
         return max(2, 2 + set_bits - Log2<block_merge_items_per_block>::VALUE);
     }
