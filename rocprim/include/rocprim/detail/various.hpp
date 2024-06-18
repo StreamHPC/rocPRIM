@@ -413,6 +413,48 @@ ROCPRIM_HOST_DEVICE auto bit_cast(const Source& source)
 #endif
 }
 
+/// \brief Gets the maximum grid size to have all blocks active.
+template<typename Kernel>
+ROCPRIM_HOST hipError_t
+    grid_dim_for_max_active_blocks(int& grid_dim, int block_size, Kernel kernel, hipStream_t stream)
+{
+    hipError_t result;
+
+    hipDevice_t default_device;
+    result = hipStreamGetDevice(0, &default_device);
+    if(result != hipSuccess)
+        return result;
+
+    hipDevice_t stream_device;
+    result = hipStreamGetDevice(stream, &stream_device);
+    if(result != hipSuccess)
+        return result;
+
+    // after setting device, we can't just exit on non-success
+    result = hipSetDevice(stream_device);
+
+    int occupancy;
+    if(result == hipSuccess)
+        result = hipOccupancyMaxActiveBlocksPerMultiprocessor(&occupancy, kernel, block_size, 0);
+
+    int num_multi_processors;
+    if(result == hipSuccess)
+        result = hipDeviceGetAttribute(&num_multi_processors,
+                                       hipDeviceAttribute_t::hipDeviceAttributeMultiprocessorCount,
+                                       stream_device);
+
+    if(result == hipSuccess)
+        grid_dim = occupancy * num_multi_processors;
+
+    // always attempt to restore to default device
+    hipError_t set_result = hipSetDevice(default_device);
+
+    if(result != hipSuccess)
+        return result;
+
+    return set_result;
+}
+
 } // end namespace detail
 END_ROCPRIM_NAMESPACE
 

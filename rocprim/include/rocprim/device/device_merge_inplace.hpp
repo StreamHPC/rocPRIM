@@ -732,44 +732,16 @@ inline hipError_t merge_inplace(void*             temporary_storage,
     if(left_size == 0 || right_size == 0)
         return hipSuccess;
 
-    // get the current device from stream and set as default device
-    hipDevice_t default_device;
-    result = hipStreamGetDevice(0, &default_device);
+    int max_grid_dim;
+    result = detail::grid_dim_for_max_active_blocks(max_grid_dim,
+                                                    global_block_size,
+                                                    impl::merge_inplace_kernel,
+                                                    stream);
     if(result != hipSuccess)
         return result;
 
-    hipDevice_t device;
-    result = hipStreamGetDevice(stream, &device);
-    if(result != hipSuccess)
-        return result;
-
-    result = hipSetDevice(device);
-    if(result != hipSuccess)
-        return result;
-
-    int occupancy;
-    result = hipOccupancyMaxActiveBlocksPerMultiprocessor(&occupancy,
-                                                          impl::merge_inplace_kernel,
-                                                          global_block_size,
-                                                          0);
-    if(result != hipSuccess)
-        return result;
-
-    int num_multi_processors;
-    result = hipDeviceGetAttribute(&num_multi_processors,
-                                   hipDeviceAttribute_t::hipDeviceAttributeMultiprocessorCount,
-                                   device);
-
-    if(result != hipSuccess)
-        return result;
-
-    const int global_grid_size = min(static_cast<size_t>(num_multi_processors * occupancy),
+    const int global_grid_size = min(static_cast<size_t>(max_grid_dim),
                                      rocprim::detail::ceiling_div(total_size, global_block_size));
-
-    // restore default device
-    result = hipSetDevice(default_device);
-    if(result != hipSuccess)
-        return result;
 
     void* kernel_args[] = {
         &work_storage,
@@ -786,10 +758,8 @@ inline hipError_t merge_inplace(void*             temporary_storage,
     if(debug_synchronous)
     {
         std::cout << "merge_inplace_kernel\n"
-                  << "  grid_size            : " << global_grid_size << "\n"
-                  << "  block_size           : " << global_block_size << "\n"
-                  << "  num_multi_processors : " << num_multi_processors << "\n"
-                  << "  occupancy            : " << occupancy << std::endl;
+                  << "  grid_size  : " << global_grid_size << "\n"
+                  << "  block_size : " << global_block_size << std::endl;
         t_start = std::chrono::high_resolution_clock::now();
     }
 
