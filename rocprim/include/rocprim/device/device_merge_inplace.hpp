@@ -619,27 +619,38 @@ struct merge_inplace_impl
 
 /// \brief Parallel merge inplace primitive for device level.
 ///
-/// The `merge_inplace` function performs a device-wide merge in place. It merges two ordered sets of input values based on a comparison function using significantly less temporary storage compared to `merge`.
+/// The `merge_inplace` function performs a device-wide merge in place. It merges two ordered sets
+/// of input values based on a comparison function using significantly less temporary storage
+/// compared to `merge`.
 ///
-/// \warning This functions prioritizes temporary storage over speed. In most cases using `merge` and a device copy is significantly faster.
+/// \warning This functions prioritizes temporary storage over speed. In most cases using `merge`
+/// and a device copy is significantly faster.
 ///
 /// \par Overview
 /// * The function can write intermediate values to the data array while the algorithm is running.
-/// * Returns the required size of `temporary_storage` in `storage_size` if `temporary_storage` is a null pointer.
+/// * Returns the required size of `temporary_storage` in `storage_size` if `temporary_storage` is a
+/// null pointer.
 /// * Accepts custom a `compare_function`.
 ///
 /// \tparam Config Configuration of the primitive, must be `default_config` or `merge_inplace_config`.
-/// \tparam Iterator Random access iterator type for the input and output range. Must meet the requirements of `std::random_access_iterator`.
+/// \tparam Iterator Random access iterator type for the input and output range. Must meet the
+/// requirements of `std::random_access_iterator`.
 /// \tparam BinaryFunction Binary function type that is used for the comparison.
 ///
-/// \param [in] temporary_storage Pointer to a device-accessible temporary storage. When a null pointer is passedm the required allocation size in bytes is written to `storage_size` and the function returns `hipSuccess` without performing the merge operation.
+/// \param [in] temporary_storage Pointer to a device-accessible temporary storage. When a null
+/// pointer is passed the required allocation size in bytes is written to `storage_size` and the
+/// function returns `hipSuccess` without performing the merge operation.
 /// \param [in,out] storage_size Reference to size in bytes of `temporary_storage`.
 /// \param [in,out] data Iterator to the first value to merge.
 /// \param [in] left_size Number of elements in the first input range.
 /// \param [in] right_size Number of elements in the second input range.
-/// \param [in] compare_function Binary operation function that will be used for comparison. The signature of the function should be equivalent to the following: `bool f(const T &a, const T &b);`. The signature does not need to have `const &`, but the function object must not modify the objects passed to it. The default value is `BinaryFunction()`.
+/// \param [in] compare_function Binary operation function that will be used for comparison. The
+/// signature of the function should be equivalent to the following: `bool f(const T &a, const T &b);`.
+/// The signature does not need to have `const &`, but the function object must not modify
+/// the objects passed to it. The default value is `BinaryFunction()`.
 /// \param [in] stream The HIP stream object. Default is `0` (`hipDefaultStream`).
-/// \param [in] debug_synchronous If `true`, forces a device synchronization after every kernel launch in order to check for errors. Default value is `false`.
+/// \param [in] debug_synchronous If `true`, forces a device synchronization after every kernel
+/// launch in order to check for errors. Default value is `false`.
 ///
 /// \returns \p hipSuccess `0` after succesful sort; otherwise a HIP runtime error of type
 /// `hipError_t`.
