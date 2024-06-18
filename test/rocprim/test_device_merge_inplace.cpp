@@ -108,6 +108,7 @@ struct small_sizes
             std::make_tuple(123, 33554432),
             std::make_tuple(33554432, 123),
             std::make_tuple(33554432, 33554432),
+            std::make_tuple(34567, (1 << 17) - 1220),
         };
     }
 };
@@ -117,10 +118,10 @@ struct large_sizes
     std::vector<std::tuple<size_t, size_t>> operator()()
     {
         return {
-            std::make_tuple(34567, (1 << 17) - 1220),
             std::make_tuple((1 << 22) - 1652, (1 << 22) - 5839),
             std::make_tuple((1 << 27) - 2459, (1 << 23) - 2134),
             std::make_tuple((1 << 27) - 9532, (1 << 27) - 8421),
+            std::make_tuple((1ULL << 29) + 3214, (1ULL << 29) + 6435),
         };
     }
 };
@@ -155,15 +156,15 @@ struct random_data_generator
         using value_type      = T;
 
         // not all integral types are valid for int distribution
-        using dist_value_type
-            = std::conditional_t<std::is_integral<T>::value
-                                     && !test_utils::is_valid_for_int_distribution<T>::value,
-                                 int,
-                                 T>;
+        using dist_value_type = std::conditional_t<
+            std::is_integral<T>::value
+                && !test_utils::is_valid_for_int_distribution<value_type>::value,
+            int,
+            value_type>;
 
         using dist_type = std::conditional_t<std::is_integral<T>::value,
                                              std::uniform_int_distribution<dist_value_type>,
-                                             std::uniform_real_distribution<T>>;
+                                             std::uniform_real_distribution<dist_value_type>>;
 
         seed_type seed;
 
@@ -179,10 +180,16 @@ struct random_data_generator
             return test_utils::saturate_cast<value_type>(value);
         }
 
+        void next()
+        {
+            if(value > std::numeric_limits<value_type>::max() - increment)
+                value += dist(engine);
+        }
+
         random_monotonic& operator++()
         {
             // prefix
-            value += dist(engine);
+            next();
             return *this;
         }
 
@@ -190,7 +197,7 @@ struct random_data_generator
         {
             // postfix
             random_monotonic retval{*this};
-            value += dist(engine);
+            next();
             return retval;
         }
     };
@@ -202,7 +209,7 @@ struct random_data_generator
 
     auto get_max_size()
     {
-        return static_cast<size_t>(std::numeric_limits<T>::max() / increment);
+        return static_cast<size_t>(std::numeric_limits<size_t>::max());
     }
 };
 
@@ -259,8 +266,8 @@ typedef ::testing::Types<
                              random_data_generator<int32_t, 2>>,
     // large input sizes
     DeviceMergeInplaceParams<int32_t,
-                             random_data_generator<int32_t, 2>,
-                             random_data_generator<int32_t, 2>,
+                             random_data_generator<int32_t, 1>,
+                             random_data_generator<int32_t, 1>,
                              large_sizes>,
     DeviceMergeInplaceParams<int64_t,
                              random_data_generator<int64_t, 2>,
@@ -311,19 +318,14 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
         if(size_a > gen_a.get_max_size() || size_b > gen_b.get_max_size())
             continue;
 
-        auto gen_a_it = gen_a.get_iterator();
-        auto gen_b_it = gen_b.get_iterator();
-
         std::vector<value_type> h_data(size_a + size_b);
 
-        // allocate data on device
-        value_type* d_data;
-        size_t      total_bytes = sizeof(value_type) * (size_a + size_b);
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_data, total_bytes));
+        size_t total_bytes  = sizeof(value_type) * (size_a + size_b);
+        size_t storage_size = 0;
 
-        // allocate temporary storage
-        void*  d_temp_storage = nullptr;
-        size_t storage_size   = 0;
+        value_type* d_data         = nullptr;
+        void*       d_temp_storage = nullptr;
+
         HIP_CHECK(rocprim::merge_inplace(d_temp_storage,
                                          storage_size,
                                          d_data,
@@ -331,17 +333,25 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                                          size_b,
                                          compare_op,
                                          stream));
+
+        // ensure tests always fit on device
+        HIP_CHECK(hipSetDevice(hipGetStreamDeviceId(stream)));
+        size_t free_vram;
+        size_t available_vram;
+        HIP_CHECK(hipMemGetInfo(&free_vram, &available_vram));
+        if(available_vram < total_bytes + storage_size)
+            continue;
+
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_data, total_bytes));
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, storage_size));
+
+        HIP_CHECK(hipDeviceSynchronize());
 
         for(size_t seed_index = 0; seed_index < num_seeds; seed_index++)
         {
             unsigned int seed_value
                 = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
             SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-
-            hipEvent_t start, stop;
-            HIP_CHECK(hipEventCreate(&start));
-            HIP_CHECK(hipEventCreate(&stop));
 
             auto gen_a_it = gen_a.get_iterator(seed_value);
             auto gen_b_it = gen_b.get_iterator(seed_value + 1);
@@ -390,9 +400,6 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                        h_reference.begin());
 
             ASSERT_NO_FATAL_FAILURE((test_utils::assert_eq(h_output, h_reference)));
-
-            HIP_CHECK(hipEventDestroy(start));
-            HIP_CHECK(hipEventDestroy(stop));
         }
         HIP_CHECK(hipFree(d_data));
         HIP_CHECK(hipFree(d_temp_storage));
