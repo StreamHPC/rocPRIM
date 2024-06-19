@@ -28,8 +28,6 @@
 #include "../detail/temp_storage.hpp"
 #include "../detail/various.hpp"
 
-#include "../block/block_load.hpp"
-#include "../block/block_sort.hpp"
 #include "../block/block_store.hpp"
 #include "../device/config_types.hpp"
 #include "../device/device_merge_inplace_config.hpp"
@@ -286,10 +284,6 @@ struct merge_inplace_impl
         return pivot_t{work.begin + mid_a, work.split + mid_b};
     }
 
-    using block_merge_block_load
-        = block_load<value_t, block_merge_block_size, block_merge_items_per_thread>;
-    using block_merge_block_sort
-        = block_sort<value_t, block_merge_block_size, block_merge_items_per_thread>;
     using block_merge_block_store
         = block_store<value_t, block_merge_block_size, block_merge_items_per_thread>;
 
