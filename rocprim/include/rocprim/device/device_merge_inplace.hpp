@@ -54,13 +54,12 @@ namespace detail
 {
 
 /// \brief implementation detail of merge inplace
-template<int GlobalMergeBlockSize,
-         int BlockMergeBlockSize,
-         int BlockMergeIPT,
+template<size_t GlobalMergeBlockSize,
+         size_t BlockMergeBlockSize,
+         size_t BlockMergeIPT,
          typename IteratorT,
-         typename OffsetT = size_t,
-         typename BinaryFunction
-         = rocprim::less<typename std::iterator_traits<IteratorT>::value_type>>
+         typename OffsetT,
+         typename BinaryFunction>
 struct merge_inplace_impl
 {
     using iterator_t = IteratorT;
