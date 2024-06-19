@@ -579,7 +579,7 @@ struct merge_inplace_impl
 /// * The function can write intermediate values to the data array while the algorithm is running.
 /// * Returns the required size of `temporary_storage` in `storage_size` if `temporary_storage` is a
 /// null pointer.
-/// * Accepts custom a `compare_function`.
+/// * Accepts a custom `compare_function`.
 ///
 /// \tparam Config Configuration of the primitive, must be `default_config` or `merge_inplace_config`.
 /// \tparam Iterator Random access iterator type for the input and output range. Must meet the
