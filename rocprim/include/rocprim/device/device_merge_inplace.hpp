@@ -33,6 +33,7 @@
 #include "../device/device_merge_inplace_config.hpp"
 #include "../intrinsics/bit.hpp"
 #include "../intrinsics/thread.hpp"
+#include "../thread/thread_search.hpp"
 
 #include <hip/hip_cooperative_groups.h>
 #include <hip/hip_runtime.h>
@@ -76,8 +77,25 @@ struct merge_inplace_impl
 
     struct pivot_t
     {
-        offset_t l_pivot;
-        offset_t r_pivot;
+        // rocprim::merge_path_search uses '.x' and '.y', but that isn't very descriptive.
+        // so we union it with more descriptive names
+        union
+        {
+            offset_t left;
+            offset_t x;
+        };
+        union
+        {
+            offset_t right;
+            offset_t y;
+        };
+
+        ROCPRIM_DEVICE pivot_t& offset(offset_t a, offset_t b)
+        {
+            left += a;
+            right += b;
+            return *this;
+        }
     };
 
     /// \brief describes two ranges [begin, split) and [split, end)
@@ -214,76 +232,6 @@ struct merge_inplace_impl
         return work;
     }
 
-    /// \brief double binary search in two arrays to find a pivot
-    ROCPRIM_DEVICE ROCPRIM_INLINE static pivot_t
-        find_median_pivot(IteratorT data, work_t work, BinaryFunction compare_function)
-    {
-        const IteratorT a = data + work.begin;
-        const IteratorT b = data + work.split;
-
-        const offset_t a_size = work.left_size();
-        const offset_t b_size = work.right_size();
-
-        // if either size is 0, it is already sorted
-        if(a_size == 0 || b_size == 0)
-        {
-            return pivot_t{work.begin + a_size, work.end};
-        }
-
-        offset_t min_a = 0;
-        offset_t min_b = 0;
-        offset_t max_a = a_size;
-        offset_t max_b = b_size;
-
-        // while we have a range to search in
-        while(min_a < max_a && min_b < max_b)
-        {
-            offset_t mid_a = (max_a - min_a) / 2 + min_a;
-            offset_t mid_b = (max_b - min_b) / 2 + min_b;
-
-            // generalize comparator
-            bool a_cmp_b = compare_function(a[mid_a], b[mid_b]);
-            bool b_cmp_a = compare_function(b[mid_b], a[mid_a]);
-            bool a_eq_b  = a_cmp_b == b_cmp_a;
-            bool a_lt_b  = a_cmp_b && !a_eq_b;
-
-            // we have found our pivots!
-            if(a_eq_b)
-                break;
-
-            // split our search domain into 4 quadrants and pick where our pivot is
-            if(a_lt_b)
-            {
-                if(mid_a + mid_b < a_size + b_size - mid_a - mid_b)
-                {
-                    min_a = mid_a + 1;
-                }
-                else
-                {
-                    max_b = mid_b;
-                }
-            }
-            else
-            {
-                if(mid_a + mid_b < a_size + b_size - mid_a - mid_b)
-                {
-                    min_b = mid_b + 1;
-                }
-                else
-                {
-                    max_a = mid_a;
-                }
-            }
-        }
-
-        // if a_eq_b early exit, pick the middle, otherwise just
-        // use min_a and min_b since min_a == max_a, min_b == max_b
-        offset_t mid_a = (max_a - min_a) / 2 + min_a;
-        offset_t mid_b = (max_b - min_b) / 2 + min_b;
-
-        return pivot_t{work.begin + mid_a, work.split + mid_b};
-    }
-
     using block_merge_block_store
         = block_store<value_t, block_merge_block_size, block_merge_items_per_thread>;
 
@@ -346,7 +294,16 @@ struct merge_inplace_impl
                 if(!work.is_valid() || work.total_size() <= block_merge_items_per_block)
                     continue;
 
-                pivot_heap[work_id] = find_median_pivot(data, work, compare_function);
+                pivot_t pivot;
+                rocprim::merge_path_search(work.total_size() / 2,
+                                           data + work.begin,
+                                           data + work.split,
+                                           work.left_size(),
+                                           work.right_size(),
+                                           pivot,
+                                           compare_function);
+
+                pivot_heap[work_id] = pivot.offset(work.begin, work.split);
             }
 
             // elected pivot must be observable by all threads
@@ -383,16 +340,16 @@ struct merge_inplace_impl
                 const offset_t work_offset = (worker_global_id - work.begin) / 2;
                 const pivot_t  pivot       = pivot_heap[work_id];
 
-                if(work_offset >= (pivot.r_pivot - pivot.l_pivot) / 2)
+                if(work_offset >= (pivot.right - pivot.left) / 2)
                     continue;
 
-                const offset_t mid_l = (pivot.l_pivot + work.split) / 2 - pivot.l_pivot;
+                const offset_t mid_l = (pivot.left + work.split) / 2 - pivot.left;
 
                 // reverse the left and right array separately
                 const bool is_left = work_offset < mid_l;
 
-                const offset_t from           = is_left ? pivot.l_pivot : work.split;
-                const offset_t to             = is_left ? work.split : pivot.r_pivot;
+                const offset_t from           = is_left ? pivot.left : work.split;
+                const offset_t to             = is_left ? work.split : pivot.right;
                 const offset_t reverse_offset = is_left ? work_offset : work_offset - mid_l;
 
                 const offset_t a = from + reverse_offset;
@@ -422,11 +379,11 @@ struct merge_inplace_impl
                 const offset_t work_offset = (worker_global_id - work.begin) / 2;
                 const pivot_t  pivot       = pivot_heap[work_id];
 
-                if(work_offset >= (pivot.r_pivot - pivot.l_pivot) / 2)
+                if(work_offset >= (pivot.right - pivot.left) / 2)
                     continue;
 
-                const auto a = pivot.l_pivot + work_offset;
-                const auto b = pivot.r_pivot - work_offset - 1;
+                const auto a = pivot.left + work_offset;
+                const auto b = pivot.right - work_offset - 1;
 
                 if(a != b)
                     rocprim::swap(data[a], data[b]);
@@ -453,13 +410,13 @@ struct merge_inplace_impl
                 if(work.is_valid() && work.total_size() > block_merge_items_per_block)
                 {
                     const pivot_t pivot = pivot_heap[work_id];
-                    if(!(pivot.l_pivot == work.split && pivot.r_pivot == work.end))
+                    if(!(pivot.left == work.split && pivot.right == work.end))
                     {
                         // the pivots describe the child work, but we have to adjust
                         // the work's split since we rotated around that value
-                        new_split   = pivot.l_pivot + pivot.r_pivot - work.split;
-                        left_split  = pivot.l_pivot;
-                        right_split = pivot.r_pivot;
+                        new_split   = pivot.left + pivot.right - work.split;
+                        left_split  = pivot.left;
+                        right_split = pivot.right;
                     }
 
                     const offset_t left_size  = left_split == no_split ? 0 : new_split - work.begin;
@@ -563,16 +520,17 @@ struct merge_inplace_impl
             if(has_work)
             {
                 // divide work over threads via merge path
-                const offset_t diagonal  = block_merge_items_per_thread * block_thread_id;
-                offset_t       partition = merge_path(data + work.begin,
-                                                data + work.split,
-                                                work.left_size(),
-                                                work.right_size(),
-                                                diagonal,
-                                                compare_function);
+                const offset_t diagonal = block_merge_items_per_thread * block_thread_id;
 
-                offset_t offset_a = work.begin + partition;
-                offset_t offset_b = work.split + diagonal - partition;
+                pivot_t pivot;
+                rocprim::merge_path_search(diagonal,
+                                           data + work.begin,
+                                           data + work.split,
+                                           work.left_size(),
+                                           work.right_size(),
+                                           pivot,
+                                           compare_function);
+                pivot.offset(work.begin, work.split);
 
                 // serial merge
                 ROCPRIM_UNROLL
@@ -581,19 +539,19 @@ struct merge_inplace_impl
                     if(block_merge_items_per_thread * block_thread_id + i >= work.total_size())
                         continue;
 
-                    bool take_left = (offset_b >= work.end)
-                                     || ((offset_a < work.split)
-                                         && !compare_function(data[offset_b], data[offset_a]));
+                    bool take_left = (pivot.right >= work.end)
+                                     || ((pivot.left < work.split)
+                                         && !compare_function(data[pivot.right], data[pivot.left]));
 
                     if(take_left)
                     {
-                        thread_data[i] = data[offset_a];
-                        ++offset_a;
+                        thread_data[i] = data[pivot.left];
+                        ++pivot.left;
                     }
                     else
                     {
-                        thread_data[i] = data[offset_b];
-                        ++offset_b;
+                        thread_data[i] = data[pivot.right];
+                        ++pivot.right;
                     }
                 }
             }
