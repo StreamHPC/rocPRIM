@@ -24,7 +24,6 @@
 #include "../config.hpp"
 #include "../functional.hpp"
 
-#include "../detail/merge_path.hpp"
 #include "../detail/temp_storage.hpp"
 #include "../detail/various.hpp"
 
@@ -234,7 +233,7 @@ struct merge_inplace_impl
     using block_merge_block_store
         = block_store<value_t, block_merge_block_size, block_merge_items_per_thread>;
 
-    ROCPRIM_HOST_DEVICE static auto get_num_global_divisions(size_t left_size, size_t right_size)
+    static auto get_num_global_divisions(size_t left_size, size_t right_size)
     {
         const offset_t max_size = max(left_size, right_size);
         const int32_t  set_bits = std::numeric_limits<size_t>::digits - clz(max_size);
@@ -266,12 +265,12 @@ struct merge_inplace_impl
 
         const work_t initial_work = work_t{0, left_work_size, total_work_size};
 
-        // put first item on the heap
-        if(grid_thread_id == 0)
+        // put first item on the heap, do it for each block since grid sync is more expensive
+        if(block_thread_id == 0)
             work_tree[1] = initial_work.split;
 
         // dependent on first item on work heap
-        grid.sync();
+        block.sync();
 
         offset_t thread_work_granularity = total_work_size;
 
