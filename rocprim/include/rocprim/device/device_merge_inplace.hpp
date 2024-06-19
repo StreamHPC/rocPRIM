@@ -553,16 +553,13 @@ struct merge_inplace_impl
                         ++pivot.right;
                     }
                 }
-            }
 
-            block.sync();
+                // there are no partial blocks working on this, so a
+                // block sync in this conditional can be done safely
+                block.sync();
 
-            if(has_work)
-            {
                 block_merge_block_store{}.store(data + work.begin, thread_data, work.total_size());
             }
-
-            block.sync();
         }
     }
 };
