@@ -750,10 +750,6 @@ inline hipError_t merge_inplace(void*             temporary_storage,
     if(result != hipSuccess)
         return result;
 
-    result = hipDeviceSynchronize();
-    if(result != hipSuccess)
-        return result;
-
     const size_t block_merge_grid_size = rocprim::detail::ceiling_div(total_size, block_block_size);
 
     if(debug_synchronous)
