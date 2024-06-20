@@ -118,10 +118,10 @@ struct large_sizes
     std::vector<std::tuple<size_t, size_t>> operator()()
     {
         return {
-            std::make_tuple((1 << 22) - 1652, (1 << 22) - 5839),
-            std::make_tuple((1 << 27) - 2459, (1 << 23) - 2134),
+            std::make_tuple((1 << 7) - 1652, (1 << 27) - 5839),
+            std::make_tuple((1 << 27) - 2459, (1 << 7) - 2134),
             std::make_tuple((1 << 27) - 9532, (1 << 27) - 8421),
-            std::make_tuple((1ULL << 29) + 3214, (1ULL << 29) + 6435),
+            std::make_tuple((1ULL << 32) + 5327, (1ULL << 32) + 9682),
         };
     }
 };
@@ -145,7 +145,7 @@ struct linear_data_generator
     }
 };
 
-template<typename T, T increment>
+template<typename T, T increment, int max_duplicates>
 struct random_data_generator
 {
     static constexpr bool is_random = true;
@@ -162,14 +162,17 @@ struct random_data_generator
             int,
             value_type>;
 
-        using dist_type = std::conditional_t<std::is_integral<T>::value,
-                                             std::uniform_int_distribution<dist_value_type>,
-                                             std::uniform_real_distribution<dist_value_type>>;
+        using val_dist_type = std::conditional_t<std::is_integral<T>::value,
+                                                 std::uniform_int_distribution<dist_value_type>,
+                                                 std::uniform_real_distribution<dist_value_type>>;
+        using dup_dist_type = std::uniform_int_distribution<int>;
 
         seed_type seed;
+        int       duplicates;
 
-        std::mt19937 engine{std::random_device{}()};
-        dist_type    dist{dist_value_type{0}, dist_value_type{increment}};
+        std::mt19937  engine{std::random_device{}()};
+        val_dist_type val_dist{dist_value_type{1}, dist_value_type{increment}};
+        dup_dist_type dup_dist{dist_value_type{1}, dist_value_type{max_duplicates}};
 
         dist_value_type value = dist_value_type{0};
 
@@ -182,8 +185,16 @@ struct random_data_generator
 
         void next()
         {
-            if(value > std::numeric_limits<value_type>::max() - increment)
-                value += dist(engine);
+            // consume a duplicate
+            duplicates--;
+
+            // if we have duplicates left over, do nothing
+            if(duplicates > 0 || value >= std::numeric_limits<value_type>::max() - increment)
+                return;
+
+            // get new duplicates
+            duplicates = max_duplicates > 1 ? dup_dist(engine) : 1;
+            value += val_dist(engine);
         }
 
         random_monotonic& operator++()
@@ -253,25 +264,25 @@ typedef ::testing::Types<
                              linear_data_generator<int32_t, 128, 0>>,
     // random data
     DeviceMergeInplaceParams<int64_t,
-                             random_data_generator<int64_t, 2>,
-                             random_data_generator<int64_t, 2>>,
+                             random_data_generator<int64_t, 2, 2>,
+                             random_data_generator<int64_t, 2, 2>>,
     DeviceMergeInplaceParams<int32_t,
-                             random_data_generator<int32_t, 2>,
-                             random_data_generator<int32_t, 2>>,
+                             random_data_generator<int32_t, 2, 2>,
+                             random_data_generator<int32_t, 2, 2>>,
     DeviceMergeInplaceParams<int16_t,
-                             random_data_generator<int16_t, 2>,
-                             random_data_generator<int16_t, 2>>,
+                             random_data_generator<int16_t, 2, 2>,
+                             random_data_generator<int16_t, 2, 2>>,
     DeviceMergeInplaceParams<float,
-                             random_data_generator<int32_t, 2>,
-                             random_data_generator<int32_t, 2>>,
+                             random_data_generator<int32_t, 2, 2>,
+                             random_data_generator<int32_t, 2, 2>>,
     // large input sizes
     DeviceMergeInplaceParams<int32_t,
-                             random_data_generator<int32_t, 1>,
-                             random_data_generator<int32_t, 1>,
+                             random_data_generator<int32_t, 2, 4>,
+                             random_data_generator<int32_t, 2, 4>,
                              large_sizes>,
     DeviceMergeInplaceParams<int64_t,
-                             random_data_generator<int64_t, 2>,
-                             random_data_generator<int64_t, 2>,
+                             random_data_generator<int64_t, 4, 4>,
+                             random_data_generator<int64_t, 4, 4>,
                              large_sizes>>
     DeviceMergeInplaceTestsParams;
 
