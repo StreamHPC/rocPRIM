@@ -455,6 +455,26 @@ ROCPRIM_HOST hipError_t
     return set_result;
 }
 
+/// \brief Checks if the device on stream supports cooperative groups
+inline hipError_t supports_cooperative_groups(bool& has_support, hipStream_t stream)
+{
+    hipDevice_t stream_device;
+    hipError_t  result = hipStreamGetDevice(stream, &stream_device);
+    if(result != hipSuccess)
+        return result;
+
+    int value;
+    result = hipDeviceGetAttribute(&value,
+                                   hipDeviceAttribute_t::hipDeviceAttributeCooperativeLaunch,
+                                   stream_device);
+    if(result != hipSuccess)
+        return result;
+
+    has_support = value != 0;
+
+    return hipSuccess;
+}
+
 } // end namespace detail
 END_ROCPRIM_NAMESPACE
 

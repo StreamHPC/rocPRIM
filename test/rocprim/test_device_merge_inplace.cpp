@@ -25,6 +25,7 @@
 #include "test_utils_assertions.hpp"
 #include "test_utils_data_generation.hpp"
 
+#include <rocprim/detail/various.hpp>
 #include <rocprim/device/device_merge_inplace.hpp>
 #include <rocprim/iterator/counting_iterator.hpp>
 #include <rocprim/iterator/transform_iterator.hpp>
@@ -40,6 +41,13 @@
 
 TEST(RocprimDeviceMergeInplaceTests, Basic)
 {
+    bool has_cooperative_launching = false;
+    rocprim::detail::supports_cooperative_groups(has_cooperative_launching, 0);
+    if(!has_cooperative_launching)
+    {
+        GTEST_SKIP() << "This device does not support cooperative groups.";
+    }
+
     using value_t            = int;
     void*  temporary_storage = nullptr;
     size_t storage_size      = 0;
@@ -309,6 +317,13 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
     binary_op compare_op{};
 
     hipStream_t stream = hipStreamDefault;
+
+    bool has_cooperative_launching = false;
+    rocprim::detail::supports_cooperative_groups(has_cooperative_launching, stream);
+    if(!has_cooperative_launching)
+    {
+        GTEST_SKIP() << "This device does not support cooperative groups.";
+    }
 
     for(auto size : sizes)
     {

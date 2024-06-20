@@ -574,6 +574,9 @@ struct merge_inplace_impl
 /// \warning This functions prioritizes temporary storage over speed. In most cases using `merge`
 /// and a device copy is significantly faster.
 ///
+/// \warning This function uses cooperative groups. Please make sure that the device and platform
+/// supports cooperative kernel launches.
+///
 /// \par Overview
 /// * The function can write intermediate values to the data array while the algorithm is running.
 /// * Returns the required size of `temporary_storage` in `storage_size` if `temporary_storage` is a
@@ -600,7 +603,7 @@ struct merge_inplace_impl
 /// \param [in] debug_synchronous If `true`, forces a device synchronization after every kernel
 /// launch in order to check for errors. Default value is `false`.
 ///
-/// \returns \p hipSuccess `0` after succesful sort; otherwise a HIP runtime error of type
+/// \returns `hipSuccess` (`0`) after succesful merge; otherwise a HIP runtime error of type
 /// `hipError_t`.
 ///
 /// \par Example

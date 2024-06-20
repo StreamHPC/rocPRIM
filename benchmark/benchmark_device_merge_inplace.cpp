@@ -371,6 +371,16 @@ int main(int argc, char* argv[])
     // HIP
     hipStream_t stream = 0; // default
 
+    bool has_cooperative_launching = false;
+    rocprim::detail::supports_cooperative_groups(has_cooperative_launching, 0);
+    if(!has_cooperative_launching)
+    {
+        std::cout << "This device does not support cooperative groups which is required for "
+                     "rocprim::merge_inplace"
+                  << std::endl;
+        return 0;
+    }
+
     // Benchmark info
     add_common_benchmark_info();
     benchmark::AddCustomContext("size", std::to_string(size));
