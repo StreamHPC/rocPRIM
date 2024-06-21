@@ -336,7 +336,7 @@ void run_merge_inplace_benchmarks(benchmark::State&   state,
 
     #define CREATE_MERGE_HOST_BENCHMARK(Value)                                         \
         benchmark::RegisterBenchmark(                                                  \
-            bench_naming::format_name("{lvl:device,algo:merge_copy,value_type:" #Value \
+            bench_naming::format_name("{lvl:device,algo:merge_host,value_type:" #Value \
                                       ",cfg:default_config}")                          \
                 .c_str(),                                                              \
             [=](benchmark::State& state) {                                             \
