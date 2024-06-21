@@ -19,7 +19,7 @@ Merge
 Merge inplace
 -------------
 
-.. doxygentypedef:: rocprim::merge_inplace_config
+.. doxygenstruct:: rocprim::merge_inplace_config
 
 Merge
 ==========
