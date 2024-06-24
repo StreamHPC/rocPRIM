@@ -88,7 +88,8 @@ struct merge_inplace_impl
             offset_t y;
         };
 
-        ROCPRIM_DEVICE pivot_t& offset(offset_t a, offset_t b)
+        ROCPRIM_DEVICE
+        pivot_t& offset(offset_t a, offset_t b)
         {
             left += a;
             right += b;
@@ -99,47 +100,54 @@ struct merge_inplace_impl
     /// \brief describes two ranges [begin, split) and [split, end)
     struct work_t
     {
-        offset_t begin;
-        offset_t split;
-        offset_t end;
+        offset_t       begin;
+        offset_t       split;
+        offset_t       end;
 
-        ROCPRIM_DEVICE ROCPRIM_INLINE constexpr bool is_valid() const
+        ROCPRIM_DEVICE ROCPRIM_INLINE
+        constexpr bool is_valid() const
         {
             return begin <= split && split <= end;
         }
 
-        ROCPRIM_DEVICE ROCPRIM_INLINE constexpr bool has_work() const
+        ROCPRIM_DEVICE ROCPRIM_INLINE
+        constexpr bool has_work() const
         {
             return begin < split && split < end;
         }
 
-        ROCPRIM_DEVICE ROCPRIM_INLINE offset_t total_size() const
+        ROCPRIM_DEVICE ROCPRIM_INLINE
+        offset_t total_size() const
         {
             return end - begin;
         }
 
-        ROCPRIM_DEVICE ROCPRIM_INLINE offset_t left_size() const
+        ROCPRIM_DEVICE ROCPRIM_INLINE
+        offset_t left_size() const
         {
             return split - begin;
         }
 
-        ROCPRIM_DEVICE ROCPRIM_INLINE offset_t right_size() const
+        ROCPRIM_DEVICE ROCPRIM_INLINE
+        offset_t right_size() const
         {
             return end - split;
         }
 
-        static constexpr ROCPRIM_DEVICE ROCPRIM_INLINE work_t invalid_work()
+        static constexpr ROCPRIM_DEVICE ROCPRIM_INLINE
+        work_t invalid_work()
         {
             return work_t{0, no_split, 0};
         }
     };
 
     /// \brief finds the `work_t` and its id by descending the binary tree `work_tree`.
-    ROCPRIM_DEVICE ROCPRIM_INLINE work_t reconstruct_work(offset_t  worker_global_id,
-                                                          offset_t* work_tree,
-                                                          work_t    work,
-                                                          uint32_t& work_id,
-                                                          uint32_t  subdivisions)
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    work_t reconstruct_work(offset_t  worker_global_id,
+                            offset_t* work_tree,
+                            work_t    work,
+                            uint32_t& work_id,
+                            uint32_t  subdivisions)
     {
         work_id    = 1;
         work.split = work_tree[work_id];
@@ -174,10 +182,11 @@ struct merge_inplace_impl
     /// If `find_split` is `true`, also try to first find the first id that is valid
     /// while discarding duplicates.
     template<bool find_split = false>
-    ROCPRIM_DEVICE ROCPRIM_INLINE static work_t reconstruct_work_from_id(work_t    work,
-                                                                         offset_t* work_tree,
-                                                                         offset_t  work_id,
-                                                                         int       global_divisions)
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    static work_t reconstruct_work_from_id(work_t    work,
+                                           offset_t* work_tree,
+                                           offset_t  work_id,
+                                           int       global_divisions)
     {
         bool need_begin = true;
         bool need_end   = true;
@@ -242,15 +251,16 @@ struct merge_inplace_impl
         return max(2, 2 + set_bits - Log2<block_merge_items_per_block>::VALUE);
     }
 
-    ROCPRIM_DEVICE ROCPRIM_INLINE void merge_inplace_agent(cooperative_groups::grid_group   grid,
-                                                           cooperative_groups::thread_block block,
-                                                           offset_t*      work_tree,
-                                                           pivot_t*       pivot_heap,
-                                                           offset_t*      scratch,
-                                                           iterator_t     data,
-                                                           offset_t       left_work_size,
-                                                           offset_t       right_work_size,
-                                                           BinaryFunction compare_function)
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    void merge_inplace_agent(cooperative_groups::grid_group   grid,
+                             cooperative_groups::thread_block block,
+                             offset_t*                        work_tree,
+                             pivot_t*                         pivot_heap,
+                             offset_t*                        scratch,
+                             iterator_t                       data,
+                             offset_t                         left_work_size,
+                             offset_t                         right_work_size,
+                             BinaryFunction                   compare_function)
     {
         const uint32_t block_thread_id   = block.thread_rank();
         const uint32_t grid_thread_id    = grid.thread_rank();
@@ -463,13 +473,14 @@ struct merge_inplace_impl
         }
     }
 
-    static __global__ void merge_inplace_kernel(offset_t*      work_storage,
-                                                pivot_t*       pivot_storage,
-                                                offset_t*      scratch_storage,
-                                                iterator_t     data,
-                                                size_t         left_size,
-                                                size_t         right_size,
-                                                BinaryFunction compare_function)
+    static __global__
+    void merge_inplace_kernel(offset_t*      work_storage,
+                              pivot_t*       pivot_storage,
+                              offset_t*      scratch_storage,
+                              iterator_t     data,
+                              size_t         left_size,
+                              size_t         right_size,
+                              BinaryFunction compare_function)
     {
         cooperative_groups::grid_group   grid  = cooperative_groups::this_grid();
         cooperative_groups::thread_block block = cooperative_groups::this_thread_block();
@@ -485,11 +496,12 @@ struct merge_inplace_impl
                                                  compare_function);
     }
 
-    static __global__ void block_merge_kernel(iterator_t     data,
-                                              size_t         num_items,
-                                              BinaryFunction compare_function,
-                                              offset_t*      work_tree,
-                                              offset_t*      scratch_storage)
+    static __global__
+    void block_merge_kernel(iterator_t     data,
+                            size_t         num_items,
+                            BinaryFunction compare_function,
+                            offset_t*      work_tree,
+                            offset_t*      scratch_storage)
     {
         cooperative_groups::thread_block block = cooperative_groups::this_thread_block();
 

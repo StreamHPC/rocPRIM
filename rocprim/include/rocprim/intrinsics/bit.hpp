@@ -75,7 +75,8 @@ ROCPRIM_HOST_DEVICE ROCPRIM_INLINE unsigned int ctz(unsigned long long x)
 ///
 /// Count the number of consecutive 0-bits, starting from the
 /// most significant bit.
-ROCPRIM_HOST_DEVICE ROCPRIM_INLINE int clz(unsigned int x)
+ROCPRIM_HOST_DEVICE ROCPRIM_INLINE
+int clz(unsigned int x)
 {
     return __builtin_clz(x);
 }
@@ -84,7 +85,8 @@ ROCPRIM_HOST_DEVICE ROCPRIM_INLINE int clz(unsigned int x)
 ///
 /// Count the number of consecutive 0-bits, starting from the
 /// most significant bit.
-ROCPRIM_HOST_DEVICE ROCPRIM_INLINE int clz(unsigned long x)
+ROCPRIM_HOST_DEVICE ROCPRIM_INLINE
+int clz(unsigned long x)
 {
     return __builtin_clzl(x);
 }
@@ -93,7 +95,8 @@ ROCPRIM_HOST_DEVICE ROCPRIM_INLINE int clz(unsigned long x)
 ///
 /// Count the number of consecutive 0-bits, starting from the
 /// most significant bit.
-ROCPRIM_HOST_DEVICE ROCPRIM_INLINE int clz(unsigned long long x)
+ROCPRIM_HOST_DEVICE ROCPRIM_INLINE
+int clz(unsigned long long x)
 {
     return __builtin_clzll(x);
 }

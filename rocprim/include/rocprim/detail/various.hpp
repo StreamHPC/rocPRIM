@@ -415,7 +415,8 @@ ROCPRIM_HOST_DEVICE auto bit_cast(const Source& source)
 
 /// \brief Gets the maximum grid size to have all blocks active.
 template<typename Kernel>
-ROCPRIM_HOST hipError_t
+ROCPRIM_HOST
+hipError_t
     grid_dim_for_max_active_blocks(int& grid_dim, int block_size, Kernel kernel, hipStream_t stream)
 {
     hipError_t result;
