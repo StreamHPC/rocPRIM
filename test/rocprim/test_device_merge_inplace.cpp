@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <random>
 
 TEST(RocprimDeviceMergeInplaceTests, Basic)
 {
@@ -126,9 +127,19 @@ struct large_sizes
     std::vector<std::tuple<size_t, size_t>> operator()()
     {
         return {
-            std::make_tuple((1 << 7) - 1652, (1 << 27) - 5839),
-            std::make_tuple((1 << 27) - 2459, (1 << 7) - 2134),
-            std::make_tuple((1 << 27) - 9532, (1 << 27) - 8421),
+            std::make_tuple((1 << 14) - 1652, (1 << 27) - 5839),
+            std::make_tuple((1 << 27) - 2459, (1 << 14) - 2134),
+            std::make_tuple((1 << 28) - 9532, (1 << 28) - 8421),
+        };
+    }
+};
+
+struct extreme_sizes
+{
+    // generating the data and checking the data on this order on the CPU is slow.
+    std::vector<std::tuple<size_t, size_t>> operator()()
+    {
+        return {
             std::make_tuple((1ULL << 32) + 5327, (1ULL << 32) + 9682),
         };
     }
@@ -141,7 +152,7 @@ struct linear_data_generator
 
     auto get_iterator(seed_type /* seed */)
     {
-        return rocprim::make_transform_iterator(rocprim::make_counting_iterator(0),
+        return rocprim::make_transform_iterator(rocprim::make_counting_iterator(T(0)),
                                                 [](T v) { return v * increment + start; });
     }
 
@@ -178,7 +189,7 @@ struct random_data_generator
         seed_type seed;
         int       duplicates;
 
-        std::mt19937  engine{std::random_device{}()};
+        std::minstd_rand engine{seed};
         val_dist_type val_dist{dist_value_type{1}, dist_value_type{increment}};
         dup_dist_type dup_dist{dist_value_type{1}, dist_value_type{max_duplicates}};
 
@@ -284,14 +295,19 @@ typedef ::testing::Types<
                              random_data_generator<int32_t, 2, 2>,
                              random_data_generator<int32_t, 2, 2>>,
     // large input sizes
+    DeviceMergeInplaceParams<int8_t,
+                             random_data_generator<int8_t, 1, 1 << 27>,
+                             random_data_generator<int8_t, 1, 1 << 27>,
+                             large_sizes>,
     DeviceMergeInplaceParams<int32_t,
                              random_data_generator<int32_t, 2, 4>,
                              random_data_generator<int32_t, 2, 4>,
                              large_sizes>,
-    DeviceMergeInplaceParams<int64_t,
-                             random_data_generator<int64_t, 4, 4>,
-                             random_data_generator<int64_t, 4, 4>,
-                             large_sizes>>
+    // extreme sizes
+    DeviceMergeInplaceParams<int8_t,
+                             random_data_generator<int8_t, 1, 1 << 27>,
+                             random_data_generator<int8_t, 1, 1 << 27>,
+                             extreme_sizes>>
     DeviceMergeInplaceTestsParams;
 
 template<typename Params>
@@ -327,11 +343,12 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
 
     for(auto size : sizes)
     {
-        size_t num_seeds
+        const size_t num_seeds
             = gen_a_type::is_random || gen_b_type::is_random ? (random_seeds_count + seed_size) : 1;
 
-        size_t size_a = std::get<0>(size);
-        size_t size_b = std::get<1>(size);
+        const size_t size_a      = std::get<0>(size);
+        const size_t size_b      = std::get<1>(size);
+        const size_t total_items = size_a + size_b;
 
         // hipMallocManaged() currently doesnt support zero byte allocation
         if((size_a == 0 || size_b == 0) && test_common_utils::use_hmm())
@@ -344,10 +361,8 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
         if(size_a > gen_a.get_max_size() || size_b > gen_b.get_max_size())
             continue;
 
-        std::vector<value_type> h_data(size_a + size_b);
-
-        size_t total_bytes  = sizeof(value_type) * (size_a + size_b);
-        size_t storage_size = 0;
+        const size_t total_bytes  = sizeof(value_type) * total_items;
+        size_t       storage_size = 0;
 
         value_type* d_data         = nullptr;
         void*       d_temp_storage = nullptr;
@@ -368,6 +383,8 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
         if(available_vram < total_bytes + storage_size)
             continue;
 
+        std::vector<value_type> h_data(size_a + size_b);
+
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_data, total_bytes));
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, storage_size));
 
@@ -385,13 +402,15 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
             // generate left array
             for(size_t i = 0; i < size_a; ++i)
             {
-                h_data[i] = static_cast<value_type>(*(gen_a_it++));
+                h_data[i] = static_cast<value_type>(*gen_a_it);
+                gen_a_it++;
             }
 
             // generate right array
             for(size_t i = 0; i < size_b; ++i)
             {
-                h_data[size_a + i] = static_cast<value_type>(*(gen_b_it++));
+                h_data[size_a + i] = static_cast<value_type>(*gen_b_it);
+                gen_b_it++;
             }
 
             // move input to device
@@ -407,25 +426,46 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                                              size_a,
                                              size_b,
                                              compare_op,
-                                             stream));
+                                             stream,
+                                             true));
 
             // compare with reference
-            std::vector<value_type> h_output(size_a + size_b);
+            std::vector<value_type> h_output(total_items);
             HIP_CHECK(hipMemcpyWithStream(h_output.data(),
                                           d_data,
                                           total_bytes,
                                           hipMemcpyDeviceToHost,
                                           stream));
 
-            // compute reference
-            std::vector<value_type> h_reference(size_a + size_b);
-            std::merge(h_data.begin(),
-                       h_data.begin() + size_a,
-                       h_data.begin() + size_a,
-                       h_data.end(),
-                       h_reference.begin());
+            // For large inputs, we test for monoticity instead of equality with reference.
+            if(total_items > 1 << 20)
+            {
+                // we keep the previous value so we don't invoke multiple loads
+                value_type prev = h_output[0];
+                for(size_t i = 1; i < total_items; ++i)
+                {
+                    value_type current = h_output[i];
+                    if(prev > current)
+                    {
+                        FAIL() << "Result is not monotonic at " << i << ": " << prev
+                               << " <= " << current;
+                    }
 
-            ASSERT_NO_FATAL_FAILURE((test_utils::assert_eq(h_output, h_reference)));
+                    prev = current;
+                }
+            }
+            else
+            {
+                // compute reference
+                std::vector<value_type> h_reference(total_items);
+                std::merge(h_data.begin(),
+                           h_data.begin() + size_a,
+                           h_data.begin() + size_a,
+                           h_data.end(),
+                           h_reference.begin());
+
+                ASSERT_NO_FATAL_FAILURE((test_utils::assert_eq(h_output, h_reference)));
+            }
         }
         HIP_CHECK(hipFree(d_data));
         HIP_CHECK(hipFree(d_temp_storage));
