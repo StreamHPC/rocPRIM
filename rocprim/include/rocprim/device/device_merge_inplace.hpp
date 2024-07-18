@@ -764,8 +764,12 @@ inline hipError_t merge_inplace(void*             temporary_storage,
     if(result != hipSuccess)
         return result;
 
-    const size_t block_merge_grid_size = rocprim::detail::ceiling_div(total_size, block_block_size);
-
+    // The kernel already does grid striding, lets just launch the max number of active blocks.
+    int32_t block_merge_grid_size;
+    detail::grid_dim_for_max_active_blocks(block_merge_grid_size,
+                                           block_block_size,
+                                           impl::block_merge_kernel,
+                                           stream);
     if(debug_synchronous)
     {
         std::cout << "block_merge_kernel\n"
