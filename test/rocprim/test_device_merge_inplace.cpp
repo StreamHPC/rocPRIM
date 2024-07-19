@@ -260,14 +260,14 @@ struct DeviceMergeInplaceParams
 typedef ::testing::Types<
     // linear even-odd
     DeviceMergeInplaceParams<int64_t,
-                             linear_data_generator<int64_t, 0, 2>,
-                             linear_data_generator<int64_t, 1, 2>>,
+                             linear_data_generator<int64_t, 1, 2>,
+                             linear_data_generator<int64_t, 0, 2>>,
     DeviceMergeInplaceParams<int32_t,
-                             linear_data_generator<int32_t, 0, 2>,
-                             linear_data_generator<int32_t, 1, 2>>,
+                             linear_data_generator<int32_t, 1, 2>,
+                             linear_data_generator<int32_t, 0, 2>>,
     DeviceMergeInplaceParams<int16_t,
-                             linear_data_generator<int16_t, 0, 2>,
-                             linear_data_generator<int16_t, 1, 2>>,
+                             linear_data_generator<int16_t, 1, 2>,
+                             linear_data_generator<int16_t, 0, 2>>,
     // linear edge cases
     DeviceMergeInplaceParams<int32_t,
                              linear_data_generator<int32_t, 0, 1>,
@@ -281,6 +281,12 @@ typedef ::testing::Types<
     DeviceMergeInplaceParams<int32_t,
                              linear_data_generator<int32_t, 0, 1>,
                              linear_data_generator<int32_t, 128, 0>>,
+    DeviceMergeInplaceParams<int32_t,
+                             linear_data_generator<int32_t, 5000, 1>,
+                             linear_data_generator<int32_t, 0, 2>>,
+    DeviceMergeInplaceParams<int32_t,
+                             linear_data_generator<int32_t, 0, 2>,
+                             linear_data_generator<int32_t, 5000, 1>>,
     // random data
     DeviceMergeInplaceParams<int64_t,
                              random_data_generator<int64_t, 2, 2>,

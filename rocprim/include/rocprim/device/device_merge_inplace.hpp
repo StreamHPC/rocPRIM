@@ -35,12 +35,14 @@
 #include "../thread/thread_search.hpp"
 
 #include <hip/amd_detail/amd_hip_runtime.h>
+#include <hip/driver_types.h>
 #include <hip/hip_cooperative_groups.h>
 #include <hip/hip_runtime.h>
 
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <hip/hip_runtime_api.h>
 #include <iostream>
 #include <iterator>
 #include <limits>
@@ -277,11 +279,11 @@ struct merge_inplace_impl
         const work_t initial_work = work_t{0, left_work_size, total_work_size};
 
         // put first item on the heap, do it for each block since grid sync is more expensive
-        if(block_thread_id == 0)
+        if(grid_thread_id == 0)
             work_tree[1] = initial_work.split;
 
         // dependent on first item on work heap
-        block.sync();
+        grid.sync();
 
         offset_t thread_work_granularity = total_work_size;
 
@@ -687,7 +689,7 @@ inline hipError_t merge_inplace(void*             temporary_storage,
         storage_size,
         detail::temp_storage::make_linear_partition(
             detail::temp_storage::ptr_aligned_array(&work_storage, 2ULL << num_divisions),
-            detail::temp_storage::ptr_aligned_array(&pivot_storage, 1ULL << num_divisions),
+            detail::temp_storage::ptr_aligned_array(&pivot_storage, 2ULL << num_divisions),
             detail::temp_storage::ptr_aligned_array(&scratch_storage, 2)));
 
     if(result != hipSuccess || temporary_storage == nullptr)
@@ -697,7 +699,7 @@ inline hipError_t merge_inplace(void*             temporary_storage,
             std::cout << "device_merge_inplace\n"
                       << "  left  size     : " << left_size << "\n"
                       << "  right size     : " << right_size << "\n"
-                      << "  num iterations : " << num_divisions << "\n"
+                      << "  max iterations : " << num_divisions << "\n"
                       << "  requires " << storage_size << " bytes of temporary storage"
                       << std::endl;
         }
@@ -753,12 +755,25 @@ inline hipError_t merge_inplace(void*             temporary_storage,
         if(result != hipSuccess)
             return result;
 
+        typename impl::offset_t scratch_results[2];
+        result = hipMemcpy(scratch_results,
+                           scratch_storage,
+                           sizeof(typename impl::offset_t) * 2,
+                           hipMemcpyDeviceToHost);
+        if(result != hipSuccess)
+            return result;
+
         t_stop = std::chrono::high_resolution_clock::now();
-        std::cout << "  "
+        std::cout << "  time       : "
                   << std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(t_stop
                                                                                           - t_start)
                          .count()
-                  << " ms" << std::endl;
+                  << " ms\n"
+                  << "  granularity: " << scratch_results[0] << "\n"
+                  << "  iterations : " << scratch_results[1] << std::endl;
+
+        if(num_divisions <= scratch_results[1])
+            return hipErrorLaunchFailure;
     }
 
     result = hipGetLastError();
