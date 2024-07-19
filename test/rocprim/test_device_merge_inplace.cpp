@@ -426,8 +426,7 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                                              size_a,
                                              size_b,
                                              compare_op,
-                                             stream,
-                                             true));
+                                             stream));
 
             // compare with reference
             std::vector<value_type> h_output(total_items);

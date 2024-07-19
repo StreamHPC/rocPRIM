@@ -34,6 +34,7 @@
 #include "../intrinsics/thread.hpp"
 #include "../thread/thread_search.hpp"
 
+#include <hip/amd_detail/amd_hip_runtime.h>
 #include <hip/hip_cooperative_groups.h>
 #include <hip/hip_runtime.h>
 
@@ -496,7 +497,7 @@ struct merge_inplace_impl
                                                  compare_function);
     }
 
-    static __global__
+    static __global__ __launch_bounds__(block_merge_block_size)
     void block_merge_kernel(iterator_t     data,
                             size_t         num_items,
                             BinaryFunction compare_function,
@@ -766,10 +767,13 @@ inline hipError_t merge_inplace(void*             temporary_storage,
 
     // The kernel already does grid striding, lets just launch the max number of active blocks.
     int32_t block_merge_grid_size;
-    detail::grid_dim_for_max_active_blocks(block_merge_grid_size,
-                                           block_block_size,
-                                           impl::block_merge_kernel,
-                                           stream);
+    result = detail::grid_dim_for_max_active_blocks(block_merge_grid_size,
+                                                    block_block_size,
+                                                    impl::block_merge_kernel,
+                                                    stream);
+    if(result != hipSuccess)
+        return result;
+
     if(debug_synchronous)
     {
         std::cout << "block_merge_kernel\n"

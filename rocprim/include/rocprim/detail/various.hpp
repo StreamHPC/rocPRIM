@@ -21,6 +21,8 @@
 #ifndef ROCPRIM_DETAIL_VARIOUS_HPP_
 #define ROCPRIM_DETAIL_VARIOUS_HPP_
 
+#include <iostream>
+#include <ostream>
 #include <type_traits>
 
 #include "../config.hpp"
@@ -434,11 +436,16 @@ hipError_t
     // after setting device, we can't just exit on non-success
     result = hipSetDevice(stream_device);
 
-    int occupancy;
+    int occupancy = 0;
     if(result == hipSuccess)
         result = hipOccupancyMaxActiveBlocksPerMultiprocessor(&occupancy, kernel, block_size, 0);
 
-    int num_multi_processors;
+    // HACK: the occupancy calculator can return 0 when spilling occurs. in such
+    // cases we set a minimum of 1 s.t. we always have a valid launch config.
+    if(occupancy == 0)
+        occupancy = 1;
+
+    int num_multi_processors = 0;
     if(result == hipSuccess)
         result = hipDeviceGetAttribute(&num_multi_processors,
                                        hipDeviceAttribute_t::hipDeviceAttributeMultiprocessorCount,

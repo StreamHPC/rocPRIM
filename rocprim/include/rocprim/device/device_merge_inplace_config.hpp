@@ -32,8 +32,8 @@ BEGIN_ROCPRIM_NAMESPACE
 /// \tparam BlockMergeBlockSize Number of threads per block for block-level merging.
 /// \tparam BlockMergeItemsPerThread number of items per thread for block-level merging.
 template<unsigned int GlobalMergeBlockSize     = 256,
-         unsigned int BlockMergeBlockSize      = 1024,
-         unsigned int BlockMergeItemsPerThread = 1024>
+         unsigned int BlockMergeBlockSize      = 256,
+         unsigned int BlockMergeItemsPerThread = 16>
 struct merge_inplace_config
 {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
