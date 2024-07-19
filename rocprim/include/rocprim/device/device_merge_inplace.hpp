@@ -749,12 +749,14 @@ inline hipError_t merge_inplace(void*             temporary_storage,
     if(result != hipSuccess)
         return result;
 
+    // HACK: you would think that cooperative groups are synchronous but somehow
+    // this is required. this fixes freezes on MI200.
+    result = hipStreamSynchronize(stream);
+    if(result != hipSuccess)
+        return result;
+
     if(debug_synchronous)
     {
-        result = hipStreamSynchronize(stream);
-        if(result != hipSuccess)
-            return result;
-
         typename impl::offset_t scratch_results[2];
         result = hipMemcpy(scratch_results,
                            scratch_storage,

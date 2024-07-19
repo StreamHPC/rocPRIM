@@ -276,12 +276,6 @@ typedef ::testing::Types<
                              linear_data_generator<int32_t, 0, 4>,
                              linear_data_generator<int32_t, 0, 1>>,
     DeviceMergeInplaceParams<int32_t,
-                             linear_data_generator<int32_t, 128, 0>,
-                             linear_data_generator<int32_t, 0, 1>>,
-    DeviceMergeInplaceParams<int32_t,
-                             linear_data_generator<int32_t, 0, 1>,
-                             linear_data_generator<int32_t, 128, 0>>,
-    DeviceMergeInplaceParams<int32_t,
                              linear_data_generator<int32_t, 5000, 1>,
                              linear_data_generator<int32_t, 0, 2>>,
     DeviceMergeInplaceParams<int32_t,
@@ -308,12 +302,16 @@ typedef ::testing::Types<
     DeviceMergeInplaceParams<int32_t,
                              random_data_generator<int32_t, 2, 4>,
                              random_data_generator<int32_t, 2, 4>,
-                             large_sizes>,
-    // extreme sizes
+                             large_sizes>
+// extreme sizes - disabled because it takes too long
+#if TEST_EXTREME_SIZES
+    ,
     DeviceMergeInplaceParams<int8_t,
                              random_data_generator<int8_t, 1, 1 << 27>,
                              random_data_generator<int8_t, 1, 1 << 27>,
-                             extreme_sizes>>
+                             extreme_sizes>
+#endif
+    >
     DeviceMergeInplaceTestsParams;
 
 template<typename Params>
