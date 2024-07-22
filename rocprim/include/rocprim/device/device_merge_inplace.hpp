@@ -245,6 +245,7 @@ struct merge_inplace_impl
     using block_merge_block_store
         = block_store<value_t, block_merge_block_size, block_merge_items_per_thread>;
 
+    ROCPRIM_HOST_DEVICE
     static auto get_num_global_divisions(size_t left_size, size_t right_size)
     {
         const offset_t max_size = max(left_size, right_size);
@@ -750,7 +751,7 @@ inline hipError_t merge_inplace(void*             temporary_storage,
         return result;
 
     // HACK: you would think that cooperative groups are synchronous but somehow
-    // this is required. this fixes freezes on MI200.
+    // this is required.
     result = hipStreamSynchronize(stream);
     if(result != hipSuccess)
         return result;

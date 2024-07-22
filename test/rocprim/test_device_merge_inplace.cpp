@@ -25,6 +25,7 @@
 #include "test_utils_assertions.hpp"
 #include "test_utils_data_generation.hpp"
 
+#include <hip/amd_detail/amd_hip_runtime.h>
 #include <rocprim/detail/various.hpp>
 #include <rocprim/device/device_merge_inplace.hpp>
 #include <rocprim/iterator/counting_iterator.hpp>
@@ -379,18 +380,20 @@ TYPED_TEST(DeviceMergeInplaceTests, MergeInplace)
                                          compare_op,
                                          stream));
 
-        // ensure tests always fit on device
-        HIP_CHECK(hipSetDevice(hipGetStreamDeviceId(stream)));
-        size_t free_vram;
-        size_t available_vram;
-        HIP_CHECK(hipMemGetInfo(&free_vram, &available_vram));
-        if(available_vram < total_bytes + storage_size)
+        hipError_t malloc_result = test_common_utils::hipMallocHelper(&d_data, total_bytes);
+        if (malloc_result == hipErrorOutOfMemory){
             continue;
+        }
+        HIP_CHECK(malloc_result);
+
+        malloc_result = test_common_utils::hipMallocHelper(&d_temp_storage, storage_size);
+        if (malloc_result == hipErrorOutOfMemory) {
+            hipFree(d_data);
+            continue;
+        }
+        HIP_CHECK(malloc_result);
 
         std::vector<value_type> h_data(size_a + size_b);
-
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_data, total_bytes));
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, storage_size));
 
         HIP_CHECK(hipDeviceSynchronize());
 
