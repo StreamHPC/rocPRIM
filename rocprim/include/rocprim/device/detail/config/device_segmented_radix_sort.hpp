@@ -4662,7 +4662,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4757,7 +4757,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4776,7 +4776,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4795,7 +4795,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4814,7 +4814,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4832,7 +4832,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4850,7 +4850,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4868,7 +4868,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4887,7 +4887,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4905,7 +4905,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -4924,7 +4924,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5019,7 +5019,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5057,7 +5057,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5095,7 +5095,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5114,7 +5114,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5133,7 +5133,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5152,7 +5152,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5171,7 +5171,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5190,7 +5190,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5208,7 +5208,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5226,7 +5226,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5244,7 +5244,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5263,7 +5263,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
@@ -5281,7 +5281,7 @@ struct default_segmented_radix_sort_config<
     : segmented_radix_sort_config<
           6,
           4,
-          kernel_config<256, 17>,
+          kernel_config<256, 16>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
                                     DisabledWarpSortConfig>::type,
