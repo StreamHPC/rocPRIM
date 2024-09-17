@@ -42,7 +42,40 @@ parameter_spaces = {
             "WarpMediumIPT": [4, 16],
             "WarpMediumBS": [256],
         },
-    }
+    },
+    "device_segmented_radix_sort_pairs": {
+        "benchmark": "benchmark_device_segmented_radix_sort_pairs",
+        "types": {
+            "KeyType": [
+                "int64_t",
+                "int",
+                "short",
+                "int8_t",
+                "double",
+                "float",
+                "rocprim::half",
+            ],
+            "ValueType": [
+                "int64_t",
+                "int",
+                "short",
+                "int8_t",
+            ],
+        },
+        "params": {
+            "LongBits": [7, 8],
+            "ShortBits": [4, 5, 6],
+            "BlockSize": [256],
+            "ItemsPerThread": [7, 8, 13, 16, 17],
+            "WarpSmallLWS": [8, 16, 32],
+            "WarpSmallIPT": [4, 8],
+            "WarpSmallBS": [256],
+            "WarpPartition": [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+            "WarpMediumLWS": [16, 32],
+            "WarpMediumIPT": [4, 16],
+            "WarpMediumBS": [256],
+        },
+    },
 }
 
 def get_result_from_json(filename: os.PathLike) -> Union[float, int]:
