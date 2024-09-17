@@ -117,7 +117,7 @@ def merge_jsons(source_filenames: List[os.PathLike], target_filename: os.PathLik
     with open(target_filename, 'w') as file:
         json.dump(merged, file, indent=2)
 
-def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False) -> None:
+def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_workers=4) -> None:
     '''
     The core tuning procedure. This tunes a single algorithm for multiple types.
     '''
@@ -308,7 +308,6 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False) -> None:
         gpu_lock = lock
         worker_id = worker_ids.get(False)
 
-    num_workers = 4
     man = mp.Manager()
 
     # create queue to distrubute worker ids
@@ -340,6 +339,7 @@ parser.add_argument('-a', '--arch', default='gfx942', help='architecture to targ
 parser.add_argument('-n', '--evals', default=200, help='maximum number of configs being evaluated per type per target')
 parser.add_argument('-c', '--clean', action='store_true', help='clear the output folder')
 parser.add_argument('-v', '--verbose', action='store_true', help='clear the output folder')
+parser.add_argument('-w', '--workers', default=4, help='number of workers')
 parser.add_argument('-l', '--list', action='store_true', help='list available targets')
 
 args = parser.parse_args()
@@ -358,4 +358,4 @@ log = logging.getLogger('rich')
 
 for target in args.targets:
     log.info(f'Tuning {target} for {args.arch} with {args.arch} max evaluations')
-    tune_alg(target, args.arch, max_samples=args.evals, clean=args.clean)
+    tune_alg(target, args.arch, max_samples=args.evals, clean=args.clean, num_workers=args.workers)
