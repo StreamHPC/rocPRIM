@@ -40,6 +40,8 @@ auto benchmarks = config_autotune_register::create_bulk(
         @WarpMediumLWS@,
         @WarpMediumIPT@,
         @WarpMediumBS@,
+        @KeyType@,
+        @ValueType@,
         true
     >::create);
 } // namespace

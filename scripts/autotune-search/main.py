@@ -57,9 +57,6 @@ parameter_spaces = {
             ],
             "ValueType": [
                 "int64_t",
-                "int",
-                "short",
-                "int8_t",
             ],
         },
         "params": {
@@ -85,7 +82,7 @@ def get_result_from_json(filename: os.PathLike) -> Union[float, int]:
     with open(filename, 'r') as file:
         data = json.load(file)
         try:
-            return data['benchmarks'][0]['bytes_per_second']
+            return float(data['benchmarks'][0]['bytes_per_second'])
         except Exception as e:
             log.error('Could not extract \'bytes_per_second\' from JSON!')
             raise e
@@ -111,13 +108,28 @@ def merge_jsons(source_filenames: List[os.PathLike], target_filename: os.PathLik
             # HACK: we reuse the last context since we can only have one
             merged['context'] = data['context']
             # append benchmark data
-            merged['benchmarks'].append(data['benchmarks'])
+            merged['benchmarks'].extend(data['benchmarks'])
 
     # write out file
     with open(target_filename, 'w') as file:
         json.dump(merged, file, indent=2)
 
-def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_workers=4) -> None:
+def combine(alg_name: str, arch: str):
+    '''
+    combine()
+    '''
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    result_dir = os.path.join(script_dir, 'artifacts')
+
+    alg_space = parameter_spaces[alg_name]
+    build_target = alg_space['benchmark']
+
+    merge_jsons(
+        glob.glob(os.path.join(result_dir, f'{arch}_{build_target}_*.json')),
+        os.path.join(result_dir, f'{arch}_{build_target}.json'),
+    )
+
+def tune_alg(alg_name: str, arch: str, max_samples: int, num_workers: int, size: int, trials: int) -> None:
     '''
     The core tuning procedure. This tunes a single algorithm for multiple types.
     '''
@@ -211,8 +223,8 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
             )
 
             if configure != 0:
-                cache[result_id] = 0
-                return 0
+                cache[result_id] = 0.0
+                return 0.0
 
             # Build target
             log.info(f'[{worker_id}] Building: {result_id}')
@@ -224,7 +236,7 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
             )
 
             if build != 0:
-                cache[result_id] = 0
+                cache[result_id] = 0.0
                 result_context = {
                     'config': dict(
                         (
@@ -234,7 +246,7 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
                     )
                 }
                 log.debug(json.dumps(result_context, indent=2))
-                return 0
+                return 0.0
 
             # Run benchmark
             gpu_lock.acquire()
@@ -247,8 +259,10 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
                         'json',
                         '--seed',
                         'random',  # Random is better... I think? Otherwise we might overfit.
+                        '--size',
+                        f'{size}',
                         '--trials',
-                        '20',  # 20 seems to be a fair balance between benchmarking and compile time. Needs verification though.
+                        f'{trials}',  # 8 seems to be a fair balance between benchmarking and compile time. Needs verification though.
                         '--benchmark_out_format=json',
                         f'--benchmark_out={result_filename}',
                     ],
@@ -259,8 +273,8 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
                 )
 
                 if bench != 0:
-                    cache[result_id] = 0
-                    return 0
+                    cache[result_id] = 0.0
+                    return 0.0
                 result_value = get_result_from_json(
                     os.path.join(result_dir, result_filename)
                 )
@@ -279,7 +293,7 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
             }
             log.debug(json.dumps(result_context, indent=2))
 
-            cache[result_id] = result_value
+            cache[result_id] = -result_value
 
             # scipy.optimize does minimization, negate result for maximize
             return -result_value
@@ -294,12 +308,6 @@ def tune_alg(alg_name: str, arch: str, *, max_samples=200, clean=False, num_work
     script_dir = os.path.dirname(os.path.realpath(__file__))
     source_dir = os.path.join(script_dir, '../..')
     result_dir = os.path.join(script_dir, 'artifacts')
-
-    if clean:
-        try:
-            shutil.rmtree(result_dir)
-        except FileNotFoundError:
-            pass
 
     os.makedirs(result_dir, exist_ok=True)
 
@@ -334,15 +342,20 @@ parser = argparse.ArgumentParser(
     description='config tuning using local search',
 )
 
-parser.add_argument('targets', metavar='TARGETS', nargs='+', help='target(s) to optimize, seperated by comma')
+parser.add_argument('targets',metavar='TARGETS', nargs='*', help='target(s) to optimize, seperated by comma')
 parser.add_argument('-a', '--arch', default='gfx942', help='architecture to target, e.g. gfx908')
 parser.add_argument('-n', '--evals', default=200, help='maximum number of configs being evaluated per type per target')
-parser.add_argument('-c', '--clean', action='store_true', help='clear the output folder')
 parser.add_argument('-v', '--verbose', action='store_true', help='clear the output folder')
-parser.add_argument('-w', '--workers', default=4, help='number of workers')
+parser.add_argument('-w', '--workers', default=8, help='number of workers')
+parser.add_argument('-s', '--size', default=33554432, help='input size to use for tuning')
+parser.add_argument('-t', '--trials', default=8, help='number of trials per config to test')
+parser.add_argument('-c', '--combine', action='store_true', help='skip tuning and combine the results of a previous run for the given targets and architecture')
 parser.add_argument('-l', '--list', action='store_true', help='list available targets')
 
 args = parser.parse_args()
+
+if not args.targets:
+    args.targets = list(parameter_spaces.keys())
 
 if args.list:
     for target in parameter_spaces.keys():
@@ -356,6 +369,18 @@ if args.verbose:
 logging.basicConfig(format='%(message)s', handlers=[rich.logging.RichHandler(rich_tracebacks=True, markup=True)], level=log_level)
 log = logging.getLogger('rich')
 
+if args.combine:
+    for target in args.targets:
+        combine(alg_name=target, arch=args.arch)
+    quit()
+
 for target in args.targets:
-    log.info(f'Tuning {target} for {args.arch} with {args.arch} max evaluations')
-    tune_alg(target, args.arch, max_samples=args.evals, clean=args.clean, num_workers=args.workers)
+    log.info(f'Tuning {target} for {args.arch} with {int(args.evals)} max evaluations')
+    tune_alg(
+        alg_name=target,
+        arch=args.arch,
+        max_samples=int(args.evals),
+        num_workers=int(args.workers),
+        size=int(args.size),
+        trials=int(args.trials)
+    )
