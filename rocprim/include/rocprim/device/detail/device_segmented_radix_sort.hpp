@@ -762,10 +762,11 @@ void segmented_sort(KeysInputIterator keys_input,
         return;
     }
 
-    if(end_offset - begin_offset > items_per_block)
+    if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
     {
         // Large segment
         unsigned int bit = begin_bit;
+        // for(unsigned int i = 0; i < 1; i++)
         for(unsigned int i = 0; i < long_iterations; i++)
         {
             long_radix_helper_type().sort(
@@ -793,17 +794,17 @@ void segmented_sort(KeysInputIterator keys_input,
             bit += short_radix_bits;
         }
     }
-    else if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
-    {
-        // Small segment
-        single_block_helper_type().sort(
-            keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
-            ((long_iterations + short_iterations) % 2 == 0) != to_output,
-            begin_offset, end_offset,
-            begin_bit, end_bit,
-            storage.single_block_helper
-        );
-    }
+    // else if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
+    // {
+    //     // Small segment
+    //     single_block_helper_type().sort(
+    //         keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
+    //         ((long_iterations + short_iterations) % 2 == 0) != to_output,
+    //         begin_offset, end_offset,
+    //         begin_bit, end_bit,
+    //         storage.single_block_helper
+    //     );
+    // }
     else if(::rocprim::flat_block_thread_id() < params.warp_sort_config.logical_warp_size_small)
     {
         // Single warp segment
