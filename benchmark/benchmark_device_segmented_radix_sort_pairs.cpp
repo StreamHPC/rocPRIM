@@ -181,6 +181,7 @@ void run_sort_pairs_benchmark(benchmark::State&   state,
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop));
 
+    bool a = std::getenv("DEBUG_SYNC") != nullptr;
     for(auto _ : state)
     {
         // Record start event
@@ -201,7 +202,8 @@ void run_sort_pairs_benchmark(benchmark::State&   state,
                                                      0,
                                                      sizeof(key_type) * 8,
                                                      stream,
-                                                     false));
+                                                     a));
+                                                 a = false;
         }
 
         // Record stop event and wait until it completes
@@ -323,35 +325,35 @@ int main(int argc, char* argv[])
                                                         seed,
                                                         stream);
 #else
-    using custom_float2  = custom_type<float, float>;
-    using custom_double2 = custom_type<double, double>;
-    add_sort_pairs_benchmarks<int, float>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_pairs_benchmarks<long long, double>(benchmarks,
-                                                 bytes,
-                                                 min_size,
-                                                 bytes / 2,
-                                                 seed,
-                                                 stream);
-    add_sort_pairs_benchmarks<int8_t, int8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_pairs_benchmarks<uint8_t, uint8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_pairs_benchmarks<rocprim::half, rocprim::half>(benchmarks,
-                                                            bytes,
-                                                            min_size,
-                                                            bytes / 2,
-                                                            seed,
-                                                            stream);
-    add_sort_pairs_benchmarks<int, custom_float2>(benchmarks,
-                                                  bytes,
-                                                  min_size,
-                                                  bytes / 2,
-                                                  seed,
-                                                  stream);
-    add_sort_pairs_benchmarks<long long, custom_double2>(benchmarks,
-                                                         bytes,
-                                                         min_size,
-                                                         bytes / 2,
-                                                         seed,
-                                                         stream);
+    // using custom_float2  = custom_type<float, float>;
+    // using custom_double2 = custom_type<double, double>;
+    // add_sort_pairs_benchmarks<int, float>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_pairs_benchmarks<long long, double>(benchmarks,
+    //                                              bytes,
+    //                                              min_size,
+    //                                              bytes / 2,
+    //                                              seed,
+    //                                              stream);
+    // add_sort_pairs_benchmarks<int8_t, int8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    add_sort_pairs_benchmarks<rocprim::bfloat16, int64_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_pairs_benchmarks<rocprim::half, rocprim::half>(benchmarks,
+    //                                                         bytes,
+    //                                                         min_size,
+    //                                                         bytes / 2,
+    //                                                         seed,
+    //                                                         stream);
+    // add_sort_pairs_benchmarks<int, custom_float2>(benchmarks,
+    //                                               bytes,
+    //                                               min_size,
+    //                                               bytes / 2,
+    //                                               seed,
+    //                                               stream);
+    // add_sort_pairs_benchmarks<long long, custom_double2>(benchmarks,
+    //                                                      bytes,
+    //                                                      min_size,
+    //                                                      bytes / 2,
+    //                                                      seed,
+    //                                                      stream);
 #endif
 
     // Use manual timing

@@ -301,12 +301,13 @@ int main(int argc, char* argv[])
                                                         seed,
                                                         stream);
 #else
-    add_sort_keys_benchmarks<float>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_keys_benchmarks<double>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_keys_benchmarks<int8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_keys_benchmarks<uint8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_keys_benchmarks<rocprim::half>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
-    add_sort_keys_benchmarks<int>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<float>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<double>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<int8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<uint8_t>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<rocprim::half>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    // add_sort_keys_benchmarks<int>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
+    add_sort_keys_benchmarks<rocprim::bfloat16>(benchmarks, bytes, min_size, bytes / 2, seed, stream);
 #endif
 
     // Use manual timing
