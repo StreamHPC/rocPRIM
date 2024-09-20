@@ -715,16 +715,22 @@ void segmented_sort(KeysInputIterator keys_input,
         ::rocprim::device_warp_size(), block_size, items_per_thread,
         long_radix_bits, Descending
     >;
-    using warp_sort_helper_type = segmented_warp_sort_helper<
-        select_warp_sort_helper_config_t<params.warp_sort_config.partitioning_allowed,
-                                         params.warp_sort_config.logical_warp_size_small,
-                                         params.warp_sort_config.items_per_thread_small,
-                                         params.warp_sort_config.block_size_small>,
-        key_type,
-        value_type,
-        block_size,
-        Descending>;
-    static constexpr unsigned int items_per_warp = warp_sort_helper_type::items_per_warp;
+    // using warp_sort_helper_type = segmented_warp_sort_helper<
+    //     select_warp_sort_helper_config_t<params.warp_sort_config.partitioning_allowed,
+    //                                      params.warp_sort_config.logical_warp_size_small,
+    //                                      params.warp_sort_config.items_per_thread_small,
+    //                                      params.warp_sort_config.block_size_small>,
+    //     key_type,
+    //     value_type,
+    //     block_size,
+    //     Descending>;
+    using warp_sort_helper_type = segmented_radix_sort_single_block_helper<
+        key_type, value_type,
+        params.warp_sort_config.logical_warp_size_small, params.warp_sort_config.items_per_thread_small,
+        Descending
+    >;
+
+    static constexpr unsigned int items_per_warp = params.warp_sort_config.logical_warp_size_small * params.warp_sort_config.items_per_thread_small;
 
     ROCPRIM_SHARED_MEMORY union
     {
