@@ -3516,8 +3516,8 @@ struct default_segmented_radix_sort_config<
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
     : segmented_radix_sort_config<
-          7,
-          6,
+          8,
+          8,
           kernel_config<256, 17>,
           typename std::conditional<1,
                                     WarpSortConfig<32, 4, 256, 3000, 32, 4, 256>,
