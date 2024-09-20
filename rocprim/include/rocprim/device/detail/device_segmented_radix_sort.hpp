@@ -728,11 +728,6 @@ void segmented_sort(KeysInputIterator keys_input,
         ::rocprim::device_warp_size(), block_size, items_per_thread,
         long_radix_bits, Descending
     >;
-    using short_radix_helper_type = segmented_radix_sort_helper<
-        key_type, value_type,
-        ::rocprim::device_warp_size(), block_size, items_per_thread,
-        short_radix_bits, Descending
-    >;
     using warp_sort_helper_type = segmented_warp_sort_helper<
         select_warp_sort_helper_config_t<params.warp_sort_config.partitioning_allowed,
                                          params.warp_sort_config.logical_warp_size_small,
@@ -747,7 +742,6 @@ void segmented_sort(KeysInputIterator keys_input,
     {
         typename single_block_helper_type::storage_type single_block_helper;
         typename long_radix_helper_type::storage_type long_radix_helper;
-        typename short_radix_helper_type::storage_type short_radix_helper;
         typename warp_sort_helper_type::storage_type warp_sort_helper;
     } storage;
 
@@ -765,9 +759,7 @@ void segmented_sort(KeysInputIterator keys_input,
     if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
     {
         // Large segment
-        unsigned int bit = begin_bit;
-        // for(unsigned int i = 0; i < 1; i++)
-        for(unsigned int i = 0; i < long_iterations; i++)
+        for (unsigned int bit = begin_bit; bit < end_bit; bit += long_radix_bits)
         {
             long_radix_helper_type().sort(
                 keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
@@ -778,20 +770,6 @@ void segmented_sort(KeysInputIterator keys_input,
             );
 
             to_output = !to_output;
-            bit += long_radix_bits;
-        }
-        for(unsigned int i = 0; i < short_iterations; i++)
-        {
-            short_radix_helper_type().sort(
-                keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
-                to_output,
-                begin_offset, end_offset,
-                bit, begin_bit, end_bit,
-                storage.short_radix_helper
-            );
-
-            to_output = !to_output;
-            bit += short_radix_bits;
         }
     }
     // else if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
