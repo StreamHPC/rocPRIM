@@ -274,33 +274,22 @@ template<
 >
 class segmented_radix_sort_single_block_helper
 {
-    using key_type = Key;
-    using value_type = Value;
-
-    using key_codec = radix_key_codec<key_type, Descending>;
+    using key_codec = radix_key_codec<Key, Descending>;
     using bit_key_type = typename key_codec::bit_key_type;
-    using keys_load_type = ::rocprim::block_load<
-        key_type, BlockSize, ItemsPerThread,
-        ::rocprim::block_load_method::block_load_transpose>;
-    using values_load_type = ::rocprim::block_load<
-        value_type, BlockSize, ItemsPerThread,
-        ::rocprim::block_load_method::block_load_transpose>;
-    using sort_type = ::rocprim::block_radix_sort<key_type, BlockSize, ItemsPerThread, value_type>;
+    using sort_type = ::rocprim::block_radix_sort<Key, BlockSize, ItemsPerThread, Value, 1, 1, 8, block_radix_rank_algorithm::match>;
     using keys_store_type = ::rocprim::block_store<
-        key_type, BlockSize, ItemsPerThread,
+        Key, BlockSize, ItemsPerThread,
         ::rocprim::block_store_method::block_store_transpose>;
     using values_store_type = ::rocprim::block_store<
-        value_type, BlockSize, ItemsPerThread,
+        Value, BlockSize, ItemsPerThread,
         ::rocprim::block_store_method::block_store_transpose>;
 
-    static constexpr bool with_values = !std::is_same<value_type, ::rocprim::empty_type>::value;
+    static constexpr bool with_values = !std::is_same<Value, ::rocprim::empty_type>::value;
 
 public:
 
     union storage_type
     {
-        typename keys_load_type::storage_type keys_load;
-        typename values_load_type::storage_type values_load;
         typename sort_type::storage_type sort;
         typename keys_store_type::storage_type keys_store;
         typename values_store_type::storage_type values_store;
@@ -314,10 +303,10 @@ public:
     >
     ROCPRIM_DEVICE ROCPRIM_INLINE
     void sort(KeysInputIterator keys_input,
-              key_type * keys_tmp,
+              Key* keys_tmp,
               KeysOutputIterator keys_output,
               ValuesInputIterator values_input,
-              value_type * values_tmp,
+              Value* values_tmp,
               ValuesOutputIterator values_output,
               bool to_output,
               unsigned int begin_offset,
@@ -348,12 +337,12 @@ public:
 
     // When all iterators are raw pointers, this overload is used to minimize code duplication in the kernel
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void sort(key_type * keys_input,
-              key_type * keys_tmp,
-              key_type * keys_output,
-              value_type * values_input,
-              value_type * values_tmp,
-              value_type * values_output,
+    void sort(Key* keys_input,
+              Key* keys_tmp,
+              Key* keys_output,
+              Value* values_input,
+              Value* values_tmp,
+              Value* values_output,
               bool to_output,
               unsigned int begin_offset,
               unsigned int end_offset,
@@ -389,7 +378,7 @@ public:
         constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
 
         using shorter_single_block_helper = segmented_radix_sort_single_block_helper<
-            key_type, value_type,
+            Key, Value,
             BlockSize, ItemsPerThread / 2, Descending
         >;
 
@@ -399,7 +388,7 @@ public:
             return false;
         }
 
-        // Recursively chech if it is possible to sort the segment using fewer items per thread
+        // Recursively check if it is possible to sort the segment using fewer items per thread
         const bool processed_by_shorter =
             shorter_single_block_helper().sort(
                 keys_input, keys_output, values_input, values_output,
@@ -412,16 +401,17 @@ public:
             return true;
         }
 
-        key_type keys[ItemsPerThread];
-        value_type values[ItemsPerThread];
+        const unsigned int flat_id = ::rocprim::flat_block_thread_id();
+
+        Key keys[ItemsPerThread];
+        Value values[ItemsPerThread];
         const unsigned int valid_count = end_offset - begin_offset;
         // Sort will leave "invalid" (out of size) items at the end of the sorted sequence
-        const key_type out_of_bounds = key_codec::decode(bit_key_type(-1));
-        keys_load_type().load(keys_input + begin_offset, keys, valid_count, out_of_bounds, storage.keys_load);
+        const Key out_of_bounds = key_codec::get_out_of_bounds_key();
+        block_load_direct_warp_striped(flat_id, keys_input + begin_offset, keys, valid_count, out_of_bounds);
         if(with_values)
         {
-            ::rocprim::syncthreads();
-            values_load_type().load(values_input + begin_offset, values, valid_count, storage.values_load);
+            block_load_direct_warp_striped(flat_id, values_input + begin_offset, values, valid_count);
         }
 
         ::rocprim::syncthreads();
@@ -756,7 +746,7 @@ void segmented_sort(KeysInputIterator keys_input,
         return;
     }
 
-    if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
+    if(end_offset - begin_offset > items_per_block)
     {
         // Large segment
         for (unsigned int bit = begin_bit; bit < end_bit; bit += long_radix_bits)
@@ -772,17 +762,17 @@ void segmented_sort(KeysInputIterator keys_input,
             to_output = !to_output;
         }
     }
-    // else if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
-    // {
-    //     // Small segment
-    //     single_block_helper_type().sort(
-    //         keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
-    //         ((long_iterations + short_iterations) % 2 == 0) != to_output,
-    //         begin_offset, end_offset,
-    //         begin_bit, end_bit,
-    //         storage.single_block_helper
-    //     );
-    // }
+    else if(!warp_sort_enabled || end_offset - begin_offset > items_per_warp)
+    {
+        // Small segment
+        single_block_helper_type().sort(
+            keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
+            ((long_iterations + short_iterations) % 2 == 0) != to_output,
+            begin_offset, end_offset,
+            begin_bit, end_bit,
+            storage.single_block_helper
+        );
+    }
     else if(::rocprim::flat_block_thread_id() < params.warp_sort_config.logical_warp_size_small)
     {
         // Single warp segment
