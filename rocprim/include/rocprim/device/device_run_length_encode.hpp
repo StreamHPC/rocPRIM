@@ -111,7 +111,7 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
     using ordered_block_id_type = detail::ordered_block_id<unsigned int>;
 
     detail::target_arch target_arch;
-    RETURN_ON_ERROR(host_target_arch(stream, target_arch));
+    ROCPRIM_RETURN_ON_ERROR(host_target_arch(stream, target_arch));
 
     const non_trivial_runs_config_params params     = dispatch_target_arch<config>(target_arch);
     const unsigned int                   block_size = params.kernel_config.block_size;
@@ -123,7 +123,7 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
     ordered_block_id_type::id_type* ordered_bid_storage;
 
     detail::temp_storage::layout layout{};
-    RETURN_ON_ERROR(scan_state_type::get_temp_storage_layout(grid_size, stream, layout));
+    ROCPRIM_RETURN_ON_ERROR(scan_state_type::get_temp_storage_layout(grid_size, stream, layout));
 
     hipError_t result = detail::temp_storage::partition(
         temporary_storage,
@@ -140,15 +140,16 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
     }
 
     bool use_sleep;
-    RETURN_ON_ERROR(detail::is_sleep_scan_state_used(stream, use_sleep));
+    ROCPRIM_RETURN_ON_ERROR(detail::is_sleep_scan_state_used(stream, use_sleep));
 
     scan_state_type            scan_state{};
     scan_state_with_sleep_type scan_state_with_sleep{};
-    RETURN_ON_ERROR(scan_state_type::create(scan_state, scan_state_storage, grid_size, stream));
-    RETURN_ON_ERROR(scan_state_with_sleep_type::create(scan_state_with_sleep,
-                                                       scan_state_storage,
-                                                       grid_size,
-                                                       stream));
+    ROCPRIM_RETURN_ON_ERROR(
+        scan_state_type::create(scan_state, scan_state_storage, grid_size, stream));
+    ROCPRIM_RETURN_ON_ERROR(scan_state_with_sleep_type::create(scan_state_with_sleep,
+                                                               scan_state_storage,
+                                                               grid_size,
+                                                               stream));
 
     auto with_scan_state
         = [use_sleep, scan_state, scan_state_with_sleep](auto&& func) mutable -> decltype(auto)
