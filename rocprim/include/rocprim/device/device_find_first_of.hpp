@@ -65,7 +65,8 @@ void find_first_of_kernel(InputIterator1           input,
     constexpr unsigned int items_per_block  = block_size * items_per_thread;
     constexpr unsigned int identity         = std::numeric_limits<unsigned int>::max();
 
-    using type     = typename std::iterator_traits<InputIterator1>::value_type;
+    using type =
+        typename std::remove_const_t<typename std::iterator_traits<InputIterator1>::value_type>;
     using key_type = typename std::iterator_traits<InputIterator2>::value_type;
 
     const unsigned int thread_id = ::rocprim::detail::block_thread_id<0>();
