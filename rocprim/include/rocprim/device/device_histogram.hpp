@@ -670,6 +670,13 @@ inline hipError_t histogram_even(void*          temporary_storage,
 /// \returns \p hipSuccess (\p 0) after successful histogram operation; otherwise a HIP runtime error of
 /// type \p hipError_t.
 ///
+/// \par Notes
+/// * Currently the \p Channels template parameter has no strict restriction on its value. However,
+///   internally a vector type of elements of type \p SampleIterator and length \p Channels is used
+///   to represent the input items, so the amount of local memory available will limit the range of
+///   possible values for this template parameter.
+/// * \p ActiveChannels must be less or equal than \p Channels.
+///
 /// \par Example
 /// \parblock
 /// In this example histograms for 3 channels (RGB) are computed on an array of 8-bit RGBA samples.
@@ -783,6 +790,13 @@ inline hipError_t multi_histogram_even(void*          temporary_storage,
 ///
 /// \returns \p hipSuccess (\p 0) after successful histogram operation; otherwise a HIP runtime error of
 /// type \p hipError_t.
+///
+/// \par Notes
+/// * Currently the \p Channels template parameter has no strict restriction on its value. However,
+///   internally a vector type of elements of type \p SampleIterator and length \p Channels is used
+///   to represent the input items, so the amount of local memory available will limit the range of
+///   possible values for this template parameter.
+/// * \p ActiveChannels must be less or equal than \p Channels.
 ///
 /// \par Example
 /// \parblock
@@ -1091,6 +1105,13 @@ inline hipError_t histogram_range(void*          temporary_storage,
 /// \returns \p hipSuccess (\p 0) after successful histogram operation; otherwise a HIP runtime error of
 /// type \p hipError_t.
 ///
+/// \par Notes
+/// * Currently the \p Channels template parameter has no strict restriction on its value. However,
+///   internally a vector type of elements of type \p SampleIterator and length \p Channels is used
+///   to represent the input items, so the amount of local memory available will limit the range of
+///   possible values for this template parameter.
+/// * \p ActiveChannels must be less or equal than \p Channels.
+///
 /// \par Example
 /// \parblock
 /// In this example histograms for 3 channels (RGB) are computed on an array of 8-bit RGBA samples.
@@ -1199,6 +1220,13 @@ inline hipError_t multi_histogram_range(void*          temporary_storage,
 ///
 /// \returns \p hipSuccess (\p 0) after successful histogram operation; otherwise a HIP runtime error of
 /// type \p hipError_t.
+///
+/// \par Notes
+/// * Currently the \p Channels template parameter has no strict restriction on its value. However,
+///   internally a vector type of elements of type \p SampleIterator and length \p Channels is used
+///   to represent the input items, so the amount of local memory available will limit the range of
+///   possible values for this template parameter.
+/// * \p ActiveChannels must be less or equal than \p Channels.
 ///
 /// \par Example
 /// \parblock
