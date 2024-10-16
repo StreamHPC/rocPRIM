@@ -16,11 +16,13 @@ Documentation for rocPRIM is available at
 * Added a parallel `find_end` device function similar to `std::find_end`, this function searches for the last occurrence of the sequence.
 * Added hipGraph support to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`).
 * Added configuration autotuning to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`) for improved performance on selected architectures.
+* Added new constructors and a `base` function, and added `constexpr` specifier to all functions in `rocprim::reverse_iterator` to improve parity with the C++17 `std::reverse_iterator`.
 
 ### Changes
 
 * Removed HIP-CPU support. HIP-CPU support was experimental and broken.
 * Changed the C++ version from 14 to 17. C++14 will be deprecated in the next major release.
+* Using the initialisation constructor of `rocprim::reverse_iterator` will throw a deprecation warning. It will be marked as explicit in the next major release.
 
 ### Fixes
 
