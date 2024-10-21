@@ -60,9 +60,9 @@ ROCPRIM_KERNEL
         InitValueType  initial_value,
         BinaryFunction reduce_op)
 {
-    block_reduce_kernel_impl<WithInitialValue, Config, ResultType>(
-        input, size, output, initial_value, reduce_op
-    );
+    // block_reduce_kernel_impl<WithInitialValue, Config, ResultType>(
+    //     input, size, output, initial_value, reduce_op
+    // );
 }
 
 #define ROCPRIM_DETAIL_HIP_SYNC(name, size, start) \
