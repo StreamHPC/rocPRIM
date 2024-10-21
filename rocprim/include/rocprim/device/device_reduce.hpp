@@ -45,7 +45,8 @@ BEGIN_ROCPRIM_NAMESPACE
 namespace detail
 {
 
-template<bool WithInitialValue,
+template<bool         WithInitialValue,
+         unsigned int LimitItems,
          class Config,
          class ResultType,
          class InputIterator,
@@ -53,47 +54,47 @@ template<bool WithInitialValue,
          class InitValueType,
          class BinaryFunction>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().reduce_config.block_size) void block_reduce_kernel(
-        InputIterator  input,
-        const size_t   size,
-        OutputIterator output,
-        InitValueType  initial_value,
-        BinaryFunction reduce_op)
+    __launch_bounds__(device_params<Config>().reduce_config.block_size)
+void block_reduce_kernel(InputIterator  input,
+                         const size_t   size,
+                         OutputIterator output,
+                         InitValueType  initial_value,
+                         BinaryFunction reduce_op)
 {
-    block_reduce_kernel_impl<WithInitialValue, Config, ResultType>(
-        input, size, output, initial_value, reduce_op
-    );
+    block_reduce_kernel_impl<WithInitialValue, LimitItems, Config, ResultType>(input,
+                                                                               size,
+                                                                               output,
+                                                                               initial_value,
+                                                                               reduce_op);
 }
 
-#define ROCPRIM_DETAIL_HIP_SYNC(name, size, start) \
-    if(debug_synchronous) \
-    { \
-        std::cout << name << "(" << size << ")"; \
-        auto _error = hipStreamSynchronize(stream); \
-        if(_error != hipSuccess) return _error; \
-        auto _end = std::chrono::steady_clock::now(); \
-        auto _d = std::chrono::duration_cast<std::chrono::duration<double>>(_end - start); \
-        std::cout << " " << _d.count() * 1000 << " ms" << '\n'; \
+#define ROCPRIM_DETAIL_HIP_SYNC(name, size, start)                                           \
+    if(debug_synchronous)                                                                    \
+    {                                                                                        \
+        std::cout << name << "(" << size << ")";                                             \
+        auto _error = hipStreamSynchronize(stream);                                          \
+        if(_error != hipSuccess)                                                             \
+            return _error;                                                                   \
+        auto _end = std::chrono::steady_clock::now();                                        \
+        auto _d   = std::chrono::duration_cast<std::chrono::duration<double>>(_end - start); \
+        std::cout << " " << _d.count() * 1000 << " ms" << '\n';                              \
     }
 
-template<
-    bool WithInitialValue, // true when inital_value should be used in reduction
-    class Config,
-    class InputIterator,
-    class OutputIterator,
-    class InitValueType,
-    class BinaryFunction
->
-inline
-hipError_t reduce_impl(void * temporary_storage,
-                       size_t& storage_size,
-                       InputIterator input,
-                       OutputIterator output,
-                       const InitValueType initial_value,
-                       const size_t size,
-                       BinaryFunction reduce_op,
-                       const hipStream_t stream,
-                       bool debug_synchronous)
+template<bool WithInitialValue, // true when inital_value should be used in reduction
+         class Config,
+         class InputIterator,
+         class OutputIterator,
+         class InitValueType,
+         class BinaryFunction>
+inline hipError_t reduce_impl(void*               temporary_storage,
+                              size_t&             storage_size,
+                              InputIterator       input,
+                              OutputIterator      output,
+                              const InitValueType initial_value,
+                              const size_t        size,
+                              BinaryFunction      reduce_op,
+                              const hipStream_t   stream,
+                              bool                debug_synchronous)
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using result_type =
@@ -168,17 +169,19 @@ hipError_t reduce_impl(void * temporary_storage,
 
     if(number_of_blocks > 1)
     {
-        const auto    aligned_size_limit = number_of_blocks_limit * items_per_block;
+        const auto aligned_size_limit = number_of_blocks_limit * items_per_block;
 
         // Launch number_of_blocks_limit blocks while there is still at least as many blocks left as the limit
         const auto number_of_launch = (size + aligned_size_limit - 1) / aligned_size_limit;
-        for(size_t i = 0, offset = 0; i < number_of_launch; ++i, offset += aligned_size_limit) {
-            const auto current_size = std::min<size_t>(size - offset, aligned_size_limit);
+        for(size_t i = 0, offset = 0; i < number_of_launch; ++i, offset += aligned_size_limit)
+        {
+            const auto current_size   = std::min<size_t>(size - offset, aligned_size_limit);
             const auto current_blocks = (current_size + items_per_block - 1) / items_per_block;
 
-            if(debug_synchronous) start = std::chrono::steady_clock::now();
+            if(debug_synchronous)
+                start = std::chrono::steady_clock::now();
             hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(detail::block_reduce_kernel<false, config, result_type>),
+                HIP_KERNEL_NAME(detail::block_reduce_kernel<false, 1, config, result_type>),
                 dim3(current_blocks),
                 dim3(block_size),
                 0,
@@ -191,7 +194,8 @@ hipError_t reduce_impl(void * temporary_storage,
             ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", current_size, start);
         }
 
-        if(debug_synchronous) start = std::chrono::steady_clock::now();
+        if(debug_synchronous)
+            start = std::chrono::steady_clock::now();
         auto error = reduce_impl<WithInitialValue, Config>(nested_temp_storage,
                                                            nested_temp_storage_size,
                                                            block_prefixes, // input
@@ -201,27 +205,70 @@ hipError_t reduce_impl(void * temporary_storage,
                                                            reduce_op,
                                                            stream,
                                                            debug_synchronous);
-        if(error != hipSuccess) return error;
+        if(error != hipSuccess)
+            return error;
         ROCPRIM_DETAIL_HIP_SYNC("nested_device_reduce", number_of_blocks, start);
     }
     else
     {
-        if(debug_synchronous) start = std::chrono::steady_clock::now();
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(detail::block_reduce_kernel<WithInitialValue, config, result_type>),
-            dim3(1), dim3(block_size), 0, stream,
-            input, size, output, initial_value, reduce_op
-        );
+        const unsigned int to_large = size > 0 ? items_per_block / size : 0;
+        if(debug_synchronous)
+            start = std::chrono::steady_clock::now();
+        if(to_large >= 16)
+        {
+            detail::block_reduce_kernel<WithInitialValue, 16, config, result_type>
+                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                           size,
+                                                           output,
+                                                           initial_value,
+                                                           reduce_op);
+        }
+        else if(to_large >= 8)
+        {
+            detail::block_reduce_kernel<WithInitialValue, 8, config, result_type>
+                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                           size,
+                                                           output,
+                                                           initial_value,
+                                                           reduce_op);
+        }
+        else if(to_large >= 4)
+        {
+            detail::block_reduce_kernel<WithInitialValue, 4, config, result_type>
+                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                           size,
+                                                           output,
+                                                           initial_value,
+                                                           reduce_op);
+        }
+        else if(to_large >= 2)
+        {
+            detail::block_reduce_kernel<WithInitialValue, 2, config, result_type>
+                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                           size,
+                                                           output,
+                                                           initial_value,
+                                                           reduce_op);
+        }
+        else
+        {
+            detail::block_reduce_kernel<WithInitialValue, 1, config, result_type>
+                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                           size,
+                                                           output,
+                                                           initial_value,
+                                                           reduce_op);
+        }
+
         ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", size, start);
     }
 
     return hipSuccess;
 }
 
-
 #undef ROCPRIM_DETAIL_HIP_SYNC
 
-} // end of detail namespace
+} // namespace detail
 
 /// \brief Parallel reduction primitive for device level.
 ///
@@ -345,29 +392,31 @@ hipError_t reduce_impl(void * temporary_storage,
 /// );
 /// \endcode
 /// \endparblock
-template<
-    class Config = default_config,
-    class InputIterator,
-    class OutputIterator,
-    class InitValueType,
-    class BinaryFunction = ::rocprim::plus<typename std::iterator_traits<InputIterator>::value_type>
->
-inline
-hipError_t reduce(void * temporary_storage,
-                 size_t& storage_size,
-                 InputIterator input,
-                 OutputIterator output,
-                 const InitValueType initial_value,
-                 const size_t size,
-                 BinaryFunction reduce_op = BinaryFunction(),
-                 const hipStream_t stream = 0,
-                 bool debug_synchronous = false)
+template<class Config = default_config,
+         class InputIterator,
+         class OutputIterator,
+         class InitValueType,
+         class BinaryFunction
+         = ::rocprim::plus<typename std::iterator_traits<InputIterator>::value_type>>
+inline hipError_t reduce(void*               temporary_storage,
+                         size_t&             storage_size,
+                         InputIterator       input,
+                         OutputIterator      output,
+                         const InitValueType initial_value,
+                         const size_t        size,
+                         BinaryFunction      reduce_op         = BinaryFunction(),
+                         const hipStream_t   stream            = 0,
+                         bool                debug_synchronous = false)
 {
-    return detail::reduce_impl<true, Config>(
-        temporary_storage, storage_size,
-        input, output, initial_value, size,
-        reduce_op, stream, debug_synchronous
-    );
+    return detail::reduce_impl<true, Config>(temporary_storage,
+                                             storage_size,
+                                             input,
+                                             output,
+                                             initial_value,
+                                             size,
+                                             reduce_op,
+                                             stream,
+                                             debug_synchronous);
 }
 
 /// \brief Parallel reduce primitive for device level.
@@ -475,29 +524,31 @@ hipError_t reduce(void * temporary_storage,
 /// );
 /// \endcode
 /// \endparblock
-template<
-    class Config = default_config,
-    class InputIterator,
-    class OutputIterator,
-    class BinaryFunction = ::rocprim::plus<typename std::iterator_traits<InputIterator>::value_type>
->
-inline
-hipError_t reduce(void * temporary_storage,
-                  size_t& storage_size,
-                  InputIterator input,
-                  OutputIterator output,
-                  const size_t size,
-                  BinaryFunction reduce_op = BinaryFunction(),
-                  const hipStream_t stream = 0,
-                  bool debug_synchronous = false)
+template<class Config = default_config,
+         class InputIterator,
+         class OutputIterator,
+         class BinaryFunction
+         = ::rocprim::plus<typename std::iterator_traits<InputIterator>::value_type>>
+inline hipError_t reduce(void*             temporary_storage,
+                         size_t&           storage_size,
+                         InputIterator     input,
+                         OutputIterator    output,
+                         const size_t      size,
+                         BinaryFunction    reduce_op         = BinaryFunction(),
+                         const hipStream_t stream            = 0,
+                         bool              debug_synchronous = false)
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
 
-    return detail::reduce_impl<false, Config>(
-        temporary_storage, storage_size,
-        input, output, input_type(), size,
-        reduce_op, stream, debug_synchronous
-    );
+    return detail::reduce_impl<false, Config>(temporary_storage,
+                                              storage_size,
+                                              input,
+                                              output,
+                                              input_type(),
+                                              size,
+                                              reduce_op,
+                                              stream,
+                                              debug_synchronous);
 }
 
 /// @}
