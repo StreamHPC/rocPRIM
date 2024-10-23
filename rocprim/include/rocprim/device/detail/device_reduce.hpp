@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,6 @@
 #ifndef ROCPRIM_DEVICE_DETAIL_DEVICE_REDUCE_HPP_
 #define ROCPRIM_DEVICE_DETAIL_DEVICE_REDUCE_HPP_
 
-#include <iterator>
-#include <type_traits>
-
 #include "../../config.hpp"
 #include "../../detail/temp_storage.hpp"
 #include "../../detail/various.hpp"
@@ -36,6 +33,9 @@
 
 #include "../../block/block_load.hpp"
 #include "../../block/block_reduce.hpp"
+
+#include <iterator>
+#include <type_traits>
 
 BEGIN_ROCPRIM_NAMESPACE
 
@@ -84,7 +84,8 @@ void block_reduce_kernel_impl(InputIterator input,
 
     constexpr unsigned int block_size = params.reduce_config.block_size;
     constexpr unsigned int items_per_thread
-        = FitLarger ? params.reduce_config.items_per_thread * FitItems: ceiling_div(params.reduce_config.items_per_thread, FitItems);
+        = FitLarger ? params.reduce_config.items_per_thread * FitItems
+                    : ceiling_div(params.reduce_config.items_per_thread, FitItems);
 
     using result_type = ResultType;
 
