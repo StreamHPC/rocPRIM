@@ -64,7 +64,8 @@ auto reduce_with_initial(T output, T initial_value, BinaryFunction reduce_op) ->
 
 template<
     bool WithInitialValue,
-    unsigned int LimitItems,
+    bool         FitLarger,
+    unsigned int FitItems,
     class Config,
     class ResultType,
     class InputIterator,
@@ -83,7 +84,7 @@ void block_reduce_kernel_impl(InputIterator input,
 
     constexpr unsigned int block_size = params.reduce_config.block_size;
     constexpr unsigned int items_per_thread
-        = ceiling_div(params.reduce_config.items_per_thread, LimitItems);
+        = FitLarger ? params.reduce_config.items_per_thread * FitItems: ceiling_div(params.reduce_config.items_per_thread, FitItems);
 
     using result_type = ResultType;
 
