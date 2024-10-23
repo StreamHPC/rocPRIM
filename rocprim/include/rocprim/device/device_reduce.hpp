@@ -81,6 +81,24 @@ void block_reduce_kernel(InputIterator  input,
         std::cout << " " << _d.count() * 1000 << " ms" << '\n';                              \
     }
 
+#define SINGLE_REDUCE_KERNEL(fit_larger, fit_items)                                       \
+    do                                                                                    \
+    {                                                                                     \
+        if(debug_synchronous)                                                             \
+        {                                                                                 \
+            start = std::chrono::steady_clock::now();                                     \
+        }                                                                                 \
+                                                                                          \
+        block_reduce_kernel<WithInitialValue, fit_larger, fit_items, config, result_type> \
+            <<<dim3(1), dim3(block_size), 0, stream>>>(input,                             \
+                                                       size,                              \
+                                                       output,                            \
+                                                       initial_value,                     \
+                                                       reduce_op);                        \
+        ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", size, start);  \
+    }                                                                                     \
+    while(0)
+
 template<bool WithInitialValue, // true when inital_value should be used in reduction
          class Config,
          class InputIterator,
@@ -104,11 +122,8 @@ inline hipError_t reduce_impl(void*               temporary_storage,
     using config = wrapped_reduce_config<Config, result_type>;
 
     detail::target_arch target_arch;
-    hipError_t          result = host_target_arch(stream, target_arch);
-    if(result != hipSuccess)
-    {
-        return result;
-    }
+    RETURN_ON_ERROR(host_target_arch(stream, target_arch));
+
     const reduce_config_params params = dispatch_target_arch<config>(target_arch);
 
     const unsigned int block_size       = params.reduce_config.block_size;
@@ -125,20 +140,15 @@ inline hipError_t reduce_impl(void*               temporary_storage,
     size_t nested_temp_storage_size = 0;
     if(number_of_blocks > 1)
     {
-        const hipError_t nested_result
-            = reduce_impl<WithInitialValue, Config>(nullptr,
-                                                    nested_temp_storage_size,
-                                                    block_prefixes, // input
-                                                    output, // output
-                                                    initial_value,
-                                                    number_of_blocks, // input size
-                                                    reduce_op,
-                                                    stream,
-                                                    debug_synchronous);
-        if(nested_result != hipSuccess)
-        {
-            return nested_result;
-        }
+        RETURN_ON_ERROR(reduce_impl<WithInitialValue, Config>(nullptr,
+                                                              nested_temp_storage_size,
+                                                              block_prefixes, // input
+                                                              output, // output
+                                                              initial_value,
+                                                              number_of_blocks, // input size
+                                                              reduce_op,
+                                                              stream,
+                                                              debug_synchronous));
     }
 
     const hipError_t partition_result = detail::temp_storage::partition(
@@ -180,137 +190,89 @@ inline hipError_t reduce_impl(void*               temporary_storage,
             const auto current_blocks = (current_size + items_per_block - 1) / items_per_block;
 
             if(debug_synchronous)
+            {
                 start = std::chrono::steady_clock::now();
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(detail::block_reduce_kernel<false, true, 1, config, result_type>),
-                dim3(current_blocks),
-                dim3(block_size),
-                0,
-                stream,
-                input + offset,
-                current_size,
-                block_prefixes + i * number_of_blocks_limit,
-                initial_value,
-                reduce_op);
+            }
+            block_reduce_kernel<false, true, 1, config, result_type>
+                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(
+                    input + offset,
+                    current_size,
+                    block_prefixes + i * number_of_blocks_limit,
+                    initial_value,
+                    reduce_op);
             ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", current_size, start);
         }
 
         if(debug_synchronous)
+        {
             start = std::chrono::steady_clock::now();
-        auto error = reduce_impl<WithInitialValue, Config>(nested_temp_storage,
-                                                           nested_temp_storage_size,
-                                                           block_prefixes, // input
-                                                           output, // output
-                                                           initial_value,
-                                                           number_of_blocks, // input size
-                                                           reduce_op,
-                                                           stream,
-                                                           debug_synchronous);
-        if(error != hipSuccess)
-            return error;
+        }
+
+        RETURN_ON_ERROR(reduce_impl<WithInitialValue, Config>(nested_temp_storage,
+                                                              nested_temp_storage_size,
+                                                              block_prefixes, // input
+                                                              output, // output
+                                                              initial_value,
+                                                              number_of_blocks, // input size
+                                                              reduce_op,
+                                                              stream,
+                                                              debug_synchronous));
+
         ROCPRIM_DETAIL_HIP_SYNC("nested_device_reduce", number_of_blocks, start);
     }
     else
     {
-        const unsigned int to_large = size > 0 ? items_per_block / size : 0;
-        const unsigned int to_small = number_of_blocks;
+        const unsigned int too_large = size > 0 ? items_per_block / size : 0;
+        const unsigned int too_small = number_of_blocks;
 
-        if(debug_synchronous)
-            start = std::chrono::steady_clock::now();
-        if(to_small > 1)
+        if(too_small > 1)
         {
-            if(to_small <= 2)
+            if(too_small <= 2)
             {
-                detail::block_reduce_kernel<WithInitialValue, true, 2, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(true, 2);
             }
-            else if (to_small <= 4)
+            else if(too_small <= 4)
             {
-                detail::block_reduce_kernel<WithInitialValue, true, 4, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(true, 4);
             }
-            else if (to_small <= 8)
+            else if(too_small <= 8)
             {
-                detail::block_reduce_kernel<WithInitialValue, true, 8, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(true, 8);
             }
-            else if (to_small <= 16)
+            else if(too_small <= 16)
             {
-                detail::block_reduce_kernel<WithInitialValue, true, 16, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(true, 16);
             }
         }
         else
         {
-            if(to_large >= 16)
+            if(too_large >= 16)
             {
-                detail::block_reduce_kernel<WithInitialValue, false, 16, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(false, 16);
             }
-            else if(to_large >= 8)
+            else if(too_large >= 8)
             {
-                detail::block_reduce_kernel<WithInitialValue, false, 8, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(false, 8);
             }
-            else if(to_large >= 4)
+            else if(too_large >= 4)
             {
-                detail::block_reduce_kernel<WithInitialValue, false, 4, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(false, 4);
             }
-            else if(to_large >= 2)
+            else if(too_large >= 2)
             {
-                detail::block_reduce_kernel<WithInitialValue, false, 2, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(false, 2);
             }
             else
             {
-                detail::block_reduce_kernel<WithInitialValue, false, 1, config, result_type>
-                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                               size,
-                                                               output,
-                                                               initial_value,
-                                                               reduce_op);
+                SINGLE_REDUCE_KERNEL(false, 1);
             }
         }
-
-        ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", size, start);
     }
 
     return hipSuccess;
 }
 
+#undef SINGLE_REDUCE_KERNEL
 #undef ROCPRIM_DETAIL_HIP_SYNC
 
 } // namespace detail
