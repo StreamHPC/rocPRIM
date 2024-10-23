@@ -46,7 +46,8 @@ namespace detail
 {
 
 template<bool         WithInitialValue,
-         unsigned int LimitItems,
+         bool         FitLarger,
+         unsigned int FitItems,
          class Config,
          class ResultType,
          class InputIterator,
@@ -61,11 +62,11 @@ void block_reduce_kernel(InputIterator  input,
                          InitValueType  initial_value,
                          BinaryFunction reduce_op)
 {
-    block_reduce_kernel_impl<WithInitialValue, LimitItems, Config, ResultType>(input,
-                                                                               size,
-                                                                               output,
-                                                                               initial_value,
-                                                                               reduce_op);
+    block_reduce_kernel_impl<WithInitialValue, FitLarger, FitItems, Config, ResultType>(input,
+                                                                                      size,
+                                                                                      output,
+                                                                                      initial_value,
+                                                                                      reduce_op);
 }
 
 #define ROCPRIM_DETAIL_HIP_SYNC(name, size, start)                                           \
@@ -167,7 +168,7 @@ inline hipError_t reduce_impl(void*               temporary_storage,
         std::cout << "items_per_block " << items_per_block << '\n';
     }
 
-    if(number_of_blocks > 1)
+    if(number_of_blocks > 16)
     {
         const auto aligned_size_limit = number_of_blocks_limit * items_per_block;
 
@@ -181,7 +182,7 @@ inline hipError_t reduce_impl(void*               temporary_storage,
             if(debug_synchronous)
                 start = std::chrono::steady_clock::now();
             hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(detail::block_reduce_kernel<false, 1, config, result_type>),
+                HIP_KERNEL_NAME(detail::block_reduce_kernel<false, true, 1, config, result_type>),
                 dim3(current_blocks),
                 dim3(block_size),
                 0,
@@ -212,52 +213,96 @@ inline hipError_t reduce_impl(void*               temporary_storage,
     else
     {
         const unsigned int to_large = size > 0 ? items_per_block / size : 0;
+        const unsigned int to_small = number_of_blocks;
+
         if(debug_synchronous)
             start = std::chrono::steady_clock::now();
-        if(to_large >= 16)
+        if(to_small > 1)
         {
-            detail::block_reduce_kernel<WithInitialValue, 16, config, result_type>
-                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                           size,
-                                                           output,
-                                                           initial_value,
-                                                           reduce_op);
-        }
-        else if(to_large >= 8)
-        {
-            detail::block_reduce_kernel<WithInitialValue, 8, config, result_type>
-                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                           size,
-                                                           output,
-                                                           initial_value,
-                                                           reduce_op);
-        }
-        else if(to_large >= 4)
-        {
-            detail::block_reduce_kernel<WithInitialValue, 4, config, result_type>
-                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                           size,
-                                                           output,
-                                                           initial_value,
-                                                           reduce_op);
-        }
-        else if(to_large >= 2)
-        {
-            detail::block_reduce_kernel<WithInitialValue, 2, config, result_type>
-                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                           size,
-                                                           output,
-                                                           initial_value,
-                                                           reduce_op);
+            if(to_small <= 2)
+            {
+                detail::block_reduce_kernel<WithInitialValue, true, 2, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if (to_small <= 4)
+            {
+                detail::block_reduce_kernel<WithInitialValue, true, 4, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if (to_small <= 8)
+            {
+                detail::block_reduce_kernel<WithInitialValue, true, 8, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if (to_small <= 16)
+            {
+                detail::block_reduce_kernel<WithInitialValue, true, 16, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
         }
         else
         {
-            detail::block_reduce_kernel<WithInitialValue, 1, config, result_type>
-                <<<dim3(1), dim3(block_size), 0, stream>>>(input,
-                                                           size,
-                                                           output,
-                                                           initial_value,
-                                                           reduce_op);
+            if(to_large >= 16)
+            {
+                detail::block_reduce_kernel<WithInitialValue, false, 16, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if(to_large >= 8)
+            {
+                detail::block_reduce_kernel<WithInitialValue, false, 8, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if(to_large >= 4)
+            {
+                detail::block_reduce_kernel<WithInitialValue, false, 4, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else if(to_large >= 2)
+            {
+                detail::block_reduce_kernel<WithInitialValue, false, 2, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
+            else
+            {
+                detail::block_reduce_kernel<WithInitialValue, false, 1, config, result_type>
+                    <<<dim3(1), dim3(block_size), 0, stream>>>(input,
+                                                               size,
+                                                               output,
+                                                               initial_value,
+                                                               reduce_op);
+            }
         }
 
         ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("block_reduce_kernel", size, start);
