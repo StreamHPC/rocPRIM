@@ -72,5 +72,6 @@ int main(int argc, char* argv[])
 
     // Run benchmarks
     benchmark::RunSpecifiedBenchmarks();
+    clearn_up_benchmarks_search_n();
     return 0;
 }
