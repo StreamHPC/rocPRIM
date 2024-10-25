@@ -237,6 +237,20 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
     }
 }
 
+template<class T>
+struct select_op_t
+{
+    __host__ __device__
+    auto operator()(const T& value) -> bool
+    {
+        if(value == T(50))
+        {
+            return true;
+        }
+        return false;
+    }
+};
+
 TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -255,11 +269,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    auto select_op = [] __host__ __device__ (const T& value) -> bool
-    {
-        if(value == T(50)) return true;
-        return false;
-    };
+    auto select_op = select_op_t<T>{};
 
     U * d_output;
     unsigned int * d_selected_count_output;
@@ -359,11 +369,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    auto select_op = [] __host__ __device__ (const T& value) -> bool
-    {
-        if(value == T(50)) return true;
-        return false;
-    };
+    auto select_op = select_op_t<T>{};
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -512,12 +518,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    auto select_op = [] __host__ __device__(const T& value) -> bool
-    {
-        if(value == T(50))
-            return true;
-        return false;
-    };
+    auto select_op = select_op_t<T>{};
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -1481,6 +1482,20 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
     }
 }
 
+template<class T>
+struct select_data_op_t
+{
+    __host__ __device__
+    auto operator()(const T& value) -> bool
+    {
+        if(value.data[0] == 128)
+        {
+            return true;
+        }
+        return false;
+    }
+};
+
 // This test checks to make sure that the block size is reduced correctly
 // when our data size and type are set in a way that we will exceed the shared
 // memory limit. Since the block size calculation is done at compile time,
@@ -1519,12 +1534,7 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
     const bool debug_synchronous = false;
     const hipStream_t stream = 0; // default stream
 
-    auto select_op = [] __host__ __device__ (const T& value) -> bool
-    {
-        // The data values are in [0, 255]. Partition on the midpoint.
-        if(value.data[0] == 128) return true;
-        return false;
-    };
+    auto select_op = select_data_op_t<T>{};
 
     // Use some power of two and off-by-one-from-power-of-two data sizes.
     const std::vector<size_t> sizes = {256, 257, 511, 512, 1024, 1025};
