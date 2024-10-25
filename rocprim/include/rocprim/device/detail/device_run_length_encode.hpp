@@ -297,6 +297,9 @@ struct scatter_helper
                 run_counts[i]  = ::rocprim::get<1>(offsets_and_counts[i]);
             }
 
+            // Force synchronization point
+            ::rocprim::syncthreads();
+
             WarpExchangeOffsetType().scatter_to_striped(run_offsets,
                                                         run_offsets,
                                                         thread_num_runs_exclusive_in_warp,
