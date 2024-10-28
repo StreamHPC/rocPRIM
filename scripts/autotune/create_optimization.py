@@ -295,10 +295,10 @@ class BenchmarksOfArchitecture:
             empty_fallback = FallbackCase(None, EMPTY_TYPENAME, 0, 0, False)
 
             # If a type is optional, also generate the fallbacks where the type is empty.
-            fallback_entries_0: List[FallbackCase] = self.fallback_entries
+            fallback_entries_0: List[FallbackCase] = self.fallback_entries.copy()
             if config_selection_types[0].is_optional:
                 fallback_entries_0.append(empty_fallback)
-            fallback_entries_1: List[FallbackCase] = self.fallback_entries
+            fallback_entries_1: List[FallbackCase] = self.fallback_entries.copy()
             if config_selection_types[1].is_optional:
                 fallback_entries_1.append(empty_fallback)
 
@@ -652,6 +652,12 @@ class AlgorithmDeviceRunLengthEncodeNonTrivial(Algorithm):
     cpp_configuration_template_name = 'run_length_encode_config_template'
     config_selection_params = [SelectionType(name='key_type', is_optional=False, select_on_size_only=False)]
 
+class AlgorithmDeviceMerge(Algorithm):
+    algorithm_name = "device_merge"
+    cpp_configuration_template_name = "merge_config_template"
+    config_selection_params = [
+        SelectionType(name="key_type", is_optional=False, select_on_size_only=False),
+        SelectionType(name="value_type", is_optional=True, select_on_size_only=True)]
     def __init__(self, fallback_entries):
         Algorithm.__init__(self, fallback_entries)
 
@@ -720,6 +726,8 @@ def create_algorithm(algorithm_name: str, fallback_entries: List[FallbackCase]):
         return AlgorithmDeviceFindFirstOf(fallback_entries)
     elif algorithm_name == 'device_run_length_encode_non_trivial':
         return AlgorithmDeviceRunLengthEncodeNonTrivial(fallback_entries)
+    elif algorithm_name == 'device_merge':
+        return AlgorithmDeviceMerge(fallback_entries)
     else:
         raise(NotSupportedError(f'Algorithm "{algorithm_name}" is not supported (yet)'))
 
@@ -837,6 +845,7 @@ def main():
     parser.add_argument("-p", "--out_basedir", type=str, help="Base dir for the output files, for each algorithm a new file will be created in this directory", required=True)
     parser.add_argument("-c", "--fallback_configuration", type=argparse.FileType('r'), default=os.path.join(current_dir, "fallback_config.json"), help="Configuration for fallbacks for not tested datatypes")
     args = parser.parse_args()
+    #import pdb; pdb.set_trace()
 
     benchmark_manager = BenchmarkDataManager(args.fallback_configuration)
 
