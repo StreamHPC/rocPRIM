@@ -31,6 +31,8 @@
 // HIP API
 #include <hip/hip_runtime.h>
 
+#include <rocrand/rocrand.hpp>
+
 // rocPRIM HIP API
 #include <rocprim/device/detail/device_config_helper.hpp>
 #include <rocprim/device/device_reduce.hpp>
@@ -92,6 +94,9 @@ struct device_reduce_benchmark : public config_autotune_interface
         // Calculate the number of elements 
         size_t size = bytes / sizeof(T);
 
+        rocrand_cpp::default_random_engine engine;
+        rocrand_cpp::uniform_real_distribution<T> distribution;
+
         BinaryFunction reduce_op{};
         const auto     random_range = limit_random_range<T>(0, 1000);
         std::vector<T> input
@@ -149,6 +154,7 @@ struct device_reduce_benchmark : public config_autotune_interface
 
             for(size_t i = 0; i < batch_size; i++)
             {
+                distribution(engine, d_input, size);
                 HIP_CHECK(
                     rocprim::reduce<Config>(
                         d_temp_storage, temp_storage_size_bytes,

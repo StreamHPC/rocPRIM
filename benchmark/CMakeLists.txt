@@ -66,6 +66,7 @@ function(add_rocprim_benchmark BENCHMARK_SOURCE)
   target_link_libraries(${BENCHMARK_TARGET}
     PRIVATE
       rocprim
+      rocrand
       benchmark::benchmark
   )
   target_link_libraries(${BENCHMARK_TARGET}
