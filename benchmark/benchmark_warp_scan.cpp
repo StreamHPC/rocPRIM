@@ -170,15 +170,11 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t bytes)
         stream,                                                                        \
         bytes)
 
-#define BENCHMARK_TYPE(type) \
-    CREATE_BENCHMARK(type, 64, 64, Inclusive), \
-    CREATE_BENCHMARK(type, 128, 64, Inclusive), \
-    CREATE_BENCHMARK(type, 256, 64, Inclusive), \
-    CREATE_BENCHMARK(type, 256, 32, Inclusive), \
-    CREATE_BENCHMARK(type, 256, 16, Inclusive), \
-    CREATE_BENCHMARK(type, 63, 63, Inclusive), \
-    CREATE_BENCHMARK(type, 62, 31, Inclusive), \
-    CREATE_BENCHMARK(type, 60, 15, Inclusive)
+#define BENCHMARK_TYPE(type)                                                                    \
+    CREATE_BENCHMARK(type, 64, 64, Inclusive), CREATE_BENCHMARK(type, 128, 64, Inclusive),      \
+        CREATE_BENCHMARK(type, 256, 64, Inclusive), CREATE_BENCHMARK(type, 256, 32, Inclusive), \
+        CREATE_BENCHMARK(type, 256, 16, Inclusive), CREATE_BENCHMARK(type, 63, 63, Inclusive),  \
+        CREATE_BENCHMARK(type, 62, 31, Inclusive), CREATE_BENCHMARK(type, 60, 15, Inclusive)
 
 template<bool Inclusive>
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
@@ -188,17 +184,15 @@ void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
     using custom_double2 = custom_type<double, double>;
     using custom_int_double = custom_type<int, double>;
 
-    std::vector<benchmark::internal::Benchmark*> new_benchmarks =
-    {
-        BENCHMARK_TYPE(int),
-        BENCHMARK_TYPE(float),
-        BENCHMARK_TYPE(double),
-        BENCHMARK_TYPE(int8_t),
-        BENCHMARK_TYPE(uint8_t),
-        BENCHMARK_TYPE(rocprim::half),
-        BENCHMARK_TYPE(custom_double2),
-        BENCHMARK_TYPE(custom_int_double)
-    };
+    std::vector<benchmark::internal::Benchmark*> new_benchmarks
+        = {BENCHMARK_TYPE(int),
+           BENCHMARK_TYPE(float),
+           BENCHMARK_TYPE(double),
+           BENCHMARK_TYPE(int8_t),
+           BENCHMARK_TYPE(uint8_t),
+           BENCHMARK_TYPE(rocprim::half),
+           BENCHMARK_TYPE(custom_double2),
+           BENCHMARK_TYPE(custom_int_double)};
     benchmarks.insert(benchmarks.end(), new_benchmarks.begin(), new_benchmarks.end());
 }
 
