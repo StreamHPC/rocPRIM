@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,19 +23,14 @@
 #ifndef TEST_SCAN_REDUCE_KERNELS_HPP_
 #define TEST_SCAN_REDUCE_KERNELS_HPP_
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_inclusive_scan_test(T* /*device_input*/, T* /*device_output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_inclusive_scan_test(T* device_input, T* device_output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
+__global__
+__launch_bounds__(BlockSize)
+void warp_inclusive_scan_kernel(T* device_input, T* device_output)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -50,29 +45,17 @@ auto warp_inclusive_scan_test(T* device_input, T* device_output)
     device_output[index] = value;
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_inclusive_scan_kernel(T* device_input, T* device_output)
-{
-    warp_inclusive_scan_test<T, BlockSize, LogicalWarpSize>(device_input, device_output);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_inclusive_scan_reduce_test(T* /*device_input*/,
-                                     T* /*device_output*/,
-                                     T* /*device_output_reductions*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_inclusive_scan_reduce_test(T* device_input, T* device_output, T* device_output_reductions)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_inclusive_scan_reduce_kernel(
+    T* device_input,
+    T* device_output,
+    T* device_output_reductions)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -92,31 +75,14 @@ auto warp_inclusive_scan_reduce_test(T* device_input, T* device_output, T* devic
     }
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_inclusive_scan_reduce_kernel(T* device_input,
-                                       T* device_output,
-                                       T* device_output_reductions)
-{
-    warp_inclusive_scan_reduce_test<T, BlockSize, LogicalWarpSize>(device_input,
-                                                                   device_output,
-                                                                   device_output_reductions);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_test(T* /*device_input*/, T* /*device_output*/, T /*init*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_test(T* device_input, T* device_output, T init)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_exclusive_scan_kernel(T* device_input, T* device_output, T init)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -131,33 +97,18 @@ auto warp_exclusive_scan_test(T* device_input, T* device_output, T init)
     device_output[index] = value;
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_exclusive_scan_kernel(T* device_input, T* device_output, T init)
-{
-    warp_exclusive_scan_test<T, BlockSize, LogicalWarpSize>(device_input, device_output, init);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_reduce_test(T* /*device_input*/,
-                                     T* /*device_output*/,
-                                     T* /*device_output_reductions*/,
-                                     T /*init*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_reduce_test(T* device_input,
-                                     T* device_output,
-                                     T* device_output_reductions,
-                                     T  init)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_exclusive_scan_reduce_kernel(
+    T* device_input,
+    T* device_output,
+    T* device_output_reductions,
+    T init)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -178,32 +129,8 @@ auto warp_exclusive_scan_reduce_test(T* device_input,
 }
 
 template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__global__
-__launch_bounds__(BlockSize)
-void warp_exclusive_scan_reduce_kernel(T* device_input,
-                                       T* device_output,
-                                       T* device_output_reductions,
-                                       T  init)
-{
-    warp_exclusive_scan_reduce_test<T, BlockSize, LogicalWarpSize>(device_input,
-                                                                   device_output,
-                                                                   device_output_reductions,
-                                                                   init);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_wo_init_test(T* /*device_input*/, T* /*device_output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_wo_init_test(T* device_input, T* device_output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+__global__ __launch_bounds__(BlockSize) void warp_exclusive_scan_wo_init_kernel(T* device_input,
+                                                                                T* device_output)
 {
     static constexpr unsigned int block_warps_no = BlockSize / LogicalWarpSize;
 
@@ -220,30 +147,8 @@ auto warp_exclusive_scan_wo_init_test(T* device_input, T* device_output)
 }
 
 template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__global__
-__launch_bounds__(BlockSize)
-void warp_exclusive_scan_wo_init_kernel(T* device_input, T* device_output)
-{
-    warp_exclusive_scan_wo_init_test<T, BlockSize, LogicalWarpSize>(device_input, device_output);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_reduce_wo_init_test(T* /*device_input*/,
-                                             T* /*device_output*/,
-                                             T* /*device_output_reductions*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_exclusive_scan_reduce_wo_init_test(T* device_input,
-                                             T* device_output,
-                                             T* device_output_reductions)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+__global__ __launch_bounds__(BlockSize) void warp_exclusive_scan_reduce_wo_init_kernel(
+    T* device_input, T* device_output, T* device_output_reductions)
 {
     static constexpr unsigned int block_warps_no = BlockSize / LogicalWarpSize;
 
@@ -266,35 +171,18 @@ auto warp_exclusive_scan_reduce_wo_init_test(T* device_input,
     }
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_exclusive_scan_reduce_wo_init_kernel(T* device_input,
-                                               T* device_output,
-                                               T* device_output_reductions)
-{
-    warp_exclusive_scan_reduce_wo_init_test<T, BlockSize, LogicalWarpSize>(
-        device_input,
-        device_output,
-        device_output_reductions);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_scan_test(T* /*device_input*/,
-                    T* /*device_inclusive_output*/,
-                    T* /*device_exclusive_output*/,
-                    T /*init*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_scan_test(T* device_input, T* device_inclusive_output, T* device_exclusive_output, T init)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_scan_kernel(
+    T* device_input,
+    T* device_inclusive_output,
+    T* device_exclusive_output,
+    T init)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -311,41 +199,19 @@ auto warp_scan_test(T* device_input, T* device_inclusive_output, T* device_exclu
     device_exclusive_output[index] = exclusive_output;
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_scan_kernel(T* device_input,
-                      T* device_inclusive_output,
-                      T* device_exclusive_output,
-                      T  init)
-{
-    warp_scan_test<T, BlockSize, LogicalWarpSize>(device_input,
-                                                  device_inclusive_output,
-                                                  device_exclusive_output,
-                                                  init);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_scan_reduce_test(T* /*device_input*/,
-                           T* /*device_inclusive_output*/,
-                           T* /*device_exclusive_output*/,
-                           T* /*device_output_reductions*/,
-                           T /*init*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_scan_reduce_test(T* device_input,
-                           T* device_inclusive_output,
-                           T* device_exclusive_output,
-                           T* device_output_reductions,
-                           T  init)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_scan_reduce_kernel(
+    T* device_input,
+    T* device_inclusive_output,
+    T* device_exclusive_output,
+    T* device_output_reductions,
+    T init)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -364,22 +230,6 @@ auto warp_scan_reduce_test(T* device_input,
     {
         device_output_reductions[index / LogicalWarpSize] = reduction;
     }
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__global__
-__launch_bounds__(BlockSize)
-void warp_scan_reduce_kernel(T* device_input,
-                             T* device_inclusive_output,
-                             T* device_exclusive_output,
-                             T* device_output_reductions,
-                             T  init)
-{
-    warp_scan_reduce_test<T, BlockSize, LogicalWarpSize>(device_input,
-                                                         device_inclusive_output,
-                                                         device_exclusive_output,
-                                                         device_output_reductions,
-                                                         init);
 }
 
 #endif // TEST_SCAN_REDUCE_KERNELS_HPP_

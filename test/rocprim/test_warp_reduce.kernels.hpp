@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +21,14 @@
 #ifndef TEST_WARP_REDUCE_KERNELS_HPP_
 #define TEST_WARP_REDUCE_KERNELS_HPP_
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_reduce_sum_test(T* /*device_input*/, T* /*device_output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_reduce_sum_test(T* device_input, T* device_output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
+__global__
+__launch_bounds__(BlockSize)
+void warp_reduce_sum_kernel(T* device_input, T* device_output)
 {
     static constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -51,27 +46,14 @@ auto warp_reduce_sum_test(T* device_input, T* device_output)
     }
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_reduce_sum_kernel(T* device_input, T* device_output)
-{
-    warp_reduce_sum_test<T, BlockSize, LogicalWarpSize>(device_input, device_output);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_allreduce_sum_test(T* /*device_input*/, T* /*device_output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_allreduce_sum_test(T* device_input, T* device_output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_allreduce_sum_kernel(T* device_input, T* device_output)
 {
     static constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -86,27 +68,14 @@ auto warp_allreduce_sum_test(T* device_input, T* device_output)
     device_output[index] = value;
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_allreduce_sum_kernel(T* device_input, T* device_output)
-{
-    warp_allreduce_sum_test<T, BlockSize, LogicalWarpSize>(device_input, device_output);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_reduce_sum_test(T* /*device_input*/, T* /*device_output*/, size_t /*valid*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_reduce_sum_test(T* device_input, T* device_output, size_t valid)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_reduce_sum_kernel(T* device_input, T* device_output, size_t valid)
 {
     static constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -124,27 +93,14 @@ auto warp_reduce_sum_test(T* device_input, T* device_output, size_t valid)
     }
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_reduce_sum_kernel(T* device_input, T* device_output, size_t valid)
-{
-    warp_reduce_sum_test<T, BlockSize, LogicalWarpSize>(device_input, device_output, valid);
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_allreduce_sum_test(T* /*device_input*/, T* /*device_output*/, size_t /*valid*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto warp_allreduce_sum_test(T* device_input, T* device_output, size_t valid)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void warp_allreduce_sum_kernel(T* device_input, T* device_output, size_t valid)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -159,27 +115,15 @@ auto warp_allreduce_sum_test(T* device_input, T* device_output, size_t valid)
     device_output[index] = value;
 }
 
-template<class T, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    class Flag,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void warp_allreduce_sum_kernel(T* device_input, T* device_output, size_t valid)
-{
-    warp_allreduce_sum_test<T, BlockSize, LogicalWarpSize>(device_input, device_output, valid);
-}
-
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto head_segmented_warp_reduce_test(T* /*input*/, Flag* /*flags*/, T* /*output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto head_segmented_warp_reduce_test(T* input, Flag* flags, T* output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void head_segmented_warp_reduce_kernel(T* input, Flag* flags, T* output)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -195,27 +139,15 @@ auto head_segmented_warp_reduce_test(T* input, Flag* flags, T* output)
     output[index] = value;
 }
 
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
+template<
+    class T,
+    class Flag,
+    unsigned int BlockSize,
+    unsigned int LogicalWarpSize
+>
 __global__
 __launch_bounds__(BlockSize)
-void head_segmented_warp_reduce_kernel(T* input, Flag* flags, T* output)
-{
-    head_segmented_warp_reduce_test<T, Flag, BlockSize, LogicalWarpSize>(input, flags, output);
-}
-
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto tail_segmented_warp_reduce_test(T* /*input*/, Flag* /*flags*/, T* /*output*/)
-    -> std::enable_if_t<!test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
-{
-    // This kernel should never be actually called; tests are filtered out at runtime
-    // if the device does not support the LogicalWarpSize
-}
-
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__device__
-auto tail_segmented_warp_reduce_test(T* input, Flag* flags, T* output)
-    -> std::enable_if_t<test_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+void tail_segmented_warp_reduce_kernel(T* input, Flag* flags, T* output)
 {
     constexpr unsigned int warps_no = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = rocprim::detail::logical_warp_id<LogicalWarpSize>();
@@ -229,14 +161,6 @@ auto tail_segmented_warp_reduce_test(T* input, Flag* flags, T* output)
     wreduce_t().tail_segmented_reduce(value, value, flag, storage[warp_id]);
 
     output[index] = value;
-}
-
-template<class T, class Flag, unsigned int BlockSize, unsigned int LogicalWarpSize>
-__global__
-__launch_bounds__(BlockSize)
-void tail_segmented_warp_reduce_kernel(T* input, Flag* flags, T* output)
-{
-    tail_segmented_warp_reduce_test<T, Flag, BlockSize, LogicalWarpSize>(input, flags, output);
 }
 
 #endif // TEST_WARP_REDUCE_KERNELS_HPP_
