@@ -94,8 +94,7 @@ typed_test_def(RocprimWarpSortShuffleBasedTests, name_suffix, Sort)
 
         // Launching kernel
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(
-                test_hip_warp_sort_kernel<items_per_thread, block_size, logical_warp_size, T>),
+            HIP_KERNEL_NAME(test_hip_warp_sort<items_per_thread, block_size, logical_warp_size, T>),
             dim3(grid_size),
             dim3(block_size),
             0,

@@ -46,18 +46,9 @@ const size_t DEFAULT_BYTES = 1024 * 1024 * 32 * 4;
 #endif
 
 template<bool AllReduce, class T, unsigned int WarpSize, unsigned int Trials>
-__device__
-auto warp_reduce_benchmark(const T* /*d_input*/, T* /*d_output*/)
-    -> std::enable_if_t<!device_test_enabled_for_warp_size_v<WarpSize>>
-{
-    // This kernel should never be actually called; benchmarks are selected at runtime only
-    // if the current device supports WarpSize
-}
-
-template<bool AllReduce, class T, unsigned int WarpSize, unsigned int Trials>
-__device__
-auto warp_reduce_benchmark(const T* d_input, T* d_output)
-    -> std::enable_if_t<device_test_enabled_for_warp_size_v<WarpSize>>
+__global__
+__launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
+void warp_reduce_kernel(const T* d_input, T* d_output)
 {
     const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -74,27 +65,10 @@ auto warp_reduce_benchmark(const T* d_input, T* d_output)
     d_output[i] = value;
 }
 
-template<bool AllReduce, class T, unsigned int WarpSize, unsigned int Trials>
+template<class T, class Flag, unsigned int WarpSize, unsigned int Trials>
 __global__
 __launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
-void warp_reduce_kernel(const T* d_input, T* d_output)
-{
-    warp_reduce_benchmark<AllReduce, T, WarpSize, Trials>(d_input, d_output);
-}
-
-template<class T, class Flag, unsigned int WarpSize, unsigned int Trials>
-__device__
-auto segmented_warp_reduce_benchmark(const T* /*d_input*/, Flag* /*d_flags*/, T* /*d_output*/)
-    -> std::enable_if_t<!device_test_enabled_for_warp_size_v<WarpSize>>
-{
-    // This kernel should never be actually called; benchmarks are selected at runtime only
-    // if the current device supports WarpSize
-}
-
-template<class T, class Flag, unsigned int WarpSize, unsigned int Trials>
-__device__
-auto segmented_warp_reduce_benchmark(const T* d_input, Flag* d_flags, T* d_output)
-    -> std::enable_if_t<device_test_enabled_for_warp_size_v<WarpSize>>
+void segmented_warp_reduce_kernel(const T* d_input, Flag* d_flags, T* d_output)
 {
     const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -112,14 +86,6 @@ auto segmented_warp_reduce_benchmark(const T* d_input, Flag* d_flags, T* d_outpu
     d_output[i] = value;
 }
 
-template<class T, class Flag, unsigned int WarpSize, unsigned int Trials>
-__global__
-__launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
-void segmented_warp_reduce_kernel(const T* d_input, Flag* d_flags, T* d_output)
-{
-    segmented_warp_reduce_benchmark<T, Flag, WarpSize, Trials>(d_input, d_flags, d_output);
-}
-
 template<bool         AllReduce,
          bool         Segmented,
          unsigned int WarpSize,
@@ -129,7 +95,7 @@ template<bool         AllReduce,
          class Flag>
 inline auto execute_warp_reduce_kernel(
     T* input, T* output, Flag* /* flags */, size_t size, hipStream_t stream) ->
-    typename std::enable_if_t<!Segmented>
+    typename std::enable_if<!Segmented>::type
 {
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(warp_reduce_kernel<AllReduce, T, WarpSize, Trials>),
@@ -148,7 +114,7 @@ template<bool         AllReduce,
          class Flag>
 inline auto
     execute_warp_reduce_kernel(T* input, T* output, Flag* flags, size_t size, hipStream_t stream) ->
-    typename std::enable_if_t<Segmented>
+    typename std::enable_if<Segmented>::type
 {
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(segmented_warp_reduce_kernel<T, Flag, WarpSize, Trials>),
@@ -248,12 +214,9 @@ void run_benchmark(benchmark::State& state, size_t bytes, const managed_seed& se
         seed,                                                                                 \
         stream)
 
-// For devices with a physical warp size of at least 32
-#define BENCHMARK_TYPE_WS32(type) CREATE_BENCHMARK(type, 32, 64)
-
-// For devices with a physical warp size of at least 64
-#define BENCHMARK_TYPE_WS64(type) \
-    CREATE_BENCHMARK(type, 37, 64), CREATE_BENCHMARK(type, 61, 64), CREATE_BENCHMARK(type, 64, 64)
+#define BENCHMARK_TYPE(type)                                        \
+    CREATE_BENCHMARK(type, 32, 64), CREATE_BENCHMARK(type, 37, 64), \
+        CREATE_BENCHMARK(type, 61, 64), CREATE_BENCHMARK(type, 64, 64)
 
 template<bool AllReduce, bool Segmented>
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
@@ -261,26 +224,14 @@ void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     const managed_seed&                           seed,
                     hipStream_t                                   stream)
 {
-    std::vector<benchmark::internal::Benchmark*> bs = {BENCHMARK_TYPE_WS32(int),
-                                                       BENCHMARK_TYPE_WS32(float),
-                                                       BENCHMARK_TYPE_WS32(double),
-                                                       BENCHMARK_TYPE_WS32(int8_t),
-                                                       BENCHMARK_TYPE_WS32(uint8_t),
-                                                       BENCHMARK_TYPE_WS32(rocprim::half)};
-    benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
+    std::vector<benchmark::internal::Benchmark*> bs = {BENCHMARK_TYPE(int),
+                                                       BENCHMARK_TYPE(float),
+                                                       BENCHMARK_TYPE(double),
+                                                       BENCHMARK_TYPE(int8_t),
+                                                       BENCHMARK_TYPE(uint8_t),
+                                                       BENCHMARK_TYPE(rocprim::half)};
 
-    int hip_device = 0;
-    HIP_CHECK(::rocprim::detail::get_device_from_stream(stream, hip_device));
-    if(is_warp_size_supported(64, hip_device))
-    {
-        std::vector<benchmark::internal::Benchmark*> bs = {BENCHMARK_TYPE_WS64(int),
-                                                           BENCHMARK_TYPE_WS64(float),
-                                                           BENCHMARK_TYPE_WS64(double),
-                                                           BENCHMARK_TYPE_WS64(int8_t),
-                                                           BENCHMARK_TYPE_WS64(uint8_t),
-                                                           BENCHMARK_TYPE_WS64(rocprim::half)};
-        benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
-    }
+    benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
 }
 
 int main(int argc, char *argv[])
