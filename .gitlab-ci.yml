@@ -170,7 +170,7 @@ build:cmake-minimum-apt:
     - | # Add hardened libc++ assertions for tests only
         if [[ $BUILD_TARGET == "TEST" ]]; then
             echo "Configuring with hardened libc++!"
-            EXTRA_CMAKE_CXX_FLAGS+=" -D_GLIBCXX_ASSERTIONS=ON"
+            EXTRA_CMAKE_CXX_FLAGS+=" -D_GLIBCXX_ASSERTIONS=ON -D ROCPRIM_ENABLE_ASSERTS=ON"
         fi
     - cmake
       -G Ninja
