@@ -2,6 +2,13 @@
 
 Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+## (Unreleased) rocPRIM 3.4.x for ROCm 6.4.x
+
+### Added
+
+* Added hipGraph support to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`).
+* Added configuration autotuning to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`) for improved performance on selected architectures.
+
 ## rocPRIM 3.4.0 for ROCm 6.4.0
 
 ### Added
