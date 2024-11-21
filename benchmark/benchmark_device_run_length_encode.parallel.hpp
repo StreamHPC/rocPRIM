@@ -384,17 +384,32 @@ struct device_run_length_encode_benchmark_generator
         {
             if(!is_load_warp_transpose || is_warp_load_supp)
             {
-                using trivial_config
+                using trivial_config_tpb_1
                     = rocprim::reduce_by_key_config<BlockSize,
                                                     items_per_thread,
                                                     BlockLoadMethod,
                                                     BlockLoadMethod,
-                                                    rocprim::block_scan_algorithm::using_warp_scan>;
-                storage.emplace_back(
-                    std::make_unique<device_run_length_encode_benchmark<T, 10, trivial_config>>());
+                                                    rocprim::block_scan_algorithm::using_warp_scan,
+                                                    1u>;
                 storage.emplace_back(
                     std::make_unique<
-                        device_run_length_encode_benchmark<T, 1000, trivial_config>>());
+                        device_run_length_encode_benchmark<T, 10, trivial_config_tpb_1>>());
+                storage.emplace_back(
+                    std::make_unique<
+                        device_run_length_encode_benchmark<T, 1000, trivial_config_tpb_1>>());
+                using trivial_config_tpb_2
+                    = rocprim::reduce_by_key_config<BlockSize,
+                                                    items_per_thread,
+                                                    BlockLoadMethod,
+                                                    BlockLoadMethod,
+                                                    rocprim::block_scan_algorithm::using_warp_scan,
+                                                    2u>;
+                storage.emplace_back(
+                    std::make_unique<
+                        device_run_length_encode_benchmark<T, 10, trivial_config_tpb_2>>());
+                storage.emplace_back(
+                    std::make_unique<
+                        device_run_length_encode_benchmark<T, 1000, trivial_config_tpb_2>>());
                 // using non_trivial_config = rocprim::non_trivial_runs_config<
                 //     BlockSize,
                 //     items_per_thread,
