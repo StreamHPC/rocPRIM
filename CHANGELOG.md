@@ -9,6 +9,7 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * Added hipGraph support to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`).
 * Added configuration autotuning to device run-length-encode for non trivial runs (`rocprim::run_length_encode_non_trivial_runs`) for improved performance on selected architectures.
 * Added configuration autotuning to device run-length-encode for trivial runs (`rocprim::run_length_encode`) for improved performance on selected architectures.
+* Added a new type traits interface to enable users to provide additional type trait information to rocPRIM, facilitating better compatibility with custom types.
 
 ## rocPRIM 3.4.0 for ROCm 6.4.0
 

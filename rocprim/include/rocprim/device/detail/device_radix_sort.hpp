@@ -803,7 +803,7 @@ struct onesweep_histograms_helper
     ROCPRIM_DEVICE
     void count_digits_at_place(const unsigned int flat_id,
                                const unsigned int stripe,
-                               const KeyType      (&keys)[ItemsPerThread],
+                               const KeyType (&keys)[ItemsPerThread],
                                const unsigned int place,
                                Decomposer         decomposer,
                                const unsigned int start_bit,
