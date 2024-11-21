@@ -358,7 +358,7 @@ struct device_non_trivial_runs_benchmark : public config_autotune_interface
 
 #ifdef BENCHMARK_CONFIG_TUNING
 
-template<typename T, int BlockSize, ::rocprim::block_load_method BlockLoadMethod>
+template<typename T, unsigned int BlockSize, ::rocprim::block_load_method BlockLoadMethod>
 struct device_run_length_encode_benchmark_generator
 {
     using OffsetCountPairT = ::rocprim::tuple<unsigned int, unsigned int>;

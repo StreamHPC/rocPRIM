@@ -39,12 +39,12 @@ BEGIN_ROCPRIM_NAMESPACE
 namespace detail
 {
 
-template<unsigned int arch, class key_type, class value_type, class enable = void>
+template<unsigned int arch, typename key_type, typename value_type, typename enable = void>
 struct default_trivial_runs_config : default_reduce_by_key_config_base<key_type, value_type>::type
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -60,7 +60,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -76,7 +76,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -92,7 +92,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -108,7 +108,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -124,7 +124,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -140,7 +140,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     key_type,
@@ -156,7 +156,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -172,7 +172,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -188,7 +188,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -204,7 +204,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -220,7 +220,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -236,7 +236,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -252,7 +252,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     key_type,
@@ -268,7 +268,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -284,7 +284,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -300,7 +300,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -316,7 +316,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -332,7 +332,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -348,7 +348,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -364,7 +364,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx906),
     key_type,
@@ -380,7 +380,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -396,7 +396,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -412,7 +412,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -428,7 +428,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -444,7 +444,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -460,7 +460,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -476,7 +476,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx908),
     key_type,
@@ -492,7 +492,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -508,7 +508,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -524,7 +524,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -540,7 +540,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -556,7 +556,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -572,7 +572,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -588,7 +588,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::unknown),
     key_type,
@@ -604,7 +604,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = double
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -620,7 +620,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = float
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -636,7 +636,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = rocprim::half
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -652,7 +652,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int64_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -668,7 +668,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -684,7 +684,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = short
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
@@ -700,7 +700,7 @@ struct default_trivial_runs_config<
 {};
 
 // Based on key_type = int8_t
-template<class key_type, class value_type>
+template<typename key_type, typename value_type>
 struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     key_type,
