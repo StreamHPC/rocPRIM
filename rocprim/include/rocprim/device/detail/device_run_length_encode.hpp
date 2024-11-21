@@ -216,7 +216,7 @@ public:
                 storage.buffer.emplace(ranks[i], input[i]);
             }
         }
-        ::rocprim::syncthreads();
+        ::rocprim::wave_barrier();
         const auto& storage_buffer = storage.buffer.get_unsafe_array();
 
         ROCPRIM_UNROLL
@@ -297,19 +297,18 @@ struct scatter_helper
                 run_counts[i]  = ::rocprim::get<1>(offsets_and_counts[i]);
             }
 
+            // Force synchronization point
+            ::rocprim::syncthreads();
+
             WarpExchangeOffsetType().scatter_to_striped(run_offsets,
                                                         run_offsets,
                                                         thread_num_runs_exclusive_in_warp,
                                                         offsets_storage);
 
-            ::rocprim::syncthreads();
-
             WarpExchangeCountType().scatter_to_striped(run_counts,
                                                        run_counts,
                                                        thread_num_runs_exclusive_in_warp,
                                                        counts_storage);
-
-            ::rocprim::syncthreads();
 
             // Each thread t in the warp scatters the valid runs with index (i * warp_size + t), for
             // i in [0, ItemsPerThread-1]. That is, consecutive threads scatter consecutive non-trivial
