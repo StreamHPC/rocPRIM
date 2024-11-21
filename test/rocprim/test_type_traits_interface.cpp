@@ -157,11 +157,6 @@ struct custom_int_type
     }
 };
 
-inline bool signbit(const custom_int_type& val)
-{
-    return std::signbit(val.x);
-}
-
 inline std::ostream& operator<<(std::ostream& stream, const custom_int_type& value)
 {
     stream << "[" << value.x << "]";
