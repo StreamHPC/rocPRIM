@@ -29,6 +29,12 @@
 
 #include <cmath>
 
+#define ROCPRIM_STATIC_ASSERT(cond) static_assert((cond), "Rocprim Traits Assertion failed!")
+#define ROCPRIM_STATIC_ASSERT_TRUE(cond) ROCPRIM_STATIC_ASSERT((cond))
+#define ROCPRIM_STATIC_ASSERT_FALSE(cond) ROCPRIM_STATIC_ASSERT(!(cond))
+#define ROCPRIM_STATIC_ASSERT_EQ(val1, val2) ROCPRIM_STATIC_ASSERT((val1) == (val2))
+#define ROCPRIM_STATIC_ASSERT_NE(val1, val2) ROCPRIM_STATIC_ASSERT((val1) != (val2))
+
 namespace type_triats_test
 {
 // Custom type to model types like Eigen::half or Eigen::bfloat16, that wrap around floating point
@@ -222,100 +228,107 @@ TYPED_TEST_SUITE(RocprimIntegralTests, IntegralTypeTestParams);
 
 TYPED_TEST(RocprimFloatingPointTests, FloatingPoint)
 {
-    using input_type   = typename TestFixture::input_type;
-    using input_traits = rocprim::traits::get<input_type>;
+    using input_type            = typename TestFixture::input_type;
+    constexpr auto input_traits = rocprim::traits::get<input_type>();
 
-    ASSERT_TRUE(input_traits::is_arithmetic());
-    ASSERT_TRUE(input_traits::is_fundamental());
-    ASSERT_FALSE(input_traits::is_compound());
-    ASSERT_TRUE(input_traits::is_scalar());
-    ASSERT_TRUE(input_traits::is_floating_point());
-    ASSERT_FALSE(input_traits::is_integral());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_arithmetic());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_fundamental());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_compound());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_scalar());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_floating_point());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_integral());
 
-    ASSERT_EQ(input_traits::is_integral(), rocprim::is_integral<input_type>::value);
+    ROCPRIM_STATIC_ASSERT_EQ(input_traits.is_integral(), rocprim::is_integral<input_type>::value);
 
+    // cannot do static_assert befause under c++ 14 there is no if constexpr
     if ROCPRIM_IF_CONSTEXPR(rocprim::is_arithmetic<input_type>::value)
     { // for c++ arithmetic types
-        ASSERT_EQ(input_traits::is_compound(), rocprim::is_compound<input_type>::value);
-        ASSERT_EQ(input_traits::is_scalar(), rocprim::is_scalar<input_type>::value);
-        ASSERT_EQ(input_traits::is_fundamental(), rocprim::is_fundamental<input_type>::value);
-        ASSERT_EQ(input_traits::is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
-        ASSERT_EQ(input_traits::is_floating_point(), rocprim::is_floating_point<input_type>::value);
+        ASSERT_EQ(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
+        ASSERT_EQ(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
+        ASSERT_EQ(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
+        ASSERT_EQ(input_traits.is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
+        ASSERT_EQ(input_traits.is_floating_point(), rocprim::is_floating_point<input_type>::value);
     }
     else
     { // for costom_types
-        ASSERT_NE(input_traits::is_compound(), rocprim::is_compound<input_type>::value);
-        ASSERT_NE(input_traits::is_scalar(), rocprim::is_scalar<input_type>::value);
-        ASSERT_NE(input_traits::is_fundamental(), rocprim::is_fundamental<input_type>::value);
-        ASSERT_NE(input_traits::is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
-        ASSERT_NE(input_traits::is_floating_point(), rocprim::is_floating_point<input_type>::value);
+        ASSERT_NE(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
+        ASSERT_NE(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
+        ASSERT_NE(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
+        ASSERT_NE(input_traits.is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
+        ASSERT_NE(input_traits.is_floating_point(), rocprim::is_floating_point<input_type>::value);
     }
 
-    [[maybe_unused]] constexpr auto float_bit_mask = input_traits::float_bit_mask();
+    [[maybe_unused]] constexpr auto float_bit_mask = input_traits.float_bit_mask();
 }
 
 TYPED_TEST(RocprimIntegralTests, Integral)
 {
-    using input_type   = typename TestFixture::input_type;
-    using input_traits = rocprim::traits::get<input_type>;
+    using input_type = typename TestFixture::input_type;
 
-    ASSERT_TRUE(input_traits::is_arithmetic());
-    ASSERT_TRUE(input_traits::is_fundamental());
-    ASSERT_FALSE(input_traits::is_compound());
-    ASSERT_TRUE(input_traits::is_scalar());
-    ASSERT_FALSE(input_traits::is_floating_point());
-    ASSERT_TRUE(input_traits::is_integral());
+    constexpr auto input_traits = rocprim::traits::get<input_type>();
 
-    ASSERT_EQ(input_traits::is_floating_point(), rocprim::is_floating_point<input_type>::value);
-    ASSERT_NE(input_traits::is_signed(), input_traits::is_unsigned());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_arithmetic());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_fundamental());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_compound());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_scalar());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_floating_point());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_integral());
+
+    ROCPRIM_STATIC_ASSERT_EQ(input_traits.is_floating_point(),
+                             rocprim::is_floating_point<input_type>::value);
+    ROCPRIM_STATIC_ASSERT_NE(input_traits.is_signed(), input_traits.is_unsigned());
 
     if ROCPRIM_IF_CONSTEXPR(rocprim::is_arithmetic<input_type>::value)
     { // for c++ arithmetic types
-        ASSERT_EQ(input_traits::is_compound(), rocprim::is_compound<input_type>::value);
-        ASSERT_EQ(input_traits::is_scalar(), rocprim::is_scalar<input_type>::value);
-        ASSERT_EQ(input_traits::is_fundamental(), rocprim::is_fundamental<input_type>::value);
-        ASSERT_EQ(input_traits::is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
-        ASSERT_EQ(input_traits::is_integral(), rocprim::is_integral<input_type>::value);
-        ASSERT_EQ(input_traits::is_signed(), rocprim::is_signed<input_type>::value);
-        ASSERT_EQ(input_traits::is_unsigned(), rocprim::is_unsigned<input_type>::value);
+        ASSERT_EQ(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
+        ASSERT_EQ(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
+        ASSERT_EQ(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
+        ASSERT_EQ(input_traits.is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
+        ASSERT_EQ(input_traits.is_integral(), rocprim::is_integral<input_type>::value);
+        ASSERT_EQ(input_traits.is_signed(), rocprim::is_signed<input_type>::value);
+        ASSERT_EQ(input_traits.is_unsigned(), rocprim::is_unsigned<input_type>::value);
     }
     else
     { // for costom_types
-        ASSERT_NE(input_traits::is_compound(), rocprim::is_compound<input_type>::value);
-        ASSERT_NE(input_traits::is_scalar(), rocprim::is_scalar<input_type>::value);
-        ASSERT_NE(input_traits::is_fundamental(), rocprim::is_fundamental<input_type>::value);
-        ASSERT_NE(input_traits::is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
-        ASSERT_NE(input_traits::is_integral(), rocprim::is_integral<input_type>::value);
+        ASSERT_NE(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
+        ASSERT_NE(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
+        ASSERT_NE(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
+        ASSERT_NE(input_traits.is_arithmetic(), rocprim::is_arithmetic<input_type>::value);
+        ASSERT_NE(input_traits.is_integral(), rocprim::is_integral<input_type>::value);
     }
 }
 
 TEST(TraitsInterface, OldType)
 {
-    using input_traits = rocprim::traits::get<type_triats_test::float_bit_masked_type>;
-    using bit_mask     = rocprim::detail::float_bit_mask<type_triats_test::float_bit_masked_type>;
-    ASSERT_FALSE(input_traits::is_arithmetic());
-    ASSERT_FALSE(input_traits::is_fundamental());
-    ASSERT_TRUE(input_traits::is_compound());
-    ASSERT_FALSE(input_traits::is_scalar());
-    ASSERT_FALSE(input_traits::is_floating_point());
-    ASSERT_FALSE(input_traits::is_integral());
+    using input_type = type_triats_test::float_bit_masked_type;
+    using bit_mask   = rocprim::detail::float_bit_mask<type_triats_test::float_bit_masked_type>;
 
-    constexpr auto float_bit_mask = input_traits::float_bit_mask();
+    constexpr auto input_traits = rocprim::traits::get<input_type>();
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_arithmetic());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_fundamental());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_compound());
 
-    ASSERT_EQ(float_bit_mask.sign_bit, bit_mask::sign_bit);
-    ASSERT_EQ(float_bit_mask.exponent, bit_mask::exponent);
-    ASSERT_EQ(float_bit_mask.mantissa, bit_mask::mantissa);
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_compound());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_scalar());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_floating_point());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_integral());
+
+    constexpr auto float_bit_mask = input_traits.float_bit_mask();
+
+    ROCPRIM_STATIC_ASSERT_EQ(float_bit_mask.sign_bit, bit_mask::sign_bit);
+    ROCPRIM_STATIC_ASSERT_EQ(float_bit_mask.exponent, bit_mask::exponent);
+    ROCPRIM_STATIC_ASSERT_EQ(float_bit_mask.mantissa, bit_mask::mantissa);
 }
 
 TEST(TraitsInterface, OtherType)
 {
     struct TestT
     {};
-    using input_traits = rocprim::traits::get<TestT>;
-    ASSERT_FALSE(input_traits::is_arithmetic());
-    ASSERT_FALSE(input_traits::is_fundamental());
-    ASSERT_TRUE(input_traits::is_compound());
-    ASSERT_FALSE(input_traits::is_scalar());
-    ASSERT_FALSE(input_traits::is_floating_point());
-    ASSERT_FALSE(input_traits::is_integral());
+    constexpr auto input_traits = rocprim::traits::get<TestT>();
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_arithmetic());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_fundamental());
+    ROCPRIM_STATIC_ASSERT_TRUE(input_traits.is_compound());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_scalar());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_floating_point());
+    ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_integral());
 }

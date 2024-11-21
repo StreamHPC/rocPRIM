@@ -35,7 +35,7 @@
 #include "../functional.hpp"
 #include "../types.hpp"
 
-#include "../type_traits.hpp"
+#include "../type_traits_interface.hpp"
 #include "detail/config/device_radix_sort_onesweep.hpp"
 #include "detail/device_radix_sort.hpp"
 #include "device_transform.hpp"
@@ -666,7 +666,7 @@ hipError_t
                                                         default_block_sort_config,
                                                         typename Config::single_sort_config>::type;
 
-    if(::rocprim::is_floating_point<key_type>::value
+    if(traits::get<key_type>().is_floating_point()
        && ((begin_bit != 0) || (end_bit != sizeof(key_type) * 8)))
     {
         return hipErrorInvalidValue;

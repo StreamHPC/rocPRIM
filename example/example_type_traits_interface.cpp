@@ -25,18 +25,18 @@
 #include <string>
 
 template<class InputType,
-         std::enable_if_t<rocprim::traits::get<InputType>::is_floating_point()>* = nullptr>
+         std::enable_if_t<rocprim::traits::get<InputType>().is_floating_point()>* = nullptr>
 void some_algo()
 {
-    using input_traits = rocprim::traits::get<InputType>;
+    constexpr auto input_traits = rocprim::traits::get<InputType>();
 
     std::stringstream ss;
 
     ss << "root_type:\t[" << typeid(InputType).name() << "] this type is floating point\n";
-    ss << "is_arithmetic:\t" << input_traits::is_arithmetic() << '\n';
-    ss << "is_fundamental:\t" << input_traits::is_fundamental() << '\n';
-    ss << "is_scalar:\t" << input_traits::is_scalar() << '\n';
-    constexpr auto musk = input_traits::float_bit_mask();
+    ss << "is_arithmetic:\t" << input_traits.is_arithmetic() << '\n';
+    ss << "is_fundamental:\t" << input_traits.is_fundamental() << '\n';
+    ss << "is_scalar:\t" << input_traits.is_scalar() << '\n';
+    constexpr auto musk = input_traits.float_bit_mask();
     ss << "sign_bit:\t" << musk.sign_bit << '\n';
     ss << "exponent:\t" << musk.exponent << '\n';
     ss << "mantissa:\t" << musk.mantissa << '\n';
@@ -44,44 +44,45 @@ void some_algo()
 }
 
 template<class InputType,
-         std::enable_if_t<rocprim::traits::get<InputType>::is_integral()>* = nullptr>
+         std::enable_if_t<rocprim::traits::get<InputType>().is_integral()>* = nullptr>
 void some_algo()
 {
-    using input_traits = rocprim::traits::get<InputType>;
+    constexpr auto input_traits = rocprim::traits::get<InputType>();
 
     std::stringstream ss;
     ss << "root_type:\t[" << typeid(InputType).name() << "] this type is integral\n";
-    ss << "is_arithmetic:\t" << input_traits::is_arithmetic() << '\n';
-    ss << "is_fundamental:\t" << input_traits::is_fundamental() << '\n';
-    ss << "is_scalar:\t" << input_traits::is_scalar() << '\n';
-    ss << "is_signed:\t" << input_traits::is_signed() << '\n';
-    ss << "is_unsigned:\t" << input_traits::is_unsigned() << '\n';
+    ss << "is_arithmetic:\t" << input_traits.is_arithmetic() << '\n';
+    ss << "is_fundamental:\t" << input_traits.is_fundamental() << '\n';
+    ss << "is_scalar:\t" << input_traits.is_scalar() << '\n';
+    ss << "is_signed:\t" << input_traits.is_signed() << '\n';
+    ss << "is_unsigned:\t" << input_traits.is_unsigned() << '\n';
 
     std::cout << ss.str() << "\n";
 }
 
 template<class InputType,
-         std::enable_if_t<!rocprim::traits::get<InputType>::is_integral()
-                          && !rocprim::traits::get<InputType>::is_floating_point()>* = nullptr>
+         std::enable_if_t<!rocprim::traits::get<InputType>().is_integral()
+                          && !rocprim::traits::get<InputType>().is_floating_point()>* = nullptr>
 void some_algo()
 {
-    using input_traits = rocprim::traits::get<InputType>;
-
+    constexpr auto    input_traits = rocprim::traits::get<InputType>();
     std::stringstream ss;
     ss << "root_type:\t[" << typeid(InputType).name()
        << "] this type is neither integral nor floating point\n";
-    ss << "is_arithmetic:\t" << input_traits::is_arithmetic() << '\n';
-    ss << "is_fundamental:\t" << input_traits::is_fundamental() << '\n';
-    ss << "is_signed:\t" << input_traits::is_signed() << '\n';
-    ss << "is_unsigned:\t" << input_traits::is_unsigned() << '\n';
-    ss << "is_scalar:\t" << input_traits::is_scalar() << '\n';
+    ss << "is_arithmetic:\t" << input_traits.is_arithmetic() << '\n';
+    ss << "is_fundamental:\t" << input_traits.is_fundamental() << '\n';
+    ss << "is_signed:\t" << input_traits.is_signed() << '\n';
+    ss << "is_unsigned:\t" << input_traits.is_unsigned() << '\n';
+    ss << "is_scalar:\t" << input_traits.is_scalar() << '\n';
 
     std::cout << ss.str() << "\n";
 }
 
+// Your type definition
 struct custom_float_type
 {};
 
+// you should add this struct specialization for the type to implement the traits
 template<>
 struct rocprim::traits::define<custom_float_type>
 {
@@ -90,9 +91,11 @@ struct rocprim::traits::define<custom_float_type>
     using float_bit_mask  = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
 };
 
+// Your type definition
 struct custom_int_type
 {};
 
+// you should add this struct specialization for the type to implement the traits
 template<>
 struct rocprim::traits::define<custom_int_type>
 {

@@ -106,8 +106,8 @@ namespace detail
                                                                       BinaryFunction compare_function,
                                                                       const OffsetT* merge_partitions)
         -> std::enable_if_t<(!std::is_trivially_copyable<ValueType>::value
-                             || rocprim::is_floating_point<ValueType>::value
-                             || std::is_integral<ValueType>::value),
+                             || traits::get<ValueType>().is_floating_point()
+                             || traits::get<ValueType>().is_integral()),
                             void>
     {
         using key_type = typename std::iterator_traits<KeysInputIterator>::value_type;
@@ -259,8 +259,8 @@ namespace detail
                                                                       BinaryFunction compare_function,
                                                                       const OffsetT* merge_partitions)
         -> std::enable_if_t<(std::is_trivially_copyable<ValueType>::value
-                             && !rocprim::is_floating_point<ValueType>::value
-                             && !std::is_integral<ValueType>::value),
+                             && !traits::get<ValueType>().is_floating_point()
+                             && !traits::get<ValueType>().is_integral()),
                             void>
     {
         using key_type = typename std::iterator_traits<KeysInputIterator>::value_type;

@@ -29,7 +29,7 @@
 #include "../../detail/various.hpp"
 #include "../../functional.hpp"
 #include "../../intrinsics.hpp"
-#include "../../type_traits.hpp"
+#include "../../type_traits_interface.hpp"
 
 #include "../../block/block_load.hpp"
 
@@ -135,7 +135,7 @@ struct sample_to_bin_even<
 // This specialization uses multiplication by inv divisor for floats
 template<class Level>
 struct sample_to_bin_even<Level,
-                          typename std::enable_if<rocprim::is_floating_point<Level>::value>::type>
+                          typename std::enable_if<traits::get<Level>().is_floating_point()>::type>
 {
     unsigned int bins;
     Level        lower_level;

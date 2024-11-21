@@ -21,14 +21,7 @@
 #ifndef ROCPRIM_TYPE_TRAITS_INTERFACE_HPP_
 #define ROCPRIM_TYPE_TRAITS_INTERFACE_HPP_
 
-#include "config.hpp"
-#include "functional.hpp"
 #include "type_traits.hpp"
-#include "types.hpp"
-#include "types/tuple.hpp"
-
-#include <stdint.h>
-#include <type_traits>
 
 // common macros
 
@@ -37,9 +30,9 @@
     #define ROCPRIM_DO_NOT_COMPILE_IF(condition, msg) static_assert(!(condition), msg)
 #endif
 
-// Wrapper macro for std::enable_if_t aims to increase code readability
+// Wrapper macro for std::enable_if aims to increase code readability
 #ifndef ROCPRIM_REQUIRES
-    #define ROCPRIM_REQUIRES(...) typename std::enable_if_t<(__VA_ARGS__)>* = nullptr
+    #define ROCPRIM_REQUIRES(...) typename std::enable_if<(__VA_ARGS__)>::type* = nullptr
 #endif
 
 // Since every definable traits need to use `is_defined`, this macro reduce the amount of code
@@ -155,7 +148,7 @@ struct is_float_or_int
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
     { // cpp arithmetic types are either floating point or integral
-        return values < std::is_floating_point_v<InputType> ? 0 : 1 > {};
+        return values < std::is_floating_point<InputType>::value ? 0 : 1 > {};
     }
 
     // rocprim arithmetic types
@@ -255,9 +248,9 @@ struct float_bit_mask
     template<class BitType, BitType SignBit, BitType Exponent, BitType Mantissa>
     struct values
     {
-        static constexpr auto sign_bit = SignBit;
-        static constexpr auto exponent = Exponent;
-        static constexpr auto mantissa = Mantissa;
+        static constexpr BitType sign_bit = SignBit;
+        static constexpr BitType exponent = Exponent;
+        static constexpr BitType mantissa = Mantissa;
     };
 
     // if defined traits using new interface
@@ -330,49 +323,49 @@ struct is_fundamental
 template<class T>
 struct get
 {
-    static constexpr auto is_arithmetic()
+    constexpr auto is_arithmetic() const
     {
-        return is_arithmetic::get<T>().is_arithmetic;
+        return rocprim::traits::is_arithmetic{}.get<T>().is_arithmetic;
     };
 
-    static constexpr auto is_fundamental()
+    constexpr auto is_fundamental() const
     {
-        return is_fundamental::get<T>().is_fundamental;
+        return rocprim::traits::is_fundamental{}.get<T>().is_fundamental;
     };
 
-    static constexpr auto is_compound()
+    constexpr auto is_compound() const
     {
-        return !is_fundamental::get<T>().is_fundamental;
+        return !rocprim::traits::is_fundamental{}.get<T>().is_fundamental;
     }
 
-    static constexpr auto is_floating_point()
+    constexpr auto is_floating_point() const
     {
-        return is_float_or_int::get<T>().is_float_or_int == 0;
+        return rocprim::traits::is_float_or_int{}.get<T>().is_float_or_int == 0;
     };
 
-    static constexpr auto is_integral()
+    constexpr auto is_integral() const
     {
-        return is_float_or_int::get<T>().is_float_or_int == 1;
+        return rocprim::traits::is_float_or_int{}.get<T>().is_float_or_int == 1;
     }
 
-    static constexpr auto is_signed()
+    constexpr auto is_signed() const
     {
-        return is_signed_or_unsigned::get<T>().is_signed_or_unsigned == 0;
+        return rocprim::traits::is_signed_or_unsigned{}.get<T>().is_signed_or_unsigned == 0;
     }
 
-    static constexpr auto is_unsigned()
+    constexpr auto is_unsigned() const
     {
-        return is_signed_or_unsigned::get<T>().is_signed_or_unsigned == 1;
+        return rocprim::traits::is_signed_or_unsigned{}.get<T>().is_signed_or_unsigned == 1;
     }
 
-    static constexpr auto is_scalar()
+    constexpr auto is_scalar() const
     {
-        return is_scalar::get<T>().is_scalar;
+        return rocprim::traits::is_scalar{}.get<T>().is_scalar;
     }
 
-    static constexpr auto float_bit_mask()
+    constexpr auto float_bit_mask() const
     {
-        return float_bit_mask::get<T>();
+        return rocprim::traits::float_bit_mask{}.get<T>();
     };
 };
 
