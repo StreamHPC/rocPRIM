@@ -83,7 +83,7 @@ ROCPRIM_DEVICE ROCPRIM_INLINE void init_lookback_scan_state(LookBackScanState  l
 
 template<typename LookBackScanState>
 ROCPRIM_KERNEL
-    __launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE) void init_lookback_scan_state_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE) void init_lookback_scan_state_kernel(
         LookBackScanState                             lookback_scan_state,
         const unsigned int                            number_of_blocks,
         ordered_block_id<unsigned int>                ordered_bid,
@@ -111,7 +111,7 @@ ROCPRIM_KERNEL
 
 template<typename LookBackScanState>
 ROCPRIM_KERNEL
-    __launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE) void init_lookback_scan_state_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE) void init_lookback_scan_state_kernel(
         LookBackScanState                             lookback_scan_state,
         const unsigned int                            number_of_blocks,
         unsigned int                                  save_index = 0,

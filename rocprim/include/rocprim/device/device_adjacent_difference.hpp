@@ -63,7 +63,7 @@ template<typename Config,
          typename OutputIt,
          typename BinaryFunction>
 void ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().adjacent_difference_kernel_config.block_size)
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().adjacent_difference_kernel_config.block_size)
         adjacent_difference_kernel(
             const InputIt                                             input,
             const OutputIt                                            output,

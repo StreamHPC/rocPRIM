@@ -83,7 +83,7 @@ using offset_type_t = std::conditional_t<
 
 template<class Config, bool Descending, class KeysInputIterator, class Offset, class Decomposer>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().histogram.block_size) void onesweep_histograms_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().histogram.block_size) void onesweep_histograms_kernel(
         KeysInputIterator  keys_input,
         Offset*            global_digit_counts,
         const Offset       size,
@@ -106,7 +106,7 @@ ROCPRIM_KERNEL
 }
 
 template<class Config, class Offset>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .histogram.block_size) void onesweep_scan_histograms_kernel(Offset* global_digit_offsets)
 {
@@ -209,7 +209,7 @@ template<class Config,
          class Offset,
          class Decomposer>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().sort.block_size) void onesweep_iteration_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().sort.block_size) void onesweep_iteration_kernel(
         KeysInputIterator        keys_input,
         KeysOutputIterator       keys_output,
         ValuesInputIterator      values_input,

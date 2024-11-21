@@ -42,7 +42,7 @@ struct adjacent_find_impl_kernels
 {
     template<class OutputT, class IdT>
     static
-ROCPRIM_KERNEL __launch_bounds__(1)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(1)
     void init_adjacent_find(OutputT*              reduce_output,
                             ordered_block_id<IdT> ordered_tile_id,
                             const size_t          size)
@@ -56,9 +56,7 @@ ROCPRIM_KERNEL __launch_bounds__(1)
 
     static
 ROCPRIM_KERNEL
-#ifndef DOXYGEN_DOCUMENTATION_BUILD
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
-#endif
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
         void block_reduce_kernel(TransformedInputIterator transformed_input,
                                  ReduceIndexIterator      reduce_output,
                                  const std::size_t        size,

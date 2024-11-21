@@ -43,7 +43,7 @@ namespace detail
 {
 
 template<class Config, unsigned int ActiveChannels, class Counter>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .histogram_config
         .block_size) void init_histogram_kernel(fixed_array<Counter*, ActiveChannels>     histogram,
@@ -60,7 +60,7 @@ template<class Config,
          class SampleIterator,
          class Counter,
          class SampleToBinOp>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .histogram_config
         .block_size) void histogram_shared_kernel(SampleIterator samples,
@@ -104,7 +104,7 @@ template<class Config,
          class SampleIterator,
          class Counter,
          class SampleToBinOp>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .histogram_config
         .block_size) void histogram_global_kernel(SampleIterator                        samples,

@@ -101,7 +101,7 @@ template<bool Exclusive,
          class InitValueType,
          class AccType>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size) void single_scan_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void single_scan_kernel(
         InputIterator       input,
         const size_t        size,
         const InitValueType initial_value,
@@ -127,7 +127,7 @@ template<lookback_scan_determinism Determinism,
          class AccType,
          class LookBackScanState>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size) void lookback_scan_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void lookback_scan_kernel(
         InputIterator       input,
         OutputIterator      output,
         const size_t        size,

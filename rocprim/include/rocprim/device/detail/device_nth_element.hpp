@@ -154,7 +154,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 
 template<class config, class KeysIterator, class BinaryFunction>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<config>().stop_recursion_size) void kernel_block_sort(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<config>().stop_recursion_size) void kernel_block_sort(
         KeysIterator keys, const size_t size, BinaryFunction compare_function)
 {
     kernel_block_sort_impl<config>(keys, size, compare_function);
@@ -203,7 +203,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 }
 
 template<class config, class KeysIterator, class BinaryFunction>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<config>().number_of_buckets
     - 1) void kernel_find_splitters(KeysIterator                                             keys,
                                     typename std::iterator_traits<KeysIterator>::value_type* tree,
@@ -319,7 +319,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 }
 
 template<class config, class KeysIterator, class BinaryFunction>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<config>()
         .kernel_config
         .block_size) void kernel_count_bucket_sizes(KeysIterator keys,
@@ -385,7 +385,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 }
 
 template<class config>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<config>()
         .number_of_buckets) void kernel_find_nth_element_bucket(size_t* buckets,
                                                                 n_th_element_iteration_data*
@@ -588,7 +588,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
 
 template<class config, unsigned int NumPartitions, class KeysIterator, class BinaryFunction>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<config>().kernel_config.block_size) void kernel_copy_buckets(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<config>().kernel_config.block_size) void kernel_copy_buckets(
         KeysIterator                                             keys,
         typename std::iterator_traits<KeysIterator>::value_type* tree,
         const size_t                                             size,

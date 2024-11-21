@@ -47,7 +47,7 @@ template<class Config,
          class KeysInputIterator2,
          class BinaryFunction>
 ROCPRIM_KERNEL
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
 void partition_kernel(IndexIterator      index,
                       KeysInputIterator1 keys_input1,
                       KeysInputIterator2 keys_input2,
@@ -72,7 +72,7 @@ template<class Config,
          class ValuesOutputIterator,
          class BinaryFunction>
 ROCPRIM_KERNEL
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
 void merge_kernel(IndexIterator        index,
                   KeysInputIterator1   keys_input1,
                   KeysInputIterator2   keys_input2,

@@ -57,7 +57,7 @@ template<lookback_scan_determinism Determinism,
          typename BinaryFunction,
          typename LookbackScanState,
          typename AccType>
-void __global__ __launch_bounds__(device_params<Config>().kernel_config.block_size)
+void __global__ ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
     device_scan_by_key_kernel(const KeyInputIterator                       keys,
                               const InputIterator                          values,
                               const OutputIterator                         output,

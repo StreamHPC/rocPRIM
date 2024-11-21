@@ -104,7 +104,7 @@ template<lookback_scan_determinism Determinism,
          typename CompareFunction,
          typename BinaryOp,
          typename LookbackScanState>
-ROCPRIM_KERNEL __launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
 void reduce_by_key_kernel(const KeyIterator                    keys_input,
                           const ValueIterator                  values_input,
                           const UniqueIterator                 unique_keys,

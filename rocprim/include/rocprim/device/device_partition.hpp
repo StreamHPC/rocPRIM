@@ -60,7 +60,7 @@ template<select_method SelectMethod,
          class OffsetLookbackScanState,
          class... UnaryPredicates>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size) void partition_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void partition_kernel(
         KeyIterator             keys_input,
         ValueIterator           values_input,
         FlagIterator            flags,

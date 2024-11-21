@@ -60,20 +60,19 @@ template<class Config,
          class ValuesOutputIterator,
          class OffsetIterator>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size)
-void segmented_sort_kernel(
-    KeysInputIterator                                               keys_input,
-    typename std::iterator_traits<KeysInputIterator>::value_type*   keys_tmp,
-    KeysOutputIterator                                              keys_output,
-    ValuesInputIterator                                             values_input,
-    typename std::iterator_traits<ValuesInputIterator>::value_type* values_tmp,
-    ValuesOutputIterator                                            values_output,
-    bool                                                            to_output,
-    OffsetIterator                                                  begin_offsets,
-    OffsetIterator                                                  end_offsets,
-    unsigned int                                                    iterations,
-    unsigned int                                                    begin_bit,
-    unsigned int                                                    end_bit)
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void segmented_sort_kernel(
+        KeysInputIterator                                               keys_input,
+        typename std::iterator_traits<KeysInputIterator>::value_type*   keys_tmp,
+        KeysOutputIterator                                              keys_output,
+        ValuesInputIterator                                             values_input,
+        typename std::iterator_traits<ValuesInputIterator>::value_type* values_tmp,
+        ValuesOutputIterator                                            values_output,
+        bool                                                            to_output,
+        OffsetIterator                                                  begin_offsets,
+        OffsetIterator                                                  end_offsets,
+        unsigned int                                                    iterations,
+        unsigned int                                                    begin_bit,
+        unsigned int                                                    end_bit)
 {
     segmented_sort<Config, Descending>(keys_input,
                                        keys_tmp,
@@ -97,7 +96,7 @@ template<class Config,
          class ValuesOutputIterator,
          class SegmentIndexIterator,
          class OffsetIterator>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .kernel_config
         .block_size)
@@ -139,7 +138,7 @@ template<class Config,
          class ValuesOutputIterator,
          class SegmentIndexIterator,
          class OffsetIterator>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .warp_sort_config
         .block_size_small) void segmented_sort_small_kernel(KeysInputIterator keys_input,
@@ -176,7 +175,7 @@ template<class Config,
          class ValuesOutputIterator,
          class SegmentIndexIterator,
          class OffsetIterator>
-ROCPRIM_KERNEL __launch_bounds__(
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
     device_params<Config>()
         .warp_sort_config
         .block_size_medium) void segmented_sort_medium_kernel(KeysInputIterator keys_input,

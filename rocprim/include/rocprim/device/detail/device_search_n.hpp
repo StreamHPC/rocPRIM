@@ -48,7 +48,7 @@ struct search_n_impl_kernels
 {
 
     template<class SizeType>
-    static ROCPRIM_KERNEL __launch_bounds__(1)
+    static ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(1)
     void search_n_init_kernel(SizeType* __restrict__ output, const SizeType target)
     {
         *output = target;
@@ -57,9 +57,7 @@ struct search_n_impl_kernels
     /// \brief Supports all forms of search_n operations,
     /// but the efficiency is insufficient when `items_per_block` is too large.
     static ROCPRIM_KERNEL
-#ifndef DOXYGEN_DOCUMENTATION_BUILD
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
-#endif
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
         void search_n_normal_kernel(
             InputIterator input,
             size_t* __restrict__ output,
@@ -110,9 +108,7 @@ __launch_bounds__(device_params<Config>().kernel_config.block_size)
     }
 
     static ROCPRIM_KERNEL
-#ifndef DOXYGEN_DOCUMENTATION_BUILD
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
-#endif
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
         void search_n_find_heads_kernel(
             InputIterator                                                   input,
             const size_t                                                    size,
@@ -149,9 +145,7 @@ __launch_bounds__(device_params<Config>().kernel_config.block_size)
     }
 
     static ROCPRIM_KERNEL
-#ifndef DOXYGEN_DOCUMENTATION_BUILD
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
-#endif
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
         void search_n_heads_filter_kernel(const size_t size,
                                           const size_t count,
                                           const size_t* __restrict__ heads,
@@ -206,9 +200,7 @@ __launch_bounds__(device_params<Config>().kernel_config.block_size)
     }
 
     static ROCPRIM_KERNEL
-#ifndef DOXYGEN_DOCUMENTATION_BUILD
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
-#endif
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
         void search_n_discard_heads_kernel(
             InputIterator                                                   input,
             const size_t                                                    size,

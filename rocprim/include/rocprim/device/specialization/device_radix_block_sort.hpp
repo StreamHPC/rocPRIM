@@ -38,7 +38,7 @@ template<class Config,
          class ValuesOutputIterator,
          class Decomposer>
 ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().block_size) void radix_sort_block_sort_kernel(
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().block_size) void radix_sort_block_sort_kernel(
         KeysInputIterator    keys_input,
         KeysOutputIterator   keys_output,
         ValuesInputIterator  values_input,

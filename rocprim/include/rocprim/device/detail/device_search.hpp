@@ -254,7 +254,7 @@ template<class Config, class InputIterator1, class InputIterator2, class BinaryF
 struct search_impl_kernels
 {
     static ROCPRIM_KERNEL
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
     void search_kernel_shared(InputIterator1 input,
                               InputIterator2 keys,
                               size_t*        output,
@@ -266,7 +266,7 @@ __launch_bounds__(device_params<Config>().kernel_config.block_size)
     }
 
     static ROCPRIM_KERNEL
-__launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
     void search_kernel(InputIterator1 input,
                        InputIterator2 keys,
                        size_t*        output,
