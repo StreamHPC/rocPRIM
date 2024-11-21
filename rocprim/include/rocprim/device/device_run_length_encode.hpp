@@ -52,14 +52,14 @@ namespace run_length_encode
 {
 
 template<lookback_scan_determinism Determinism,
-         class Config,
-         class KeysInputIterator,
-         class ValuesInputIterator,
-         class UniqueOutputIterator,
-         class AggregatesOutputIterator,
-         class UniqueCountOutputIterator,
-         class BinaryFunction,
-         class KeyCompareFunction>
+         typename Config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction,
+         typename KeyCompareFunction>
 hipError_t run_length_encode_impl(void*                     temporary_storage,
                                   size_t&                   storage_size,
                                   KeysInputIterator         keys_input,
@@ -122,11 +122,11 @@ void non_trivial_kernel(const InputIterator           input,
                                                                             size);
 }
 
-template<class Config,
-         class InputIterator,
-         class OffsetsOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config,
+         typename InputIterator,
+         typename OffsetsOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 hipError_t run_length_encode_non_trivial_runs_impl(void*                   temporary_storage,
                                                    size_t&                 storage_size,
                                                    InputIterator           input,
@@ -354,11 +354,11 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
 /// // runs_count_output: [4]
 /// \endcode
 /// \endparblock
-template<class Config = default_config,
-         class InputIterator,
-         class UniqueOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config = default_config,
+         typename InputIterator,
+         typename UniqueOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 inline hipError_t run_length_encode(void*                   temporary_storage,
                                     size_t&                 storage_size,
                                     InputIterator           input,
@@ -468,11 +468,11 @@ inline hipError_t run_length_encode(void*                   temporary_storage,
 /// // runs_count_output: [2]
 /// \endcode
 /// \endparblock
-template<class Config = default_config,
-         class InputIterator,
-         class OffsetsOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config = default_config,
+         typename InputIterator,
+         typename OffsetsOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 inline hipError_t run_length_encode_non_trivial_runs(void*                   temporary_storage,
                                                      size_t&                 storage_size,
                                                      InputIterator           input,

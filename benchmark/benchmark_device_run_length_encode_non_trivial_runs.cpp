@@ -127,7 +127,6 @@ int main(int argc, char* argv[])
     add_non_trivial_runs_benchmarks<16>(benchmarks, size, seed, stream);
     add_non_trivial_runs_benchmarks<256>(benchmarks, size, seed, stream);
     add_non_trivial_runs_benchmarks<4096>(benchmarks, size, seed, stream);
-
 #endif
 
     // Use manual timing

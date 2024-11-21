@@ -59,12 +59,11 @@ inline std::string non_trivial_runs_config_name<rocprim::default_config>()
     return "default_config";
 }
 
-template<class T, int MaxLength, class Config = rocprim::default_config>
+template<typename T, int MaxLength, typename Config = rocprim::default_config>
 struct device_non_trivial_runs_benchmark : public config_autotune_interface
 {
     std::string name() const override
     {
-        using namespace std::string_literals;
         return bench_naming::format_name(
             "{lvl:device,algo:run_length_encode,subalgo:non_trivial,key_type:"
             + std::string(Traits<T>::name()) + ",keys_max_length:" + std::to_string(MaxLength)

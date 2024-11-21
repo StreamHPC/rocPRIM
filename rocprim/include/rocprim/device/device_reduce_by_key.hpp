@@ -139,14 +139,14 @@ void reduce_by_key_kernel(const KeyIterator                    keys_input,
 }
 
 template<lookback_scan_determinism Determinism,
-         class config,
-         class KeysInputIterator,
-         class ValuesInputIterator,
-         class UniqueOutputIterator,
-         class AggregatesOutputIterator,
-         class UniqueCountOutputIterator,
-         class BinaryFunction,
-         class KeyCompareFunction>
+         typename config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction,
+         typename KeyCompareFunction>
 hipError_t reduce_by_key_impl_wrapped_config(void*                     temporary_storage,
                                              size_t&                   storage_size,
                                              KeysInputIterator         keys_input,
@@ -288,7 +288,7 @@ hipError_t reduce_by_key_impl_wrapped_config(void*                     temporary
         std::cout << "items_per_tile:     " << items_per_tile << '\n';
     }
 
-    for(size_t i = 0, offset = 0; i < number_of_launch; i++, offset += limited_size)
+    for(size_t i = 0, offset = 0; i < number_of_launch; ++i, offset += limited_size)
     {
         const std::size_t current_size = std::min<std::size_t>(size - offset, limited_size);
         const std::size_t number_of_tiles_launch = ceiling_div(current_size, items_per_tile);
@@ -355,14 +355,14 @@ hipError_t reduce_by_key_impl_wrapped_config(void*                     temporary
 }
 
 template<lookback_scan_determinism Determinism,
-         class Config,
-         class KeysInputIterator,
-         class ValuesInputIterator,
-         class UniqueOutputIterator,
-         class AggregatesOutputIterator,
-         class UniqueCountOutputIterator,
-         class BinaryFunction,
-         class KeyCompareFunction>
+         typename Config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction,
+         typename KeyCompareFunction>
 hipError_t reduce_by_key_impl(void*                     temporary_storage,
                               size_t&                   storage_size,
                               KeysInputIterator         keys_input,
@@ -504,15 +504,15 @@ hipError_t reduce_by_key_impl(void*                     temporary_storage,
 /// // unique_count_output: [4]
 /// \endcode
 /// \endparblock
-template<class Config = default_config,
-         class KeysInputIterator,
-         class ValuesInputIterator,
-         class UniqueOutputIterator,
-         class AggregatesOutputIterator,
-         class UniqueCountOutputIterator,
-         class BinaryFunction
+template<typename Config = default_config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction
          = ::rocprim::plus<typename std::iterator_traits<ValuesInputIterator>::value_type>,
-         class KeyCompareFunction
+         typename KeyCompareFunction
          = ::rocprim::equal_to<typename std::iterator_traits<KeysInputIterator>::value_type>>
 inline hipError_t reduce_by_key(void*                     temporary_storage,
                                 size_t&                   storage_size,
@@ -549,15 +549,15 @@ inline hipError_t reduce_by_key(void*                     temporary_storage,
 /// non-associative scan operators like floating point arithmetic operations.
 /// Refer to the documentation for \link reduce_by_key() rocprim::reduce_by_key \endlink
 /// for a detailed description of this function.
-template<class Config = default_config,
-         class KeysInputIterator,
-         class ValuesInputIterator,
-         class UniqueOutputIterator,
-         class AggregatesOutputIterator,
-         class UniqueCountOutputIterator,
-         class BinaryFunction
+template<typename Config = default_config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction
          = ::rocprim::plus<typename std::iterator_traits<ValuesInputIterator>::value_type>,
-         class KeyCompareFunction
+         typename KeyCompareFunction
          = ::rocprim::equal_to<typename std::iterator_traits<KeysInputIterator>::value_type>>
 inline hipError_t deterministic_reduce_by_key(void*                     temporary_storage,
                                               size_t&                   storage_size,

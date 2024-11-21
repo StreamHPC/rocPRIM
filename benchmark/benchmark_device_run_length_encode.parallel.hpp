@@ -46,7 +46,6 @@
 template<typename Config>
 std::string run_length_encode_config_name()
 {
-
     const rocprim::detail::reduce_by_key_config_params config = Config();
     return "{bs:" + std::to_string(config.kernel_config.block_size)
            + ",ipt:" + std::to_string(config.kernel_config.items_per_thread)
@@ -93,12 +92,12 @@ struct device_run_length_encode_benchmark : public config_autotune_interface
         {
             const size_t key_count = key_counts[runs_count % key_counts.size()];
             const size_t end       = std::min(size, offset + key_count);
-            for(size_t i = offset; i < end; i++)
+            for(size_t i = offset; i < end; ++i)
             {
                 input[i] = runs_count;
             }
 
-            runs_count++;
+            ++runs_count;
             offset += key_count;
         }
 
@@ -132,7 +131,7 @@ struct device_run_length_encode_benchmark : public config_autotune_interface
         HIP_CHECK(hipDeviceSynchronize());
 
         // Warm-up
-        for(size_t i = 0; i < 10; i++)
+        for(size_t i = 0; i < 10; ++i)
         {
             HIP_CHECK(rocprim::run_length_encode<Config>(d_temporary_storage,
                                                          temporary_storage_bytes,
@@ -157,7 +156,7 @@ struct device_run_length_encode_benchmark : public config_autotune_interface
             // Record start event
             HIP_CHECK(hipEventRecord(start, stream));
 
-            for(size_t i = 0; i < batch_size; i++)
+            for(size_t i = 0; i < batch_size; ++i)
             {
                 HIP_CHECK(rocprim::run_length_encode<Config>(d_temporary_storage,
                                                              temporary_storage_bytes,
