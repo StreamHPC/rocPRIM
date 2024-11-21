@@ -407,6 +407,29 @@ __global__ void thread_search_kernel(Type* const    device_input1,
     device_output_y[id] = coord.y;
 }
 
+template<class Type, class OffsetT, class BinaryFunction>
+__global__ void thread_search_out_of_bounds_kernel(Type* const    device_input1,
+                                                   Type* const    device_input2,
+                                                   OffsetT*       device_output_x,
+                                                   OffsetT*       device_output_y,
+                                                   const OffsetT  input1_size,
+                                                   const OffsetT  input2_size,
+                                                   BinaryFunction bin_op)
+{
+    const OffsetT partition_id = input1_size + input2_size + 1;
+    CoordinateT<OffsetT> coord;
+    rocprim::merge_path_search(partition_id,
+                               device_input1,
+                               device_input2,
+                               input1_size,
+                               input2_size,
+                               coord,
+                               bin_op);
+
+    *device_output_x = coord.x;
+    *device_output_y = coord.y;
+}
+
 template<class T, class OffsetT, class BinaryFunction>
 void merge_path_search_test()
 {
@@ -433,6 +456,7 @@ void merge_path_search_test()
 
         std::vector<OffsetT> output_x(index_size);
         std::vector<OffsetT> output_y(index_size);
+        OffsetT output_oob_x, output_oob_y;
 
         // Preparing device
         T* device_input1;
@@ -447,6 +471,11 @@ void merge_path_search_test()
         OffsetT* device_output_y;
         HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_y),
                                                      output_y.size() * sizeof(OffsetT)));
+        OffsetT* device_output_oob_x;
+        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_x), sizeof(OffsetT)));
+        OffsetT* device_output_oob_y;
+        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_y), sizeof(OffsetT)));
+
 
         HIP_CHECK(hipMemcpy(device_input1,
                             input1.data(),
@@ -468,6 +497,16 @@ void merge_path_search_test()
                                         bin_op);
         HIP_CHECK(hipGetLastError());
 
+        thread_search_out_of_bounds_kernel<T, OffsetT, BinaryFunction>
+            <<<grid_size, block_size>>>(device_input1,
+                                        device_input2,
+                                        device_output_oob_x,
+                                        device_output_oob_y,
+                                        input1.size(),
+                                        input2.size(),
+                                        bin_op);
+        HIP_CHECK(hipGetLastError());
+
         // Reading results back
         HIP_CHECK(hipMemcpy(output_x.data(),
                             device_output_x,
@@ -479,6 +518,16 @@ void merge_path_search_test()
                             output_y.size() * sizeof(OffsetT),
                             hipMemcpyDeviceToHost));
 
+        HIP_CHECK(hipMemcpy(&output_oob_x,
+                            device_output_oob_x,
+                            sizeof(OffsetT),
+                            hipMemcpyDeviceToHost));
+
+        HIP_CHECK(hipMemcpy(&output_oob_y,
+                            device_output_oob_y,
+                            sizeof(OffsetT),
+                            hipMemcpyDeviceToHost));
+
         std::vector<T> combined_input(2 * size);
         std::merge(input1.begin(),
                    input1.end(),
@@ -486,6 +535,8 @@ void merge_path_search_test()
                    input2.end(),
                    combined_input.begin(),
                    bin_op);
+
+        ASSERT_EQ(output_oob_x, input1.size());
 
         OffsetT slice_index = 0;
         for(OffsetT i = 0; i < index_size - 1; i++)
@@ -514,6 +565,8 @@ void merge_path_search_test()
         HIP_CHECK(hipFree(device_input2));
         HIP_CHECK(hipFree(device_output_x));
         HIP_CHECK(hipFree(device_output_y));
+        HIP_CHECK(hipFree(device_output_oob_x));
+        HIP_CHECK(hipFree(device_output_oob_y));
     }
 }
 
