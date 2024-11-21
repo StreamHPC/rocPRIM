@@ -373,9 +373,9 @@ struct radix_sort_and_scatter_helper
              class ValuesInputIterator,
              class ValuesOutputIterator>
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void sort_and_scatter(KeysInputIterator    keys_input,
-                          KeysOutputIterator   keys_output,
-                          ValuesInputIterator  values_input,
+    void sort_and_scatter(KeysInputIterator keys_input,
+                          KeysOutputIterator keys_output,
+                          ValuesInputIterator values_input,
                           ValuesOutputIterator values_output,
                           Offset               begin_offset,
                           Offset               end_offset,
@@ -621,8 +621,8 @@ auto compare_nan_sensitive(const T& a, const T& b)
     // Always check benchmark_device_segmented_radix_sort and benchmark_device_radix_sort
     // when making changes to this function.
 
-    using bit_key_type = typename float_bit_mask<T>::bit_type;
-    static constexpr auto sign_bit = float_bit_mask<T>::sign_bit;
+    static constexpr auto sign_bit = ::rocprim::traits::get<T>().float_bit_mask().sign_bit;
+    using bit_key_type             = decltype(sign_bit);
 
     auto a_bits = ::rocprim::detail::bit_cast<bit_key_type>(a);
     auto b_bits = ::rocprim::detail::bit_cast<bit_key_type>(b);
