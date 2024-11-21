@@ -56,7 +56,7 @@ namespace traits
 /// This template struct provides an interface for downstream libraries to implement type traits for
 /// their custom types. Users can utilize this template struct to define traits for these types. Users
 /// should only implement traits as required by specific algorithms, and some traits cannot be defined
-/// if they can be inferred from others.
+/// if they can be inferred from others. This API is not static because of ODR.
 /// \tparam T The type for which you want to define traits.
 ///
 /// \par Example
@@ -70,9 +70,9 @@ namespace traits
 /// template<>
 /// struct rocprim::traits::define<custom_float_type>
 /// {
-///     using is_arithmetic   = rocprim::traits::is_arithmetic::values<true>;
-///     using is_float_or_int = rocprim::traits::is_float_or_int::values<0>;
-///     using float_bit_mask  = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
+///     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
+///     using number_format = rocprim::traits::number_format::values<traits::number_format::options::floating_point_type>;
+///     using float_bit_mask = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
 /// };
 /// \endcode
 /// The example below demonstrates how to implement traits for a custom integral type.
@@ -84,9 +84,9 @@ namespace traits
 /// template<>
 /// struct rocprim::traits::define<custom_int_type>
 /// {
-///     using is_arithmetic         = rocprim::traits::is_arithmetic::values<true>;
-///     using is_float_or_int       = rocprim::traits::is_float_or_int::values<1>;
-///     using is_signed_or_unsigned = rocprim::traits::is_signed_or_unsigned::values<0>;
+///     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
+///     using number_format = rocprim::traits::number_format::values<traits::number_format::options::integral_type>;
+///     using integral_sign = rocprim::traits::integral_sign::values<0>;
 /// };
 /// \endcode
 /// \endparblock
@@ -95,6 +95,10 @@ struct define
 {};
 
 /// @}
+
+/// predef
+template<class T>
+struct get;
 
 /// \defgroup available_traits Traits that can be used
 /// \addtogroup available_traits
@@ -120,18 +124,19 @@ struct define
 /// \endparblock
 struct is_arithmetic
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_arithmetic);
-
     /// \brief Value of this trait
     template<bool Val>
     struct values
     {
         /// \brief value
-        static constexpr auto is_arithmetic = Val;
+        static constexpr auto value = Val;
     };
 
-    /// \brief For c++ arithmetic types, return true, but will throw compile error when user try to define this trait for them
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_arithmetic);
+
+    // For c++ arithmetic types, return true, but will throw compile error when user try to define this trait for them
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
     {
@@ -140,7 +145,7 @@ struct is_arithmetic
         return values<true>{};
     }
 
-    /// \brief For third party types, if trait `is_arithmetic` not defined, will return default value `false`
+    // For third party types, if trait `is_arithmetic` not defined, will return default value `false`
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value && !is_defined<InputType>)>
     static constexpr auto get()
@@ -148,13 +153,14 @@ struct is_arithmetic
         return values<false>{};
     }
 
-    /// \brief For third party types, if trait [is_arithmetic] is defined, then should return its value
+    // For third party types, if trait `is_arithmetic` is defined, then should return its value
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value && is_defined<InputType>)>
     static constexpr auto get()
     {
         return typename define<InputType>::is_arithmetic{};
     }
+#endif
 };
 
 /// \brief Arithmetic types, pointers, member pointers, and null pointers are considered scalar types.
@@ -179,46 +185,47 @@ struct is_arithmetic
 /// \endparblock
 struct is_scalar
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_scalar);
-
     /// \brief Value of this trait
     template<bool Val>
     struct values
     {
         /// \brief value
-        static constexpr auto is_scalar = Val;
+        static constexpr auto value = Val;
     };
 
-    /// \brief For c++ scalar types, return true, but will throw compile error when user try to define this trait for them
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_scalar);
+
+    // For c++ scalar types, return true, but will throw compile error when user try to define this trait for them
     template<class InputType, ROCPRIM_REQUIRES(std::is_scalar<InputType>::value)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(is_defined<InputType>,
-                                  "Do not define trait [is_scalar] for c++ scalar types");
+                                  "Do not define trait `is_scalar` for c++ scalar types");
         return values<true>{};
     }
 
-    /// \brief For third party types, if trait `is_scalar` is not defined, will return default value `false`
-    /// For rocprim rocprim or third party types that defined trait `is_arithmetic` as true the result should be `true`
+    // For third party types, if trait `is_scalar` is not defined, will return default value `false`
+    // For rocprim rocprim or third party types that defined trait `is_arithmetic` as true the result should be `true`
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_scalar<InputType>::value && !is_defined<InputType>)>
     static constexpr auto get()
     {
-        return values<is_arithmetic::get<InputType>().is_arithmetic>{};
+        return values<is_arithmetic::get<InputType>().value>{};
     }
-    /// \brief for third party types and rocprim types, if trait `is_scalar` is defined, will return the value
-    /// check if the `is_scalar` equals to `is_arithmetic`, or throw a compile error
+    // For third party types and rocprim types, if trait `is_scalar` is defined, will return the value
+    // check if the `is_scalar` equals to `is_arithmetic`, or throw a compile error
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_scalar<InputType>::value && is_defined<InputType>)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
-            is_arithmetic::get<InputType>().is_arithmetic !=
-                typename define<InputType>::is_scalar{}.is_scalar,
-            "Trait [is_arithmetic] and trait [is_scalar] should have the same value");
+            is_arithmetic::get<InputType>().value != typename define<InputType>::is_scalar{}.value,
+            "Trait `is_arithmetic` and trait `is_scalar` should have the same value");
         return typename define<InputType>::is_scalar{};
     }
+#endif
 };
 
 /// \par Definability
@@ -232,7 +239,7 @@ struct is_scalar
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
-/// using is_float_or_int = rocprim::traits::is_float_or_int::values<0>;
+/// using number_format = rocprim::traits::number_format::values<number_format::options::integral_type>;
 /// \endcode
 /// \endparblock
 /// \par How to use
@@ -242,53 +249,64 @@ struct is_scalar
 /// rocprim::traits::get<InputType>().is_floating_point();
 /// \endcode
 /// \endparblock
-struct is_float_or_int
+struct number_format
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_float_or_int);
+    /// \brief the options of the value
+    enum class options
+    {
+        unknown_type        = 0,
+        floating_point_type = 1,
+        integral_type       = 2
+    };
 
     /// \brief Value of this trait
-    template<int Val>
+    template<options Val>
     struct values
     {
         /// \brief value
-        static constexpr auto is_float_or_int = Val;
+        static constexpr auto value = Val;
     };
 
-    /// \brief for c++ arithmetic types
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(number_format);
+
+    // For c++ arithmetic types
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
-    { // cpp arithmetic types are either floating point or integral
-        return values < std::is_floating_point<InputType>::value ? 0 : 1 > {};
+    { // C++ build-in arithmetic types are either floating point or integral
+        return values < std::is_floating_point<InputType>::value ? options::floating_point_type
+                                                                 : options::integral_type > {};
     }
 
-    /// \brief for rocprim arithmetic types
+    // For rocprim arithmetic types
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value
-                              && is_arithmetic::get<InputType>().is_arithmetic)>
+                              && is_arithmetic::get<InputType>().value)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(!is_defined<InputType>,
-                                  "You must define trait [is_float_or_int] for arithmetic types");
-        return typename define<InputType>::is_float_or_int{};
+                                  "You must define trait `number_format` for arithmetic types");
+        return typename define<InputType>::number_format{};
     }
 
-    /// \brief for other types
+    // For other types
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value
-                              && !is_arithmetic::get<InputType>().is_arithmetic)>
+                              && !is_arithmetic::get<InputType>().value)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
-            "You cannot define trait [is_float_or_int] for non-arithmetic types");
-        return values<2>{};
+            "You cannot define trait `number_format` for non-arithmetic types");
+        return values<number_format::options::unknown_type>{};
     }
+#endif
 };
 
 /// \par Definability
 /// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and integral types.
-/// * **Required**: If you define `is_float_or_int` as `1`, you must also define this trait; otherwise, a
+/// * **Required**: If you define `number_format` as `1`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
 /// \par Value Option
 /// * `0`: For signed integral types
@@ -297,7 +315,7 @@ struct is_float_or_int
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
-/// using is_signed_or_unsigned = rocprim::traits::is_signed_or_unsigned::values<0>;
+/// using integral_sign = rocprim::traits::integral_sign::values<0>;
 /// \endcode
 /// \endparblock
 /// \par How to use
@@ -307,63 +325,73 @@ struct is_float_or_int
 /// rocprim::traits::get<InputType>().is_unsigned();
 /// \endcode
 /// \endparblock
-struct is_signed_or_unsigned
+struct integral_sign
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_signed_or_unsigned);
+    enum class options
+    {
+        unknown_type  = 0,
+        signed_type   = 1,
+        unsigned_type = 2
+    };
 
     /// \brief Value of this trait
-    template<int Val>
+    template<options Val>
     struct values
     {
         /// \brief value
-        static constexpr auto is_signed_or_unsigned = Val;
+        static constexpr auto value = Val;
     };
 
-    /// \brief for c++ arithmetic types
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(integral_sign);
+
+    // For c++ arithmetic types
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
     { // cpp arithmetic types are either signed point or unsignned
-        return values < std::is_signed<InputType>::value ? 0 : 1 > {};
+        return values < std::is_signed<InputType>::value ? options::signed_type
+                                                         : options::unsigned_type > {};
     }
 
-    /// \brief for rocprim arithmetic integral
+    // For rocprim arithmetic integral
     template<class InputType,
-             ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value
-                              && is_arithmetic::get<InputType>().is_arithmetic
-                              && is_float_or_int::get<InputType>().is_float_or_int == 1)>
+             ROCPRIM_REQUIRES(
+                 !std::is_arithmetic<InputType>::value && is_arithmetic::get<InputType>().value
+                 && number_format::get<InputType>().value == number_format::options::integral_type)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(!is_defined<InputType>,
-                                  "Trait [is_signed_or_unsigned] is required for arithmetic "
+                                  "Trait `integral_sign` is required for arithmetic "
                                   "integral types, please define");
-        return typename define<InputType>::is_signed_or_unsigned{};
+        return typename define<InputType>::integral_sign{};
     }
 
-    /// \brief for rocprim arithmetic non-integral
+    // For rocprim arithmetic non-integral
     template<class InputType,
-             ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value
-                              && is_arithmetic::get<InputType>().is_arithmetic
-                              && is_float_or_int::get<InputType>().is_float_or_int != 1)>
+             ROCPRIM_REQUIRES(
+                 !std::is_arithmetic<InputType>::value && is_arithmetic::get<InputType>().value
+                 && number_format::get<InputType>().value != number_format::options::integral_type)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
-            "You cannot define trait [is_signed_or_unsigned] for arithmetic non-integral types");
-        return values<2>{};
+            "You cannot define trait `integral_sign` for arithmetic non-integral types");
+        return values<options::unknown_type>{};
     }
 
-    /// \brief for other types
+    // For other types
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_arithmetic<InputType>::value
-                              && !is_arithmetic::get<InputType>().is_arithmetic)>
+                              && !is_arithmetic::get<InputType>().value)>
     static constexpr auto get()
-    { //  for other types, trait is_floating_point is a must
+    { // For other types, trait is_floating_point is a must
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
-            "You cannot define trait [is_signed_or_unsigned] for non-arithmetic types");
-        return values<2>{};
+            "You cannot define trait `integral_sign` for non-arithmetic types");
+        return values<options::unknown_type>{};
     }
+#endif
 };
 
 /// \warning For some types, if this trait is not implemented in their traits definition, it will
@@ -372,16 +400,12 @@ struct is_signed_or_unsigned
 /// are updated to the latest interface.
 /// \par Definability
 /// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and floating-point types.
-/// * **Required**: If you define `is_float_or_int` as `1`, you must also define this trait; otherwise, a
+/// * **Required**: If you define `number_format` as `0`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
-/// \par Value Option
-/// * `0`: For signed integral types
-/// * `1`: For unsigned integral types
-/// * `2`: For other types
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
-/// using is_signed_or_unsigned = rocprim::traits::is_signed_or_unsigned::values<0>;
+/// using float_bit_mask = rocprim::traits::float_bit_mask::values<int,1,1,1>;
 /// \endcode
 /// \endparblock
 /// \par How to use
@@ -392,23 +416,13 @@ struct is_signed_or_unsigned
 /// \endparblock
 struct float_bit_mask
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(float_bit_mask);
-
-    /// \brief To check if this type has a `rocprim::detail::float_bit_mask` specialization - default value
-    template<class InputType, class = void>
-    static constexpr bool has_old_float_bit_mask = false;
-    /// \brief To check if this type has a `rocprim::detail::float_bit_mask` specialization
-    template<class InputType>
-    static constexpr bool has_old_float_bit_mask<
-        InputType,
-        detail::void_t<decltype(rocprim::detail::float_bit_mask<InputType>{})>>
-        = true;
-
     /// \brief Value of this trait
     template<class BitType, BitType SignBit, BitType Exponent, BitType Mantissa>
     struct values
     {
+        ROCPRIM_DO_NOT_COMPILE_IF(number_format::get<BitType>().value
+                                      != number_format::options::integral_type,
+                                  "BitType should be integral");
         /// \brief sign_bit value
         static constexpr BitType sign_bit = SignBit;
         /// \brief exponent value
@@ -417,18 +431,29 @@ struct float_bit_mask
         static constexpr BitType mantissa = Mantissa;
     };
 
-    /// \brief if defined this trait, then use the new interface
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(float_bit_mask);
+
+    template<class InputType, class = void>
+    static constexpr bool has_old_float_bit_mask = false;
+    template<class InputType>
+    static constexpr bool has_old_float_bit_mask<
+        InputType,
+        detail::void_t<decltype(rocprim::detail::float_bit_mask<InputType>{})>>
+        = true;
+
+    // If defined this trait, then use the new interface
     template<class InputType, ROCPRIM_REQUIRES(is_defined<InputType>)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
-            is_float_or_int::get<InputType>().is_float_or_int != 0,
-            "You cannot use trait [float_bit_mask] for [non-floating_point] types");
+            number_format::get<InputType>().value != number_format::options::floating_point_type,
+            "You cannot use trait `float_bit_mask` for `non-floating_point` types");
         return typename define<InputType>::float_bit_mask{};
     }
 
-    /// \brief This function acts as a bridge for old interface
-    /// Will be removed in certain version
+    // This function acts as a bridge for old interface. Will be removed in certain version
     template<class InputType,
              ROCPRIM_REQUIRES(!is_defined<InputType> && has_old_float_bit_mask<InputType>)>
     static constexpr auto get()
@@ -437,18 +462,20 @@ struct float_bit_mask
         return values<typename mask::bit_type, mask::sign_bit, mask::exponent, mask::mantissa>{};
     }
 
-    /// \brief for types that don't have a trait [float_bit_mask] defined neither a rocprim::detail::float_bit_mask specialization
+    // For types that don't have a trait `float_bit_mask` defined neither a rocprim::detail::float_bit_mask specialization
     template<class InputType,
              ROCPRIM_REQUIRES(!is_defined<InputType> && !has_old_float_bit_mask<InputType>)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
-            is_float_or_int::get<InputType>().is_float_or_int != 0,
-            "You cannot use trait [float_bit_mask] for [non-floating_point] types");
-        ROCPRIM_DO_NOT_COMPILE_IF(is_float_or_int::get<InputType>().is_float_or_int == 0,
-                                  "Trait [float_bit_mask] is required for [floating_point] types");
+            number_format::get<InputType>().value != number_format::options::floating_point_type,
+            "You cannot use trait `float_bit_mask` for `non-floating_point` types");
+        ROCPRIM_DO_NOT_COMPILE_IF(number_format::get<InputType>().value
+                                      == number_format::options::floating_point_type,
+                                  "Trait `float_bit_mask` is required for `floating_point` types");
         return values<int, 0, 0, 0>{};
     }
+#endif
 };
 
 /// \brief The trait `is_fundamental` is undefinable, as it is the union of `std::is_fundamental`
@@ -464,25 +491,28 @@ struct float_bit_mask
 /// \endparblock
 struct is_fundamental
 {
-    /// \brief auto generate the `is_defined` template comstexpr
-    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_fundamental);
 
     /// \brief Value of this trait
     template<bool Val>
     struct values
     {
         /// \brief value
-        static constexpr auto is_fundamental = Val;
+        static constexpr auto value = Val;
     };
 
-    /// \brief for all types
+#ifndef DOXYGEN_DOCUMENTATION_BUILD
+
+    ROCPRIM_TRAITS_GENERATE_IS_DEFINE(is_fundamental);
+
+    // For all types
     template<class InputType>
     static constexpr auto get()
     {
-        ROCPRIM_DO_NOT_COMPILE_IF(is_defined<InputType>, "Trait [is_fundamental] is undefinable");
+        ROCPRIM_DO_NOT_COMPILE_IF(is_defined<InputType>, "Trait `is_fundamental` is undefinable");
         return values < std::is_fundamental<InputType>::value
-               || is_arithmetic::get<InputType>().is_arithmetic > {};
+               || is_arithmetic::get<InputType>().value > {};
     }
+#endif
 };
 
 /// @}
@@ -492,7 +522,7 @@ struct is_fundamental
 
 /// \par Overview
 /// This template struct is designed to allow rocPRIM algorithms to retrieve trait information from C++
-/// build-in arithmetic types, rocPRIM types, and custom types.
+/// build-in arithmetic types, rocPRIM types, and custom types. This API is not static because of ODR.
 /// * All member functions are `compiled only when invoked`.
 /// * Different algorithms require different traits.
 /// \tparam T The type from which you want to retrieve the traits.
@@ -520,7 +550,7 @@ struct get
     /// type, or if the `is_arithmetic` trait has been defined as `true`; otherwise, returns `false`.
     constexpr bool is_arithmetic() const
     {
-        return rocprim::traits::is_arithmetic{}.get<T>().is_arithmetic;
+        return rocprim::traits::is_arithmetic{}.get<T>().value;
     };
 
     /// \brief Get trait `is_fundamental`.
@@ -528,7 +558,7 @@ struct get
     /// otherwise, returns `false`.
     constexpr bool is_fundamental() const
     {
-        return rocprim::traits::is_fundamental{}.get<T>().is_fundamental;
+        return rocprim::traits::is_fundamental{}.get<T>().value;
     };
 
     /// \brief If `T` is fundamental type, then returns `false`.
@@ -536,7 +566,7 @@ struct get
     /// otherwise, returns `true`.
     constexpr bool is_compound() const
     {
-        return !rocprim::traits::is_fundamental{}.get<T>().is_fundamental;
+        return !rocprim::traits::is_fundamental{}.get<T>().value;
     }
 
     /// \brief To check if `T` is floating-point type.
@@ -544,7 +574,8 @@ struct get
     /// doing so will result in a compile-time error.
     constexpr bool is_floating_point() const
     {
-        return rocprim::traits::is_float_or_int{}.get<T>().is_float_or_int == 0;
+        return rocprim::traits::number_format{}.get<T>().value
+               == number_format::options::floating_point_type;
     };
 
     /// \brief To check if `T` is integral type.
@@ -552,7 +583,8 @@ struct get
     /// doing so will result in a compile-time error.
     constexpr bool is_integral() const
     {
-        return rocprim::traits::is_float_or_int{}.get<T>().is_float_or_int == 1;
+        return rocprim::traits::number_format{}.get<T>().value
+               == number_format::options::integral_type;
     }
 
     /// \brief To check if `T` is signed integral type.
@@ -560,7 +592,8 @@ struct get
     /// doing so will result in a compile-time error.
     constexpr bool is_signed() const
     {
-        return rocprim::traits::is_signed_or_unsigned{}.get<T>().is_signed_or_unsigned == 0;
+        return rocprim::traits::integral_sign{}.get<T>().value
+               == integral_sign::options::signed_type;
     }
 
     /// \brief To check if `T` is unsigned integral type.
@@ -568,7 +601,8 @@ struct get
     /// doing so will result in a compile-time error.
     constexpr bool is_unsigned() const
     {
-        return rocprim::traits::is_signed_or_unsigned{}.get<T>().is_signed_or_unsigned == 1;
+        return rocprim::traits::integral_sign{}.get<T>().value
+               == integral_sign::options::unsigned_type;
     }
 
     /// \brief Get trait `is_scalar`.
@@ -576,7 +610,7 @@ struct get
     /// type, or if the `is_scalar` trait has been defined as `true`; otherwise, returns `false`.
     constexpr bool is_scalar() const
     {
-        return rocprim::traits::is_scalar{}.get<T>().is_scalar;
+        return rocprim::traits::is_scalar{}.get<T>().value;
     }
 
     /// \brief Get trait `float_bit_mask`.
@@ -628,8 +662,9 @@ struct traits::define<rocprim::bfloat16>
 {
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
-    /// \brief Trait `is_float_or_int` for this type
-    using is_float_or_int = traits::is_float_or_int::values<0>;
+    /// \brief Trait `number_format` for this type
+    using number_format
+        = traits::number_format::values<traits::number_format::options::floating_point_type>;
     /// \brief Trait `float_bit_mask` for this type
     using float_bit_mask = traits::float_bit_mask::values<uint16_t, 0x8000, 0x7F80, 0x007F>;
 };
@@ -641,8 +676,9 @@ struct traits::define<rocprim::half>
 {
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
-    /// \brief Trait `is_float_or_int` for this type
-    using is_float_or_int = traits::is_float_or_int::values<0>;
+    /// \brief Trait `number_format` for this type
+    using number_format
+        = traits::number_format::values<traits::number_format::options::floating_point_type>;
     /// \brief Trait `float_bit_mask` for this type
     using float_bit_mask = traits::float_bit_mask::values<uint16_t, 0x8000, 0x7F80, 0x007F>;
 };
@@ -654,10 +690,12 @@ struct traits::define<rocprim::int128_t>
 {
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
-    /// \brief Trait `is_float_or_int` for this type
-    using is_float_or_int = traits::is_float_or_int::values<1>;
-    /// \brief Trait `is_signed_or_unsigned` for this type
-    using is_signed_or_unsigned = traits::is_signed_or_unsigned::values<0>;
+    /// \brief Trait `number_format` for this type
+    using number_format
+        = traits::number_format::values<traits::number_format::options::integral_type>;
+    /// \brief Trait `integral_sign` for this type
+    using integral_sign
+        = traits::integral_sign::values<traits::integral_sign::options::signed_type>;
 };
 
 /// \brief This is the definition of traits of `rocprim::uint128_t`
@@ -667,10 +705,12 @@ struct traits::define<rocprim::uint128_t>
 {
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
-    /// \brief Trait `is_float_or_int` for this type
-    using is_float_or_int = traits::is_float_or_int::values<1>;
-    /// \brief Trait `is_signed_or_unsigned` for this type
-    using is_signed_or_unsigned = traits::is_signed_or_unsigned::values<1>;
+    /// \brief Trait `number_format` for this type
+    using number_format
+        = traits::number_format::values<traits::number_format::options::integral_type>;
+    /// \brief Trait `integral_sign` for this type
+    using integral_sign
+        = traits::integral_sign::values<traits::integral_sign::options::unsigned_type>;
 };
 /// @}
 

@@ -31,6 +31,7 @@ Available traits
 
 .. doxygengroup::  available_traits
   :content-only:
+  :members:
 
 
 Types with predefined traits
