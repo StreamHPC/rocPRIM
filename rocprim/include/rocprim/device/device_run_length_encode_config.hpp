@@ -196,6 +196,52 @@ struct wrapped_non_trivial_runs_config<default_config, InputType>
 
 #ifndef DOXYGEN_DOCUMENTATION_BUILD
 
+template<typename ReduceByKeyConfig,
+         typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction>
+template<target_arch Arch>
+constexpr reduce_by_key_config_params
+    wrapped_trivial_runs_config<ReduceByKeyConfig, KeyType, AccumulatorType, BinaryFunction>::
+        architecture_config<Arch>::params;
+
+template<typename ReduceByKeyConfig,
+         typename SelectConfig,
+         typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction>
+template<target_arch Arch>
+constexpr reduce_by_key_config_params
+    wrapped_trivial_runs_config<rocprim::run_length_encode_config<ReduceByKeyConfig, SelectConfig>,
+                                KeyType,
+                                AccumulatorType,
+                                BinaryFunction>::architecture_config<Arch>::params;
+
+template<typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction,
+         typename Enable = void>
+template<target_arch Arch>
+constexpr reduce_by_key_config_params
+    wrapped_trivial_runs_impl<KeyType, AccumulatorType, BinaryFunction, Enable>::
+        architecture_config<Arch>::params;
+
+template<typename KeyType, typename AccumulatorType, typename BinaryFunction>
+template<target_arch Arch>
+constexpr reduce_by_key_config_params wrapped_trivial_runs_impl<
+    KeyType,
+    AccumulatorType,
+    BinaryFunction,
+    std::enable_if_t<is_arithmetic<KeyType>::value && is_arithmetic<AccumulatorType>::value
+                     && is_binary_functional<BinaryFunction>::value>>::architecture_config<Arch>::
+    params;
+
+template<typename KeyType, typename AccumulatorType, typename BinaryFunction>
+template<target_arch Arch>
+constexpr reduce_by_key_config_params
+    wrapped_trivial_runs_config<default_config, KeyType, AccumulatorType, BinaryFunction>::
+        architecture_config<Arch>::params;
+
 template<typename RLENonTrivialRunsConfig, typename InputType>
 template<target_arch Arch>
 constexpr non_trivial_runs_config_params
