@@ -653,6 +653,12 @@ class AlgorithmDeviceMerge(Algorithm):
     config_selection_params = [
         SelectionType(name="key_type", is_optional=False, select_on_size_only=False),
         SelectionType(name="value_type", is_optional=True, select_on_size_only=True)]
+
+class AlgorithmDeviceRunLengthEncodeNonTrivial(Algorithm):
+    algorithm_name = 'device_run_length_encode_non_trivial'
+    cpp_configuration_template_name = 'run_length_encode_config_template'
+    config_selection_params = [SelectionType(name='key_type', is_optional=False, select_on_size_only=False)]
+
     def __init__(self, fallback_entries):
         Algorithm.__init__(self, fallback_entries)
 
@@ -721,6 +727,8 @@ def create_algorithm(algorithm_name: str, fallback_entries: List[FallbackCase]):
         return AlgorithmDeviceFindFirstOf(fallback_entries)
     elif algorithm_name == 'device_merge':
         return AlgorithmDeviceMerge(fallback_entries)
+    elif algorithm_name == 'device_run_length_encode_non_trivial':
+        return AlgorithmDeviceRunLengthEncodeNonTrivial(fallback_entries)
     else:
         raise(NotSupportedError(f'Algorithm "{algorithm_name}" is not supported (yet)'))
 
