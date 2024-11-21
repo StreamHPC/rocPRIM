@@ -52,6 +52,7 @@ option(BUILD_DOCS "Build documentation (requires sphinx)" OFF)
 option(ONLY_INSTALL "Only install" OFF)
 option(BUILD_CODE_COVERAGE "Build with code coverage enabled" OFF)
 option(ROCPRIM_INSTALL "Enable installation of rocPRIM (projects embedding rocPRIM may want to turn this OFF)" ON)
+option(ROCPRIM_ENABLE_ASSERTS "Enable asserts in release build)" OFF)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -64,6 +65,21 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+if(ROCPRIM_ENABLE_ASSERTS)
+  if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "")
+      string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
+      set(BUILD_TYPE_CXX_FLAGS "CMAKE_CXX_FLAGS_${BUILD_TYPE}")
+      set(BUILD_TYPE_C_FLAGS "CMAKE_C_FLAGS_${BUILD_TYPE}")
+  endif()
+
+  string(REGEX REPLACE "-DNDEBUG( |$)" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REGEX REPLACE "-DNDEBUG( |$)" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "")
+      string(REGEX REPLACE "-DNDEBUG( |$)" "" ${BUILD_TYPE_CXX_FLAGS} "${${BUILD_TYPE_CXX_FLAGS}}")
+      string(REGEX REPLACE "-DNDEBUG( |$)" "" ${BUILD_TYPE_C_FLAGS} "${${BUILD_TYPE_C_FLAGS}}")
+  endif()
 endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
