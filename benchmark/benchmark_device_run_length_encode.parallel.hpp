@@ -392,6 +392,9 @@ struct device_run_length_encode_benchmark_generator
                                                     rocprim::block_scan_algorithm::using_warp_scan>;
                 storage.emplace_back(
                     std::make_unique<device_run_length_encode_benchmark<T, 10, trivial_config>>());
+                storage.emplace_back(
+                    std::make_unique<
+                        device_run_length_encode_benchmark<T, 1000, trivial_config>>());
                 using non_trivial_config = rocprim::non_trivial_runs_config<
                     BlockSize,
                     items_per_thread,
