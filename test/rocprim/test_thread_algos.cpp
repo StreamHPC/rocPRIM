@@ -408,15 +408,16 @@ __global__ void thread_search_kernel(Type* const    device_input1,
 }
 
 template<class Type, class OffsetT, class BinaryFunction>
-__global__ void thread_search_out_of_bounds_kernel(Type* const    device_input1,
-                                                   Type* const    device_input2,
-                                                   OffsetT*       device_output_x,
-                                                   OffsetT*       device_output_y,
-                                                   const OffsetT  input1_size,
-                                                   const OffsetT  input2_size,
-                                                   BinaryFunction bin_op)
+__global__
+void thread_search_out_of_bounds_kernel(Type* const    device_input1,
+                                        Type* const    device_input2,
+                                        OffsetT*       device_output_x,
+                                        OffsetT*       device_output_y,
+                                        const OffsetT  input1_size,
+                                        const OffsetT  input2_size,
+                                        BinaryFunction bin_op)
 {
-    const OffsetT partition_id = input1_size + input2_size + 1;
+    const OffsetT        partition_id = input1_size + input2_size + 1;
     CoordinateT<OffsetT> coord;
     rocprim::merge_path_search(partition_id,
                                device_input1,
@@ -456,7 +457,7 @@ void merge_path_search_test()
 
         std::vector<OffsetT> output_x(index_size);
         std::vector<OffsetT> output_y(index_size);
-        OffsetT output_oob_x, output_oob_y;
+        OffsetT              output_oob_x, output_oob_y;
 
         // Preparing device
         T* device_input1;
@@ -472,9 +473,11 @@ void merge_path_search_test()
         HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_y),
                                                      output_y.size() * sizeof(OffsetT)));
         OffsetT* device_output_oob_x;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_x), sizeof(OffsetT)));
+        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_x),
+                                                     sizeof(OffsetT)));
         OffsetT* device_output_oob_y;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_y), sizeof(OffsetT)));
+        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output_oob_y),
+                                                     sizeof(OffsetT)));
 
 
         HIP_CHECK(hipMemcpy(device_input1,
@@ -518,15 +521,11 @@ void merge_path_search_test()
                             output_y.size() * sizeof(OffsetT),
                             hipMemcpyDeviceToHost));
 
-        HIP_CHECK(hipMemcpy(&output_oob_x,
-                            device_output_oob_x,
-                            sizeof(OffsetT),
-                            hipMemcpyDeviceToHost));
+        HIP_CHECK(
+            hipMemcpy(&output_oob_x, device_output_oob_x, sizeof(OffsetT), hipMemcpyDeviceToHost));
 
-        HIP_CHECK(hipMemcpy(&output_oob_y,
-                            device_output_oob_y,
-                            sizeof(OffsetT),
-                            hipMemcpyDeviceToHost));
+        HIP_CHECK(
+            hipMemcpy(&output_oob_y, device_output_oob_y, sizeof(OffsetT), hipMemcpyDeviceToHost));
 
         std::vector<T> combined_input(2 * size);
         std::merge(input1.begin(),
