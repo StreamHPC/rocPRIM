@@ -43,142 +43,11 @@
 constexpr size_t DEFAULT_BYTES = size_t{2} << 30; // 2 GiB
 #endif
 
-namespace rp = rocprim;
-
-template<class T>
-void run_encode_benchmark(benchmark::State&   state,
-                          size_t              max_length,
-                          size_t              bytes,
-                          const managed_seed& seed,
-                          hipStream_t         stream)
-{
-    using key_type   = T;
-    using count_type = unsigned int;
-
-    const size_t size = bytes / sizeof(T);
-
-    // Generate data
-    std::vector<key_type> input(size);
-
-    unsigned int        runs_count   = 0;
-    const auto          random_range = limit_random_range<size_t>(1, max_length);
-    std::vector<size_t> key_counts
-        = get_random_data<size_t>(100000, random_range.first, random_range.second, seed.get_0());
-    size_t offset = 0;
-    while(offset < size)
-    {
-        const size_t key_count = key_counts[runs_count % key_counts.size()];
-        const size_t end       = std::min(size, offset + key_count);
-        for(size_t i = offset; i < end; i++)
-        {
-            input[i] = runs_count;
-        }
-
-        runs_count++;
-        offset += key_count;
+#define CREATE_ENCODE_BENCHMARK(T, ML)                                \
+    {                                                                 \
+        const device_run_length_encode_benchmark<T, ML> instance;     \
+        REGISTER_BENCHMARK(benchmarks, size, seed, stream, instance); \
     }
-
-    key_type* d_input;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_input), size * sizeof(key_type)));
-    HIP_CHECK(hipMemcpy(d_input, input.data(), size * sizeof(key_type), hipMemcpyHostToDevice));
-
-    key_type*   d_unique_output;
-    count_type* d_counts_output;
-    count_type* d_runs_count_output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_unique_output), runs_count * sizeof(key_type)));
-    HIP_CHECK(
-        hipMalloc(reinterpret_cast<void**>(&d_counts_output), runs_count * sizeof(count_type)));
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_runs_count_output), sizeof(count_type)));
-
-    void*  d_temporary_storage     = nullptr;
-    size_t temporary_storage_bytes = 0;
-
-    HIP_CHECK(rp::run_length_encode(nullptr,
-                                    temporary_storage_bytes,
-                                    d_input,
-                                    size,
-                                    d_unique_output,
-                                    d_counts_output,
-                                    d_runs_count_output,
-                                    stream,
-                                    false));
-
-    HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // Warm-up
-    for(size_t i = 0; i < 10; i++)
-    {
-        HIP_CHECK(rp::run_length_encode(d_temporary_storage,
-                                        temporary_storage_bytes,
-                                        d_input,
-                                        size,
-                                        d_unique_output,
-                                        d_counts_output,
-                                        d_runs_count_output,
-                                        stream,
-                                        false));
-    }
-    HIP_CHECK(hipDeviceSynchronize());
-
-    // HIP events creation
-    hipEvent_t start, stop;
-    HIP_CHECK(hipEventCreate(&start));
-    HIP_CHECK(hipEventCreate(&stop));
-
-    const unsigned int batch_size = 10;
-    for(auto _ : state)
-    {
-        // Record start event
-        HIP_CHECK(hipEventRecord(start, stream));
-
-        for(size_t i = 0; i < batch_size; i++)
-        {
-            HIP_CHECK(rp::run_length_encode(d_temporary_storage,
-                                            temporary_storage_bytes,
-                                            d_input,
-                                            size,
-                                            d_unique_output,
-                                            d_counts_output,
-                                            d_runs_count_output,
-                                            stream,
-                                            false));
-        }
-
-        // Record stop event and wait until it completes
-        HIP_CHECK(hipEventRecord(stop, stream));
-        HIP_CHECK(hipEventSynchronize(stop));
-
-        float elapsed_mseconds;
-        HIP_CHECK(hipEventElapsedTime(&elapsed_mseconds, start, stop));
-        state.SetIterationTime(elapsed_mseconds / 1000);
-    }
-
-    // Destroy HIP events
-    HIP_CHECK(hipEventDestroy(start));
-    HIP_CHECK(hipEventDestroy(stop));
-
-    state.SetBytesProcessed(state.iterations() * batch_size * size * sizeof(key_type));
-    state.SetItemsProcessed(state.iterations() * batch_size * size);
-
-    HIP_CHECK(hipFree(d_temporary_storage));
-    HIP_CHECK(hipFree(d_input));
-    HIP_CHECK(hipFree(d_unique_output));
-    HIP_CHECK(hipFree(d_counts_output));
-    HIP_CHECK(hipFree(d_runs_count_output));
-}
-
-#define CREATE_ENCODE_BENCHMARK(T)                                                                \
-    benchmark::RegisterBenchmark(                                                                 \
-        bench_naming::format_name(                                                                \
-            "{lvl:device,algo:run_length_encode,subalgo:trivial,key_type:" #T ",keys_max_length:" \
-            + std::to_string(MaxLength) + ",cfg:default_config}")                                 \
-            .c_str(),                                                                             \
-        run_encode_benchmark<T>,                                                                  \
-        MaxLength,                                                                                \
-        size,                                                                                     \
-        seed,                                                                                     \
-        stream)
 
 template<size_t MaxLength>
 void add_encode_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
@@ -189,21 +58,17 @@ void add_encode_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchma
     using custom_float2  = custom_type<float, float>;
     using custom_double2 = custom_type<double, double>;
 
-    std::vector<benchmark::internal::Benchmark*> bs = {
-        // all tuned types
-        CREATE_ENCODE_BENCHMARK(int8_t),
-        CREATE_ENCODE_BENCHMARK(int16_t),
-        CREATE_ENCODE_BENCHMARK(int32_t),
-        CREATE_ENCODE_BENCHMARK(int64_t),
-        CREATE_ENCODE_BENCHMARK(rocprim::half),
-        CREATE_ENCODE_BENCHMARK(float),
-        CREATE_ENCODE_BENCHMARK(double),
-        // custom types
-        CREATE_ENCODE_BENCHMARK(custom_float2),
-        CREATE_ENCODE_BENCHMARK(custom_double2),
-    };
-
-    benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
+    // all tuned types
+    CREATE_ENCODE_BENCHMARK(int8_t, MaxLength);
+    CREATE_ENCODE_BENCHMARK(int16_t, MaxLength);
+    CREATE_ENCODE_BENCHMARK(int32_t, MaxLength);
+    CREATE_ENCODE_BENCHMARK(int64_t, MaxLength);
+    CREATE_ENCODE_BENCHMARK(rocprim::half, MaxLength);
+    CREATE_ENCODE_BENCHMARK(float, MaxLength);
+    CREATE_ENCODE_BENCHMARK(double, MaxLength);
+    // custom types
+    CREATE_ENCODE_BENCHMARK(custom_float2, MaxLength);
+    CREATE_ENCODE_BENCHMARK(custom_double2, MaxLength);
 }
 
 // CHANGE

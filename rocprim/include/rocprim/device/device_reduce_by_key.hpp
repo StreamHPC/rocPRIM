@@ -30,8 +30,8 @@
 #include "detail/device_scan_common.hpp"
 #include "detail/lookback_scan_state.hpp"
 
-#include "../config.hpp"
 #include "../common.hpp"
+#include "../config.hpp"
 #include "../detail/temp_storage.hpp"
 #include "../detail/various.hpp"
 #include "../functional.hpp"
@@ -104,23 +104,22 @@ template<lookback_scan_determinism Determinism,
          typename CompareFunction,
          typename BinaryOp,
          typename LookbackScanState>
-ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size) void reduce_by_key_kernel(
-        const KeyIterator                    keys_input,
-        const ValueIterator                  values_input,
-        const UniqueIterator                 unique_keys,
-        const ReductionIterator              reductions,
-        const UniqueCountIterator            unique_count,
-        const BinaryOp                       reduce_op,
-        const CompareFunction                compare,
-        const LookbackScanState              scan_state,
-        const ordered_block_id<unsigned int> ordered_tile_id,
-        const std::size_t                    starting_tile,
-        const std::size_t                    total_number_of_tiles,
-        const std::size_t                    size,
-        const std::size_t* const             global_head_count,
-        const AccumulatorType* const         previous_accumulated,
-        const std::size_t                    number_of_tiles_launch)
+ROCPRIM_KERNEL __launch_bounds__(device_params<Config>().kernel_config.block_size)
+void reduce_by_key_kernel(const KeyIterator                    keys_input,
+                          const ValueIterator                  values_input,
+                          const UniqueIterator                 unique_keys,
+                          const ReductionIterator              reductions,
+                          const UniqueCountIterator            unique_count,
+                          const BinaryOp                       reduce_op,
+                          const CompareFunction                compare,
+                          const LookbackScanState              scan_state,
+                          const ordered_block_id<unsigned int> ordered_tile_id,
+                          const std::size_t                    starting_tile,
+                          const std::size_t                    total_number_of_tiles,
+                          const std::size_t                    size,
+                          const std::size_t* const             global_head_count,
+                          const AccumulatorType* const         previous_accumulated,
+                          const std::size_t                    number_of_tiles_launch)
 {
     reduce_by_key::kernel_impl<Determinism, Config>(keys_input,
                                                     values_input,
@@ -140,7 +139,7 @@ ROCPRIM_KERNEL
 }
 
 template<lookback_scan_determinism Determinism,
-         class Config,
+         class config,
          class KeysInputIterator,
          class ValuesInputIterator,
          class UniqueOutputIterator,
@@ -148,24 +147,20 @@ template<lookback_scan_determinism Determinism,
          class UniqueCountOutputIterator,
          class BinaryFunction,
          class KeyCompareFunction>
-hipError_t reduce_by_key_impl(void*                     temporary_storage,
-                              size_t&                   storage_size,
-                              KeysInputIterator         keys_input,
-                              ValuesInputIterator       values_input,
-                              const size_t              size,
-                              UniqueOutputIterator      unique_output,
-                              AggregatesOutputIterator  aggregates_output,
-                              UniqueCountOutputIterator unique_count_output,
-                              BinaryFunction            reduce_op,
-                              KeyCompareFunction        key_compare_op,
-                              const hipStream_t         stream,
-                              const bool                debug_synchronous)
+hipError_t reduce_by_key_impl_wrapped_config(void*                     temporary_storage,
+                                             size_t&                   storage_size,
+                                             KeysInputIterator         keys_input,
+                                             ValuesInputIterator       values_input,
+                                             const size_t              size,
+                                             UniqueOutputIterator      unique_output,
+                                             AggregatesOutputIterator  aggregates_output,
+                                             UniqueCountOutputIterator unique_count_output,
+                                             BinaryFunction            reduce_op,
+                                             KeyCompareFunction        key_compare_op,
+                                             const hipStream_t         stream,
+                                             const bool                debug_synchronous)
 {
-    using key_type         = ::rocprim::detail::value_type_t<KeysInputIterator>;
     using accumulator_type = reduce_by_key::accumulator_type_t<ValuesInputIterator, BinaryFunction>;
-
-    using config = wrapped_reduce_by_key_config<Config, key_type, accumulator_type, BinaryFunction>;
-
     detail::target_arch target_arch;
     hipError_t          result = host_target_arch(stream, target_arch);
     if(result != hipSuccess)
@@ -359,7 +354,48 @@ hipError_t reduce_by_key_impl(void*                     temporary_storage,
     return hipSuccess;
 }
 
+template<lookback_scan_determinism Determinism,
+         class Config,
+         class KeysInputIterator,
+         class ValuesInputIterator,
+         class UniqueOutputIterator,
+         class AggregatesOutputIterator,
+         class UniqueCountOutputIterator,
+         class BinaryFunction,
+         class KeyCompareFunction>
+hipError_t reduce_by_key_impl(void*                     temporary_storage,
+                              size_t&                   storage_size,
+                              KeysInputIterator         keys_input,
+                              ValuesInputIterator       values_input,
+                              const size_t              size,
+                              UniqueOutputIterator      unique_output,
+                              AggregatesOutputIterator  aggregates_output,
+                              UniqueCountOutputIterator unique_count_output,
+                              BinaryFunction            reduce_op,
+                              KeyCompareFunction        key_compare_op,
+                              const hipStream_t         stream,
+                              const bool                debug_synchronous)
+{
+    using key_type         = ::rocprim::detail::value_type_t<KeysInputIterator>;
+    using accumulator_type = reduce_by_key::accumulator_type_t<ValuesInputIterator, BinaryFunction>;
 
+    using config = wrapped_reduce_by_key_config<Config, key_type, accumulator_type, BinaryFunction>;
+
+    return detail::reduce_by_key_impl_wrapped_config<
+        detail::lookback_scan_determinism::default_determinism,
+        config>(temporary_storage,
+                storage_size,
+                keys_input,
+                values_input,
+                size,
+                unique_output,
+                aggregates_output,
+                unique_count_output,
+                reduce_op,
+                key_compare_op,
+                stream,
+                debug_synchronous);
+}
 
 } // namespace detail
 

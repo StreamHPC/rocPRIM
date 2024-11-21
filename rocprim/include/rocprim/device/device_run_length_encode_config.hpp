@@ -27,6 +27,7 @@
 #include "../config.hpp"
 #include "../detail/various.hpp"
 #include "../type_traits.hpp"
+#include "detail/config/device_run_length_encode.hpp"
 #include "detail/config/device_run_length_encode_non_trivial.hpp"
 
 #include <type_traits>
@@ -42,10 +43,7 @@ BEGIN_ROCPRIM_NAMESPACE
 /// Must be \p reduce_by_key_config or \p default_config.
 /// \tparam SelectConfig - configuration of device-level select operation.
 /// Must be \p select_config or \p default_config.
-template<
-    class ReduceByKeyConfig,
-    class SelectConfig = default_config
->
+template<class ReduceByKeyConfig, class SelectConfig = default_config>
 struct run_length_encode_config
 {
     /// \brief Configuration of device-level reduce-by-key operation.
