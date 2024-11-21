@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_REDUCE_BY_KEY_HPP_
-#define ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_REDUCE_BY_KEY_HPP_
+#ifndef ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_RUN_LENGTH_ENCODE_HPP_
+#define ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_RUN_LENGTH_ENCODE_HPP_
 
 #include "../../../type_traits.hpp"
 #include "../device_config_helper.hpp"
@@ -40,12 +40,12 @@ namespace detail
 {
 
 template<unsigned int arch, class key_type, class value_type, class enable = void>
-struct default_reduce_by_key_config : default_reduce_by_key_config_base<key_type, value_type>::type
+struct default_trivial_runs_config : default_reduce_by_key_config_base<key_type, value_type>::type
 {};
 
 // Based on key_type = double
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -60,7 +60,7 @@ reduce_by_key_config<
 
 // Based on key_type = float
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -75,7 +75,7 @@ reduce_by_key_config<
 
 // Based on key_type = rocprim::half
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -90,7 +90,7 @@ reduce_by_key_config<
 
 // Based on key_type = int64_t
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -105,7 +105,7 @@ reduce_by_key_config<
 
 // Based on key_type = int
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -120,7 +120,7 @@ reduce_by_key_config<
 
 // Based on key_type = short
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -135,7 +135,7 @@ reduce_by_key_config<
 
 // Based on key_type = int8_t
 template<class key_type, class value_type>
-struct default_reduce_by_key_config<
+struct default_trivial_runs_config<
     static_cast<unsigned int>(target_arch::gfx900), 
     key_type, 
     value_type, 
@@ -156,4 +156,4 @@ END_ROCPRIM_NAMESPACE
 /// @}
 // end of group primitivesmodule_deviceconfigs
 
-#endif // ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_REDUCE_BY_KEY_HPP_
+#endif // ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_RUN_LENGTH_ENCODE_HPP_

@@ -57,6 +57,58 @@ struct run_length_encode_config
 namespace detail
 {
 
+template<typename ReduceByKeyConfig,
+         typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction>
+struct wrapped_trivial_runs_config
+    : wrapped_reduce_by_key_config<ReduceByKeyConfig, KeyType, AccumulatorType, BinaryFunction>
+{};
+
+template<typename ReduceByKeyConfig,
+         typename SelectConfig,
+         typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction>
+struct wrapped_trivial_runs_config<
+    rocprim::run_length_encode_config<ReduceByKeyConfig, SelectConfig>,
+    KeyType,
+    AccumulatorType,
+    BinaryFunction>
+    : wrapped_reduce_by_key_config<ReduceByKeyConfig, KeyType, AccumulatorType, BinaryFunction>
+{};
+
+template<typename KeyType,
+         typename AccumulatorType,
+         typename BinaryFunction,
+         typename Enable = void>
+struct wrapped_trivial_runs_impl
+    : wrapped_reduce_by_key_impl<KeyType, AccumulatorType, BinaryFunction, Enable>
+{};
+
+template<typename KeyType, typename AccumulatorType, typename BinaryFunction>
+struct wrapped_trivial_runs_impl<
+    KeyType,
+    AccumulatorType,
+    BinaryFunction,
+    std::enable_if_t<is_arithmetic<KeyType>::value && is_arithmetic<AccumulatorType>::value
+                     && is_binary_functional<BinaryFunction>::value>>
+{
+    template<target_arch Arch>
+    struct architecture_config
+    {
+        static constexpr reduce_by_key_config_params params
+            = default_trivial_runs_config<static_cast<unsigned int>(Arch),
+                                          KeyType,
+                                          AccumulatorType>{};
+    };
+};
+
+template<typename KeyType, typename AccumulatorType, typename BinaryFunction>
+struct wrapped_trivial_runs_config<default_config, KeyType, AccumulatorType, BinaryFunction>
+    : wrapped_trivial_runs_impl<KeyType, AccumulatorType, BinaryFunction>
+{};
+
 // Wrap around run_length_encode_config and the newly added non_trivial_runs_config for the
 // run_length_encode_non_trivial_runs algorithm. Three cases are considered for selecting
 // the appropriate config:

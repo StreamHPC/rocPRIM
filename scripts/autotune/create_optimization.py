@@ -656,9 +656,8 @@ class AlgorithmDeviceMerge(Algorithm):
 
 class AlgorithmDeviceRunLengthEncodeNonTrivial(Algorithm):
     algorithm_name = 'device_run_length_encode_non_trivial'
-    cpp_configuration_template_name = 'run_length_encode_config_template'
+    cpp_configuration_template_name = 'run_length_encode_non_trivial_runs_config_template'
     config_selection_params = [SelectionType(name='key_type', is_optional=False, select_on_size_only=False)]
-
     def __init__(self, fallback_entries):
         Algorithm.__init__(self, fallback_entries)
 
