@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 #include <rocprim/type_traits.hpp>
-#include <rocprim/type_traits_interface.hpp>
 
 #include <iostream>
 #include <sstream>

@@ -30,12 +30,11 @@
 
 #include "rocprim_version.hpp"
 
-#include "functional.hpp"
 #include "intrinsics.hpp"
-#include "iterator.hpp"
-#include "type_traits.hpp"
-#include "type_traits_interface.hpp"
+#include "functional.hpp"
 #include "types.hpp"
+#include "type_traits.hpp"
+#include "iterator.hpp"
 
 #include "thread/radix_key_codec.hpp"
 #include "thread/thread_load.hpp"

@@ -22,7 +22,7 @@
 
 #include "test_utils_custom_test_types.hpp"
 
-#include <rocprim/type_traits_interface.hpp>
+#include <rocprim/type_traits.hpp>
 
 #include <ostream>
 #include <type_traits>
@@ -166,7 +166,7 @@ inline std::ostream& operator<<(std::ostream& stream, const custom_int_type& val
 } // namespace type_traits_test
 
 template<>
-struct rocprim::traits::define<type_triats_test::custom_float_type>
+struct rocprim::traits::define<type_traits_test::custom_float_type>
 {
     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
     using number_format
@@ -175,7 +175,7 @@ struct rocprim::traits::define<type_triats_test::custom_float_type>
 };
 
 template<>
-struct rocprim::traits::define<type_triats_test::custom_int_type>
+struct rocprim::traits::define<type_traits_test::custom_int_type>
 {
     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
     using number_format
@@ -185,7 +185,7 @@ struct rocprim::traits::define<type_triats_test::custom_int_type>
 };
 
 template<>
-struct rocprim::detail::float_bit_mask<type_triats_test::float_bit_masked_type>
+struct rocprim::detail::float_bit_mask<type_traits_test::float_bit_masked_type>
 {
     static constexpr uint32_t sign_bit = 0x80000000;
     static constexpr uint32_t exponent = 0x7F800000;
@@ -200,7 +200,7 @@ public:
     using input_type = Params;
 };
 using FloatingPointTypeTestParams = ::testing::
-    Types<rocprim::half, rocprim::bfloat16, float, double, type_triats_test::custom_float_type>;
+    Types<rocprim::half, rocprim::bfloat16, float, double, type_traits_test::custom_float_type>;
 
 template<class Params>
 class RocprimIntegralTests : public ::testing::Test
@@ -218,7 +218,7 @@ using IntegralTypeTestParams = ::testing::Types<uint8_t,
                                                 int64_t,
                                                 rocprim::uint128_t,
                                                 rocprim::int128_t,
-                                                type_triats_test::custom_int_type>;
+                                                type_traits_test::custom_int_type>;
 
 TYPED_TEST_SUITE(RocprimFloatingPointTests, FloatingPointTypeTestParams);
 
@@ -298,8 +298,8 @@ TYPED_TEST(RocprimIntegralTests, Integral)
 
 TEST(TraitsInterface, OldType)
 {
-    using input_type = type_triats_test::float_bit_masked_type;
-    using bit_mask   = rocprim::detail::float_bit_mask<type_triats_test::float_bit_masked_type>;
+    using input_type = type_traits_test::float_bit_masked_type;
+    using bit_mask   = rocprim::detail::float_bit_mask<type_traits_test::float_bit_masked_type>;
 
     constexpr auto input_traits = rocprim::traits::get<input_type>();
     ROCPRIM_STATIC_ASSERT_FALSE(input_traits.is_arithmetic());

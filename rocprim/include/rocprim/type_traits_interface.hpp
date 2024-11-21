@@ -21,7 +21,9 @@
 #ifndef ROCPRIM_TYPE_TRAITS_INTERFACE_HPP_
 #define ROCPRIM_TYPE_TRAITS_INTERFACE_HPP_
 
-#include "type_traits.hpp"
+#include "types.hpp"
+
+#include <type_traits>
 
 // common macros
 
@@ -29,7 +31,13 @@
 #ifndef ROCPRIM_DO_NOT_COMPILE_IF
     #define ROCPRIM_DO_NOT_COMPILE_IF(condition, msg) static_assert(!(condition), msg)
 #endif
-
+#ifndef ROCPRIM_COMPILE_ERROR
+    #define ROCPRIM_COMPILE_ERROR(msg) static_assert(false, msg)
+#endif
+#ifndef ROCPRIM_COMPILE_WARN
+    #define ROCPRIM_COMPILE_WARN(msg)
+    // #define ROCPRIM_COMPILE_WARN(msg) [[deprecated(msg)]]
+#endif
 /// \brief Wrapper macro for std::enable_if aims to increase code readability
 #ifndef ROCPRIM_REQUIRES
     #define ROCPRIM_REQUIRES(...) typename std::enable_if<(__VA_ARGS__)>::type* = nullptr
@@ -44,7 +52,55 @@
             is_defined<InputType, detail::void_t<typename define<InputType>::traits_name>> \
             = true
 #endif
+
 BEGIN_ROCPRIM_NAMESPACE
+
+namespace detail
+{
+
+template<class...>
+using void_t = void;
+
+template<class Key>
+struct float_bit_mask;
+
+template<>
+struct float_bit_mask<float>
+{
+    static constexpr uint32_t sign_bit = 0x80000000;
+    static constexpr uint32_t exponent = 0x7F800000;
+    static constexpr uint32_t mantissa = 0x007FFFFF;
+    using bit_type                     = uint32_t;
+};
+
+template<>
+struct float_bit_mask<double>
+{
+    static constexpr uint64_t sign_bit = 0x8000000000000000;
+    static constexpr uint64_t exponent = 0x7FF0000000000000;
+    static constexpr uint64_t mantissa = 0x000FFFFFFFFFFFFF;
+    using bit_type                     = uint64_t;
+};
+
+template<>
+struct float_bit_mask<rocprim::bfloat16>
+{
+    static constexpr uint16_t sign_bit = 0x8000;
+    static constexpr uint16_t exponent = 0x7F80;
+    static constexpr uint16_t mantissa = 0x007F;
+    using bit_type                     = uint16_t;
+};
+
+template<>
+struct float_bit_mask<rocprim::half>
+{
+    static constexpr uint16_t sign_bit = 0x8000;
+    static constexpr uint16_t exponent = 0x7C00;
+    static constexpr uint16_t mantissa = 0x03FF;
+    using bit_type                     = uint16_t;
+};
+
+} // namespace detail
 
 namespace traits
 {
@@ -456,6 +512,9 @@ struct float_bit_mask
     // This function acts as a bridge for old interface. Will be removed in certain version
     template<class InputType,
              ROCPRIM_REQUIRES(!is_defined<InputType> && has_old_float_bit_mask<InputType>)>
+    ROCPRIM_COMPILE_WARN(
+        "`rocprim::detail::float_bit_mask` will be deprecated on next main release,"
+        "`please use rocprim::trait::define` to define tratis for types.")
     static constexpr auto get()
     {
         using mask = typename ::rocprim::detail::float_bit_mask<InputType>;
@@ -707,6 +766,52 @@ struct traits::define<rocprim::uint128_t>
     /// \brief Trait `integral_sign` for this type
     using integral_sign = traits::integral_sign::values<traits::integral_sign::kind::unsigned_type>;
 };
+/// @}
+
+/// \defgroup rocprim_pre_type_traits_wrapper
+/// \addtogroup rocprim_pre_type_traits_wrapper
+/// @{
+/// \brief Extension of `std::is_floating_point`, which includes support for \ref rocprim::half and \ref rocprim::bfloat16.
+template<class T>
+struct is_floating_point
+    : std::integral_constant<bool, ::rocprim::traits::get<T>().is_floating_point()>
+{};
+
+/// \brief Extension of `std::is_integral`, which includes support for 128-bit integers.
+template<class T>
+struct is_integral : std::integral_constant<bool, ::rocprim::traits::get<T>().is_integral()>
+{};
+
+/// \brief Extension of `std::is_arithmetic`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+template<class T>
+struct is_arithmetic : std::integral_constant<bool, ::rocprim::traits::get<T>().is_arithmetic()>
+{};
+
+/// \brief Extension of `std::is_fundamental`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+template<class T>
+struct is_fundamental : std::integral_constant<bool, ::rocprim::traits::get<T>().is_fundamental()>
+{};
+
+/// \brief Extension of `std::is_unsigned`, which includes support for 128-bit integers.
+template<class T>
+struct is_unsigned : std::integral_constant<bool, ::rocprim::traits::get<T>().is_unsigned()>
+{};
+
+/// \brief Extension of `std::is_signed`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+template<class T>
+struct is_signed : std::integral_constant<bool, ::rocprim::traits::get<T>().is_signed()>
+{};
+
+/// \brief Extension of `std::is_scalar`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+template<class T>
+struct is_scalar : std::integral_constant<bool, ::rocprim::traits::get<T>().is_scalar()>
+{};
+
+/// \brief Extension of `std::is_compound`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+template<class T>
+struct is_compound : std::integral_constant<bool, ::rocprim::traits::get<T>().is_compound()>
+{};
+
 /// @}
 
 END_ROCPRIM_NAMESPACE
