@@ -23,6 +23,7 @@
 
 #include "config_types.hpp"
 #include "detail/device_config_helper.hpp"
+#include "device_reduce_by_key_config.hpp"
 
 #include "../config.hpp"
 #include "../detail/various.hpp"
