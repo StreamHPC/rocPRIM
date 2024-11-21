@@ -461,8 +461,8 @@ void merge_path_search_test()
         OffsetT              output_oob_x, output_oob_y;
 
         // Preparing device
-        test_utils::device_ptr<T> device_input1(input1);
-        test_utils::device_ptr<T> device_input2(input2);
+        test_utils::device_ptr<T>       device_input1(input1);
+        test_utils::device_ptr<T>       device_input2(input2);
         test_utils::device_ptr<OffsetT> device_output_x(index_size);
         test_utils::device_ptr<OffsetT> device_output_y(index_size);
         test_utils::device_ptr<OffsetT> device_output_oob_x(1);
@@ -489,8 +489,8 @@ void merge_path_search_test()
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        output_x = device_output_x.load();
-        output_y = device_output_y.load();
+        output_x     = device_output_x.load();
+        output_y     = device_output_y.load();
         output_oob_x = device_output_oob_x.load()[0];
         output_oob_y = device_output_oob_y.load()[0];
 
