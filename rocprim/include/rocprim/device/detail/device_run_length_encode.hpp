@@ -23,7 +23,6 @@
 
 #include "device_partition.hpp"
 #include "lookback_scan_state.hpp"
-#include "ordered_block_id.hpp"
 
 #include "../../detail/binary_op_wrappers.hpp"
 #include "../../detail/various.hpp"
@@ -764,15 +763,13 @@ template<typename Config,
          typename OffsetsOutputIterator,
          typename CountsOutputIterator,
          typename RunsCountOutputIterator,
-         typename LookbackScanState,
-         typename OrderedBlockIdType>
+         typename LookbackScanState>
 ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
     non_trivial_kernel_impl(InputIterator,
                             const OffsetsOutputIterator,
                             const CountsOutputIterator,
                             const RunsCountOutputIterator,
                             const LookbackScanState,
-                            OrderedBlockIdType,
                             const size_t,
                             const size_t)
         -> std::enable_if_t<!is_lookback_kernel_runnable<LookbackScanState>()>
@@ -786,15 +783,13 @@ template<typename Config,
          typename OffsetsOutputIterator,
          typename CountsOutputIterator,
          typename RunsCountOutputIterator,
-         typename LookbackScanState,
-         typename OrderedBlockIdType>
+         typename LookbackScanState>
 ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
     non_trivial_kernel_impl(InputIterator                  input,
                             const OffsetsOutputIterator    offsets_output,
                             const CountsOutputIterator     counts_output,
                             const RunsCountOutputIterator  runs_count_output,
                             const LookbackScanState        scan_state,
-                            OrderedBlockIdType ordered_block_id,
                             const size_t              grid_size,
                             const size_t              size)
         -> std::enable_if_t<is_lookback_kernel_runnable<LookbackScanState>()>
@@ -819,13 +814,9 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
                                          load_input_method,
                                          scan_algorithm>;
 
-    ROCPRIM_SHARED_MEMORY union
-    {
-        typename OrderedBlockIdType::storage_type block_id;
-        typename block_processor::storage_type_   block;
-    } storage;
+    ROCPRIM_SHARED_MEMORY typename block_processor::storage_type_ storage;
 
-    const size_t block_id = ordered_block_id.get(threadIdx.x, storage.block_id);
+    const size_t block_id = flat_block_id<block_size, 1, 1>();
 
     const size_t        block_offset = block_id * items_per_block;
     const InputIterator block_input  = input + block_offset;
@@ -842,7 +833,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
                                         block_id,
                                         grid_size,
                                         size,
-                                        storage.block);
+                                        storage);
     }
     else if(valid_in_last_block > 0)
     {
@@ -853,7 +844,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
                                                                     block_id,
                                                                     grid_size,
                                                                     size,
-                                                                    storage.block);
+                                                                    storage);
         // First thread of last block sets the total number of non-trivial runs found and updates
         // the counts with the last run's length if necessary.
         if(threadIdx.x == 0)
