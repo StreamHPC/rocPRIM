@@ -301,7 +301,7 @@ autotune:build:
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -qq -y zstd
   variables:
-    BENCHMARK_TARGETS: benchmark_device_run_length_encode
+    BENCHMARK_TARGETS: benchmark_config_tuning
   script:
     - mkdir -p $BUILD_DIR
     - cd $BUILD_DIR

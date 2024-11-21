@@ -59,7 +59,7 @@ inline std::string non_trivial_runs_config_name<rocprim::default_config>()
     return "default_config";
 }
 
-template<typename T, int MaxLength, typename Config = rocprim::default_config>
+template<typename T, size_t MaxLength, typename Config = rocprim::default_config>
 struct device_non_trivial_runs_benchmark : public config_autotune_interface
 {
     std::string name() const override

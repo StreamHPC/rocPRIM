@@ -43,7 +43,7 @@ BEGIN_ROCPRIM_NAMESPACE
 /// Must be \p reduce_by_key_config or \p default_config.
 /// \tparam SelectConfig - configuration of device-level select operation.
 /// Must be \p select_config or \p default_config.
-template<class ReduceByKeyConfig, class SelectConfig = default_config>
+template<typename ReduceByKeyConfig, typename SelectConfig = default_config>
 struct run_length_encode_config
 {
     /// \brief Configuration of device-level reduce-by-key operation.
@@ -134,7 +134,7 @@ struct wrapped_non_trivial_runs_config
     };
 };
 
-template<class ReduceByKeyConfig, class SelectConfig, class InputType>
+template<typename ReduceByKeyConfig, typename SelectConfig, typename InputType>
 struct wrapped_non_trivial_runs_config<
     rocprim::run_length_encode_config<ReduceByKeyConfig, SelectConfig>,
     InputType>
@@ -210,7 +210,7 @@ constexpr non_trivial_runs_config_params
     wrapped_non_trivial_runs_config<RLENonTrivialRunsConfig,
                                     InputType>::architecture_config<Arch>::params;
 
-template<class ReduceByKeyConfig, class SelectConfig, typename InputType>
+template<typename ReduceByKeyConfig, typename SelectConfig, typename InputType>
 template<target_arch Arch>
 constexpr non_trivial_runs_config_params wrapped_non_trivial_runs_config<
     rocprim::run_length_encode_config<ReduceByKeyConfig, SelectConfig>,
