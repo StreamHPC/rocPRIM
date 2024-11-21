@@ -27,8 +27,8 @@
 #include "detail/device_config_helper.hpp"
 #include "detail/device_run_length_encode.hpp"
 
-#include "../config.hpp"
 #include "../common.hpp"
+#include "../config.hpp"
 #include "../detail/various.hpp"
 #include "../iterator/constant_iterator.hpp"
 #include "../type_traits.hpp"
@@ -51,6 +51,49 @@ namespace detail
 namespace run_length_encode
 {
 
+template<lookback_scan_determinism Determinism,
+         typename Config,
+         typename KeysInputIterator,
+         typename ValuesInputIterator,
+         typename UniqueOutputIterator,
+         typename AggregatesOutputIterator,
+         typename UniqueCountOutputIterator,
+         typename BinaryFunction,
+         typename KeyCompareFunction>
+hipError_t run_length_encode_impl(void*                     temporary_storage,
+                                  size_t&                   storage_size,
+                                  KeysInputIterator         keys_input,
+                                  ValuesInputIterator       values_input,
+                                  const size_t              size,
+                                  UniqueOutputIterator      unique_output,
+                                  AggregatesOutputIterator  aggregates_output,
+                                  UniqueCountOutputIterator unique_count_output,
+                                  BinaryFunction            reduce_op,
+                                  KeyCompareFunction        key_compare_op,
+                                  const hipStream_t         stream,
+                                  const bool                debug_synchronous)
+{
+    using key_type         = ::rocprim::detail::value_type_t<KeysInputIterator>;
+    using accumulator_type = reduce_by_key::accumulator_type_t<ValuesInputIterator, BinaryFunction>;
+
+    using config = wrapped_trivial_runs_config<Config, key_type, accumulator_type, BinaryFunction>;
+
+    return detail::reduce_by_key_impl_wrapped_config<
+        detail::lookback_scan_determinism::default_determinism,
+        config>(temporary_storage,
+                storage_size,
+                keys_input,
+                values_input,
+                size,
+                unique_output,
+                aggregates_output,
+                unique_count_output,
+                reduce_op,
+                key_compare_op,
+                stream,
+                debug_synchronous);
+}
+
 template<typename Config,
          typename OffsetCountPairType,
          typename InputIterator,
@@ -59,8 +102,7 @@ template<typename Config,
          typename RunsCountOutputIterator,
          typename LookbackScanState,
          typename OrderedBlockIdType>
-ROCPRIM_KERNEL
-    __launch_bounds__(device_params<Config>().kernel_config.block_size)
+ROCPRIM_KERNEL __launch_bounds__(device_params<Config>().kernel_config.block_size)
 void non_trivial_kernel(const InputIterator           input,
                         const OffsetsOutputIterator   offsets_output,
                         const CountsOutputIterator    counts_output,
@@ -80,11 +122,11 @@ void non_trivial_kernel(const InputIterator           input,
                                                                             size);
 }
 
-template<class Config,
-         class InputIterator,
-         class OffsetsOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config,
+         typename InputIterator,
+         typename OffsetsOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 hipError_t run_length_encode_non_trivial_runs_impl(void*                   temporary_storage,
                                                    size_t&                 storage_size,
                                                    InputIterator           input,
@@ -312,11 +354,11 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
 /// // runs_count_output: [4]
 /// \endcode
 /// \endparblock
-template<class Config = default_config,
-         class InputIterator,
-         class UniqueOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config = default_config,
+         typename InputIterator,
+         typename UniqueOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 inline hipError_t run_length_encode(void*                   temporary_storage,
                                     size_t&                 storage_size,
                                     InputIterator           input,
@@ -330,27 +372,20 @@ inline hipError_t run_length_encode(void*                   temporary_storage,
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using count_type = unsigned int;
 
-    // run_length_encode does not use a tuned reduce by key config, as using a constant iterator
-    //   instead of a device array has different performance characteristics
-    using config = detail::default_or_custom_config<
-        Config,
-        run_length_encode_config<
-            typename detail::default_reduce_by_key_config_base<input_type, count_type>::type,
-            default_config>>;
-
-    return ::rocprim::reduce_by_key<typename config::reduce_by_key>(
-        temporary_storage,
-        storage_size,
-        input,
-        make_constant_iterator<count_type>(1),
-        size,
-        unique_output,
-        counts_output,
-        runs_count_output,
-        ::rocprim::plus<count_type>(),
-        ::rocprim::equal_to<input_type>(),
-        stream,
-        debug_synchronous);
+    return detail::run_length_encode::
+        run_length_encode_impl<detail::lookback_scan_determinism::default_determinism, Config>(
+            temporary_storage,
+            storage_size,
+            input,
+            make_constant_iterator<count_type>(1),
+            size,
+            unique_output,
+            counts_output,
+            runs_count_output,
+            ::rocprim::plus<count_type>(),
+            ::rocprim::equal_to<input_type>(),
+            stream,
+            debug_synchronous);
 }
 
 /// \brief Parallel run-length encoding of non-trivial runs for device level.
@@ -433,11 +468,11 @@ inline hipError_t run_length_encode(void*                   temporary_storage,
 /// // runs_count_output: [2]
 /// \endcode
 /// \endparblock
-template<class Config = default_config,
-         class InputIterator,
-         class OffsetsOutputIterator,
-         class CountsOutputIterator,
-         class RunsCountOutputIterator>
+template<typename Config = default_config,
+         typename InputIterator,
+         typename OffsetsOutputIterator,
+         typename CountsOutputIterator,
+         typename RunsCountOutputIterator>
 inline hipError_t run_length_encode_non_trivial_runs(void*                   temporary_storage,
                                                      size_t&                 storage_size,
                                                      InputIterator           input,

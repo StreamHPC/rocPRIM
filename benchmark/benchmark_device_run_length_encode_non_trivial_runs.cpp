@@ -20,7 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "benchmark_device_run_length_encode.parallel.hpp"
+#include "benchmark_device_run_length_encode_non_trivial_runs.parallel.hpp"
 #include "benchmark_utils.hpp"
 
 // CmdParser
@@ -43,32 +43,32 @@
 constexpr size_t DEFAULT_BYTES = size_t{2} << 30; // 2 GiB
 #endif
 
-#define CREATE_ENCODE_BENCHMARK(T, ML)                                \
+// CHANGE
+#define CREATE_NON_TRIVIAL_RUNS_BENCHMARK(T, ML)                      \
     {                                                                 \
-        const device_run_length_encode_benchmark<T, ML> instance;     \
+        const device_non_trivial_runs_benchmark<T, ML> instance;      \
         REGISTER_BENCHMARK(benchmarks, size, seed, stream, instance); \
     }
 
 template<size_t MaxLength>
-void add_encode_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
-                           size_t                                        size,
-                           const managed_seed&                           seed,
-                           hipStream_t                                   stream)
+void add_non_trivial_runs_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
+                                     size_t                                        size,
+                                     const managed_seed&                           seed,
+                                     hipStream_t                                   stream)
 {
     using custom_float2  = custom_type<float, float>;
     using custom_double2 = custom_type<double, double>;
 
-    // all tuned types
-    CREATE_ENCODE_BENCHMARK(int8_t, MaxLength);
-    CREATE_ENCODE_BENCHMARK(int16_t, MaxLength);
-    CREATE_ENCODE_BENCHMARK(int32_t, MaxLength);
-    CREATE_ENCODE_BENCHMARK(int64_t, MaxLength);
-    CREATE_ENCODE_BENCHMARK(rocprim::half, MaxLength);
-    CREATE_ENCODE_BENCHMARK(float, MaxLength);
-    CREATE_ENCODE_BENCHMARK(double, MaxLength);
-    // custom types
-    CREATE_ENCODE_BENCHMARK(custom_float2, MaxLength);
-    CREATE_ENCODE_BENCHMARK(custom_double2, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(int8_t, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(int16_t, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(int32_t, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(int64_t, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(rocprim::half, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(float, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(double, MaxLength);
+
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(custom_float2, MaxLength);
+    CREATE_NON_TRIVIAL_RUNS_BENCHMARK(custom_double2, MaxLength);
 }
 
 int main(int argc, char* argv[])
@@ -124,8 +124,9 @@ int main(int argc, char* argv[])
                                                         seed,
                                                         stream);
 #else
-    add_encode_benchmarks<1000>(benchmarks, size, seed, stream);
-    add_encode_benchmarks<10>(benchmarks, size, seed, stream);
+    add_non_trivial_runs_benchmarks<16>(benchmarks, size, seed, stream);
+    add_non_trivial_runs_benchmarks<256>(benchmarks, size, seed, stream);
+    add_non_trivial_runs_benchmarks<4096>(benchmarks, size, seed, stream);
 #endif
 
     // Use manual timing
