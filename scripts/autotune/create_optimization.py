@@ -647,12 +647,12 @@ class AlgorithmDeviceFindFirstOf(Algorithm):
     def __init__(self, fallback_entries):
         Algorithm.__init__(self, fallback_entries)
 
-class AlgorithmDeviceMerge(Algorithm):
-    algorithm_name = "device_merge"
-    cpp_configuration_template_name = "merge_config_template"
-    config_selection_params = [
-        SelectionType(name="key_type", is_optional=False, select_on_size_only=False),
-        SelectionType(name="value_type", is_optional=True, select_on_size_only=True)]
+class AlgorithmDeviceRunLengthEncode(Algorithm):
+    algorithm_name = 'device_run_length_encode'
+    cpp_configuration_template_name = 'run_length_encode_config_template'
+    config_selection_params = [SelectionType(name='key_type', is_optional=False, select_on_size_only=False)]
+    def __init__(self, fallback_entries):
+        Algorithm.__init__(self, fallback_entries)
 
 class AlgorithmDeviceRunLengthEncodeNonTrivial(Algorithm):
     algorithm_name = 'device_run_length_encode_non_trivial'
@@ -660,6 +660,13 @@ class AlgorithmDeviceRunLengthEncodeNonTrivial(Algorithm):
     config_selection_params = [SelectionType(name='key_type', is_optional=False, select_on_size_only=False)]
     def __init__(self, fallback_entries):
         Algorithm.__init__(self, fallback_entries)
+
+class AlgorithmDeviceMerge(Algorithm):
+    algorithm_name = "device_merge"
+    cpp_configuration_template_name = "merge_config_template"
+    config_selection_params = [
+        SelectionType(name="key_type", is_optional=False, select_on_size_only=False),
+        SelectionType(name="value_type", is_optional=True, select_on_size_only=True)]
 
 def filt_algo_regex(e: FallbackCase, algorithm_name):
     if e.algo_regex:
@@ -724,10 +731,12 @@ def create_algorithm(algorithm_name: str, fallback_entries: List[FallbackCase]):
         return AlgorithmDeviceReduceByKey(fallback_entries)
     elif algorithm_name == 'device_find_first_of':
         return AlgorithmDeviceFindFirstOf(fallback_entries)
-    elif algorithm_name == 'device_merge':
-        return AlgorithmDeviceMerge(fallback_entries)
+    elif algorithm_name == 'device_run_length_encode':
+        return AlgorithmDeviceRunLengthEncode(fallback_entries)
     elif algorithm_name == 'device_run_length_encode_non_trivial':
         return AlgorithmDeviceRunLengthEncodeNonTrivial(fallback_entries)
+    elif algorithm_name == 'device_merge':
+        return AlgorithmDeviceMerge(fallback_entries)
     else:
         raise(NotSupportedError(f'Algorithm "{algorithm_name}" is not supported (yet)'))
 
