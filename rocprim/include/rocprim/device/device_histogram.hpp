@@ -76,7 +76,12 @@ ROCPRIM_KERNEL __launch_bounds__(
 {
     static constexpr histogram_config_params params = device_params<Config>();
 
+// Temporary fix: issue with dynamic shared memory on windows.
+#ifndef _WIN32
     HIP_DYNAMIC_SHARED(unsigned int, block_histogram);
+#else
+    __shared__ unsigned int block_histogram[params.shared_impl_max_bins];
+#endif
 
     histogram_shared<params.histogram_config.block_size,
                      params.histogram_config.items_per_thread,
