@@ -277,6 +277,7 @@ add_rocprim_test("rocprim.texture_cache_iterator" test_texture_cache_iterator.cp
 add_rocprim_test("rocprim.thread" test_thread.cpp)
 add_rocprim_test("rocprim.thread_algos" test_thread_algos.cpp)
 add_rocprim_test("rocprim.transform_iterator" test_transform_iterator.cpp)
+add_rocprim_test("rocprim.type_traits_interface" test_type_traits_interface.cpp)
 add_rocprim_test("rocprim.no_half_operators" test_no_half_operators.cpp)
 add_rocprim_test("rocprim.intrinsics" test_intrinsics.cpp)
 add_rocprim_test("rocprim.invoke_result" test_invoke_result.cpp)

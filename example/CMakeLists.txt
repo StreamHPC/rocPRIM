@@ -56,3 +56,4 @@ endfunction()
 # ****************************************************************************
 
 add_rocprim_example(example_temporary_storage.cpp)
+add_rocprim_example(example_type_traits_interface.cpp)
