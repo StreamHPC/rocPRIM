@@ -58,7 +58,6 @@ struct make_unsigned<::rocprim::uint128_t>
 static_assert(std::is_same<make_unsigned<::rocprim::int128_t>::type, ::rocprim::uint128_t>::value,
               "'rocprim::int128_t' needs to implement 'make_unsigned' trait.");
 
-
 /// \brief Extension of `std::numeric_limits`, which includes support for 128-bit integers.
 template<class T>
 struct numeric_limits : std::numeric_limits<T>
@@ -342,8 +341,6 @@ private:
 public:
     static constexpr bool value = is_tuple_of_references_impl<0>();
 };
-
-
 
 template<typename Iterator>
 using value_type_t = typename std::iterator_traits<Iterator>::value_type;

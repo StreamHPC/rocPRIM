@@ -307,7 +307,7 @@ struct is_scalar
 /// \endparblock
 struct number_format
 {
-    /// \brief the kind of the value
+    /// \brief the kind enum that indecates the values avaliable for this trait
     enum class kind
     {
         unknown_type        = 0,
@@ -383,6 +383,7 @@ struct number_format
 /// \endparblock
 struct integral_sign
 {
+    /// \brief the kind enum that indecates the values avaliable for this trait
     enum class kind
     {
         unknown_type  = 0,
@@ -768,7 +769,7 @@ struct traits::define<rocprim::uint128_t>
 };
 /// @}
 
-/// \defgroup rocprim_pre_type_traits_wrapper
+/// \defgroup rocprim_pre_type_traits_wrapper Handy wrappers for obtaining type traits
 /// \addtogroup rocprim_pre_type_traits_wrapper
 /// @{
 /// \brief Extension of `std::is_floating_point`, which includes support for \ref rocprim::half and \ref rocprim::bfloat16.

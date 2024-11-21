@@ -622,7 +622,7 @@ auto compare_nan_sensitive(const T& a, const T& b)
     // when making changes to this function.
 
     static constexpr auto sign_bit = ::rocprim::traits::get<T>().float_bit_mask().sign_bit;
-    using bit_key_type = decltype(sign_bit);
+    using bit_key_type             = decltype(sign_bit);
 
     auto a_bits = ::rocprim::detail::bit_cast<bit_key_type>(a);
     auto b_bits = ::rocprim::detail::bit_cast<bit_key_type>(b);
