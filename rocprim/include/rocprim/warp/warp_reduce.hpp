@@ -179,7 +179,7 @@ public:
     /// \endparblock
     template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void reduce(T              input,
+    auto reduce(T              input,
                 T&             output,
                 storage_type&  storage,
                 BinaryFunction reduce_op = BinaryFunction())
@@ -235,7 +235,7 @@ public:
     /// \endparblock
     template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void reduce(T              input,
+    auto reduce(T              input,
                 T&             output,
                 int            valid_items,
                 storage_type&  storage,
@@ -266,7 +266,7 @@ public:
              class BinaryFunction          = ::rocprim::plus<T>,
              unsigned int FunctionWarpSize = WarpSize>
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void head_segmented_reduce(T              input,
+    auto head_segmented_reduce(T              input,
                                T&             output,
                                Flag           flag,
                                storage_type&  storage,
@@ -297,7 +297,7 @@ public:
              class BinaryFunction          = ::rocprim::plus<T>,
              unsigned int FunctionWarpSize = WarpSize>
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    void tail_segmented_reduce(T              input,
+    auto tail_segmented_reduce(T              input,
                                T&             output,
                                Flag           flag,
                                storage_type&  storage,
