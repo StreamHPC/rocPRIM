@@ -35,10 +35,10 @@ void some_algo()
     ss << "is_arithmetic:\t" << input_traits.is_arithmetic() << '\n';
     ss << "is_fundamental:\t" << input_traits.is_fundamental() << '\n';
     ss << "is_scalar:\t" << input_traits.is_scalar() << '\n';
-    constexpr auto musk = input_traits.float_bit_mask();
-    ss << "sign_bit:\t" << musk.sign_bit << '\n';
-    ss << "exponent:\t" << musk.exponent << '\n';
-    ss << "mantissa:\t" << musk.mantissa << '\n';
+    constexpr auto mask = input_traits.float_bit_mask();
+    ss << "sign_bit:\t" << mask.sign_bit << '\n';
+    ss << "exponent:\t" << mask.exponent << '\n';
+    ss << "mantissa:\t" << mask.mantissa << '\n';
     std::cout << ss.str() << "\n";
 }
 
