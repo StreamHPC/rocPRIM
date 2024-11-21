@@ -381,20 +381,18 @@ hipError_t reduce_by_key_impl(void*                     temporary_storage,
 
     using config = wrapped_reduce_by_key_config<Config, key_type, accumulator_type, BinaryFunction>;
 
-    return detail::reduce_by_key_impl_wrapped_config<
-        detail::lookback_scan_determinism::default_determinism,
-        config>(temporary_storage,
-                storage_size,
-                keys_input,
-                values_input,
-                size,
-                unique_output,
-                aggregates_output,
-                unique_count_output,
-                reduce_op,
-                key_compare_op,
-                stream,
-                debug_synchronous);
+    return detail::reduce_by_key_impl_wrapped_config<Determinism, config>(temporary_storage,
+                                                                          storage_size,
+                                                                          keys_input,
+                                                                          values_input,
+                                                                          size,
+                                                                          unique_output,
+                                                                          aggregates_output,
+                                                                          unique_count_output,
+                                                                          reduce_op,
+                                                                          key_compare_op,
+                                                                          stream,
+                                                                          debug_synchronous);
 }
 
 } // namespace detail
