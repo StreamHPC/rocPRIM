@@ -22,7 +22,6 @@
 #define ROCPRIM_DEVICE_DEVICE_RUN_LENGTH_ENCODE_CONFIG_HPP_
 
 #include "config_types.hpp"
-#include "detail/device_config_helper.hpp"
 #include "device_reduce_by_key_config.hpp"
 
 #include "../config.hpp"
