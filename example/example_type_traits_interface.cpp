@@ -88,7 +88,7 @@ struct rocprim::traits::define<custom_float_type>
 {
     using is_arithmetic   = rocprim::traits::is_arithmetic::values<true>;
     using number_format
-        = rocprim::traits::number_format::values<number_format::options::floating_point_type>;
+        = rocprim::traits::number_format::values<number_format::kind::floating_point_type>;
     using float_bit_mask  = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
 };
 
@@ -102,9 +102,9 @@ struct rocprim::traits::define<custom_int_type>
 {
     using is_arithmetic         = rocprim::traits::is_arithmetic::values<true>;
     using number_format
-        = rocprim::traits::number_format::values<number_format::options::integral_type>;
+        = rocprim::traits::number_format::values<number_format::kind::integral_type>;
     using integral_sign
-        = rocprim::traits::integral_sign::values<traits::integral_sign::options::signed_type>;
+        = rocprim::traits::integral_sign::values<traits::integral_sign::kind::signed_type>;
 };
 
 int main()

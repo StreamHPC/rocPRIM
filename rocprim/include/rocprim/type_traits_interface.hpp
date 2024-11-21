@@ -48,8 +48,8 @@ BEGIN_ROCPRIM_NAMESPACE
 
 namespace traits
 {
-/// \defgroup type_traits_interfeces Interfaces for defining and obtaining the traits
-/// \addtogroup type_traits_interfeces
+/// \defgroup type_traits_interfaces Interfaces for defining and obtaining the traits
+/// \addtogroup type_traits_interfaces
 /// @{
 
 /// \par Overview
@@ -71,7 +71,7 @@ namespace traits
 /// struct rocprim::traits::define<custom_float_type>
 /// {
 ///     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
-///     using number_format = rocprim::traits::number_format::values<traits::number_format::options::floating_point_type>;
+///     using number_format = rocprim::traits::number_format::values<traits::number_format::kind::floating_point_type>;
 ///     using float_bit_mask = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
 /// };
 /// \endcode
@@ -85,8 +85,8 @@ namespace traits
 /// struct rocprim::traits::define<custom_int_type>
 /// {
 ///     using is_arithmetic = rocprim::traits::is_arithmetic::values<true>;
-///     using number_format = rocprim::traits::number_format::values<traits::number_format::options::integral_type>;
-///     using integral_sign = rocprim::traits::integral_sign::values<0>;
+///     using number_format = rocprim::traits::number_format::values<traits::number_format::kind::integral_type>;
+///     using integral_sign = rocprim::traits::integral_sign::values<traits::integral_sign::kind::signed_type>;
 /// };
 /// \endcode
 /// \endparblock
@@ -207,7 +207,7 @@ struct is_scalar
     }
 
     // For third party types, if trait `is_scalar` is not defined, will return default value `false`
-    // For rocprim rocprim or third party types that defined trait `is_arithmetic` as true the result should be `true`
+    // For rocprim or third party types that defined trait `is_arithmetic` as true the result should be `true`
     template<class InputType,
              ROCPRIM_REQUIRES(!std::is_scalar<InputType>::value && !is_defined<InputType>)>
     static constexpr auto get()
@@ -239,7 +239,7 @@ struct is_scalar
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
-/// using number_format = rocprim::traits::number_format::values<number_format::options::integral_type>;
+/// using number_format = rocprim::traits::number_format::values<number_format::kind::integral_type>;
 /// \endcode
 /// \endparblock
 /// \par How to use
@@ -251,8 +251,8 @@ struct is_scalar
 /// \endparblock
 struct number_format
 {
-    /// \brief the options of the value
-    enum class options
+    /// \brief the kind of the value
+    enum class kind
     {
         unknown_type        = 0,
         floating_point_type = 1,
@@ -260,7 +260,7 @@ struct number_format
     };
 
     /// \brief Value of this trait
-    template<options Val>
+    template<kind Val>
     struct values
     {
         /// \brief value
@@ -275,8 +275,8 @@ struct number_format
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
     { // C++ build-in arithmetic types are either floating point or integral
-        return values < std::is_floating_point<InputType>::value ? options::floating_point_type
-                                                                 : options::integral_type > {};
+        return values < std::is_floating_point<InputType>::value ? kind::floating_point_type
+                                                                 : kind::integral_type > {};
     }
 
     // For rocprim arithmetic types
@@ -299,14 +299,14 @@ struct number_format
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
             "You cannot define trait `number_format` for non-arithmetic types");
-        return values<number_format::options::unknown_type>{};
+        return values<number_format::kind::unknown_type>{};
     }
 #endif
 };
 
 /// \par Definability
-/// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and integral types.
-/// * **Required**: If you define `number_format` as `1`, you must also define this trait; otherwise, a
+/// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and floating-point types.
+/// * **Required**: If you define `number_format` as `number_format::kind::floating_point_type`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
 /// \par Value Option
 /// * `0`: For signed integral types
@@ -315,7 +315,7 @@ struct number_format
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
-/// using integral_sign = rocprim::traits::integral_sign::values<0>;
+/// using integral_sign = rocprim::traits::integral_sign::values<traits::integral_sign::kind::signed_type>;
 /// \endcode
 /// \endparblock
 /// \par How to use
@@ -327,7 +327,7 @@ struct number_format
 /// \endparblock
 struct integral_sign
 {
-    enum class options
+    enum class kind
     {
         unknown_type  = 0,
         signed_type   = 1,
@@ -335,7 +335,7 @@ struct integral_sign
     };
 
     /// \brief Value of this trait
-    template<options Val>
+    template<kind Val>
     struct values
     {
         /// \brief value
@@ -350,15 +350,15 @@ struct integral_sign
     template<class InputType, ROCPRIM_REQUIRES(std::is_arithmetic<InputType>::value)>
     static constexpr auto get()
     { // cpp arithmetic types are either signed point or unsignned
-        return values < std::is_signed<InputType>::value ? options::signed_type
-                                                         : options::unsigned_type > {};
+        return values < std::is_signed<InputType>::value ? kind::signed_type
+                                                         : kind::unsigned_type > {};
     }
 
     // For rocprim arithmetic integral
     template<class InputType,
              ROCPRIM_REQUIRES(
                  !std::is_arithmetic<InputType>::value && is_arithmetic::get<InputType>().value
-                 && number_format::get<InputType>().value == number_format::options::integral_type)>
+                 && number_format::get<InputType>().value == number_format::kind::integral_type)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(!is_defined<InputType>,
@@ -371,13 +371,13 @@ struct integral_sign
     template<class InputType,
              ROCPRIM_REQUIRES(
                  !std::is_arithmetic<InputType>::value && is_arithmetic::get<InputType>().value
-                 && number_format::get<InputType>().value != number_format::options::integral_type)>
+                 && number_format::get<InputType>().value != number_format::kind::integral_type)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
             "You cannot define trait `integral_sign` for arithmetic non-integral types");
-        return values<options::unknown_type>{};
+        return values<kind::unknown_type>{};
     }
 
     // For other types
@@ -389,18 +389,18 @@ struct integral_sign
         ROCPRIM_DO_NOT_COMPILE_IF(
             is_defined<InputType>,
             "You cannot define trait `integral_sign` for non-arithmetic types");
-        return values<options::unknown_type>{};
+        return values<kind::unknown_type>{};
     }
 #endif
 };
 
 /// \warning For some types, if this trait is not implemented in their traits definition, it will
-/// link to `rocprim::details::float_bit_mask` to maintain compatibility with downstream libraries.
+/// link to `rocprim::detail::float_bit_mask` to maintain compatibility with downstream libraries.
 /// However, this linkage will be removed in the next major release. Please ensure that these types
 /// are updated to the latest interface.
 /// \par Definability
-/// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and floating-point types.
-/// * **Required**: If you define `number_format` as `0`, you must also define this trait; otherwise, a
+/// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and integral types.
+/// * **Required**: If you define `number_format` as `number_format::kind::unknown_type`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
 /// \par How to define
 /// \parblock
@@ -421,7 +421,7 @@ struct float_bit_mask
     struct values
     {
         ROCPRIM_DO_NOT_COMPILE_IF(number_format::get<BitType>().value
-                                      != number_format::options::integral_type,
+                                      != number_format::kind::integral_type,
                                   "BitType should be integral");
         /// \brief sign_bit value
         static constexpr BitType sign_bit = SignBit;
@@ -443,12 +443,12 @@ struct float_bit_mask
         detail::void_t<decltype(rocprim::detail::float_bit_mask<InputType>{})>>
         = true;
 
-    // If defined this trait, then use the new interface
+    // If this trait is defined, then use the new interface
     template<class InputType, ROCPRIM_REQUIRES(is_defined<InputType>)>
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
-            number_format::get<InputType>().value != number_format::options::floating_point_type,
+            number_format::get<InputType>().value != number_format::kind::floating_point_type,
             "You cannot use trait `float_bit_mask` for `non-floating_point` types");
         return typename define<InputType>::float_bit_mask{};
     }
@@ -468,10 +468,10 @@ struct float_bit_mask
     static constexpr auto get()
     {
         ROCPRIM_DO_NOT_COMPILE_IF(
-            number_format::get<InputType>().value != number_format::options::floating_point_type,
+            number_format::get<InputType>().value != number_format::kind::floating_point_type,
             "You cannot use trait `float_bit_mask` for `non-floating_point` types");
         ROCPRIM_DO_NOT_COMPILE_IF(number_format::get<InputType>().value
-                                      == number_format::options::floating_point_type,
+                                      == number_format::kind::floating_point_type,
                                   "Trait `float_bit_mask` is required for `floating_point` types");
         return values<int, 0, 0, 0>{};
     }
@@ -517,7 +517,7 @@ struct is_fundamental
 
 /// @}
 
-/// \addtogroup type_traits_interfeces
+/// \addtogroup type_traits_interfaces
 /// @{
 
 /// \par Overview
@@ -575,7 +575,7 @@ struct get
     constexpr bool is_floating_point() const
     {
         return rocprim::traits::number_format{}.get<T>().value
-               == number_format::options::floating_point_type;
+               == number_format::kind::floating_point_type;
     };
 
     /// \brief To check if `T` is integral type.
@@ -584,7 +584,7 @@ struct get
     constexpr bool is_integral() const
     {
         return rocprim::traits::number_format{}.get<T>().value
-               == number_format::options::integral_type;
+               == number_format::kind::integral_type;
     }
 
     /// \brief To check if `T` is signed integral type.
@@ -592,8 +592,7 @@ struct get
     /// doing so will result in a compile-time error.
     constexpr bool is_signed() const
     {
-        return rocprim::traits::integral_sign{}.get<T>().value
-               == integral_sign::options::signed_type;
+        return rocprim::traits::integral_sign{}.get<T>().value == integral_sign::kind::signed_type;
     }
 
     /// \brief To check if `T` is unsigned integral type.
@@ -602,7 +601,7 @@ struct get
     constexpr bool is_unsigned() const
     {
         return rocprim::traits::integral_sign{}.get<T>().value
-               == integral_sign::options::unsigned_type;
+               == integral_sign::kind::unsigned_type;
     }
 
     /// \brief Get trait `is_scalar`.
@@ -664,7 +663,7 @@ struct traits::define<rocprim::bfloat16>
     using is_arithmetic = traits::is_arithmetic::values<true>;
     /// \brief Trait `number_format` for this type
     using number_format
-        = traits::number_format::values<traits::number_format::options::floating_point_type>;
+        = traits::number_format::values<traits::number_format::kind::floating_point_type>;
     /// \brief Trait `float_bit_mask` for this type
     using float_bit_mask = traits::float_bit_mask::values<uint16_t, 0x8000, 0x7F80, 0x007F>;
 };
@@ -678,7 +677,7 @@ struct traits::define<rocprim::half>
     using is_arithmetic = traits::is_arithmetic::values<true>;
     /// \brief Trait `number_format` for this type
     using number_format
-        = traits::number_format::values<traits::number_format::options::floating_point_type>;
+        = traits::number_format::values<traits::number_format::kind::floating_point_type>;
     /// \brief Trait `float_bit_mask` for this type
     using float_bit_mask = traits::float_bit_mask::values<uint16_t, 0x8000, 0x7F80, 0x007F>;
 };
@@ -691,11 +690,9 @@ struct traits::define<rocprim::int128_t>
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
     /// \brief Trait `number_format` for this type
-    using number_format
-        = traits::number_format::values<traits::number_format::options::integral_type>;
+    using number_format = traits::number_format::values<traits::number_format::kind::integral_type>;
     /// \brief Trait `integral_sign` for this type
-    using integral_sign
-        = traits::integral_sign::values<traits::integral_sign::options::signed_type>;
+    using integral_sign = traits::integral_sign::values<traits::integral_sign::kind::signed_type>;
 };
 
 /// \brief This is the definition of traits of `rocprim::uint128_t`
@@ -706,11 +703,9 @@ struct traits::define<rocprim::uint128_t>
     /// \brief Trait `is_arithmetic` for this type
     using is_arithmetic = traits::is_arithmetic::values<true>;
     /// \brief Trait `number_format` for this type
-    using number_format
-        = traits::number_format::values<traits::number_format::options::integral_type>;
+    using number_format = traits::number_format::values<traits::number_format::kind::integral_type>;
     /// \brief Trait `integral_sign` for this type
-    using integral_sign
-        = traits::integral_sign::values<traits::integral_sign::options::unsigned_type>;
+    using integral_sign = traits::integral_sign::values<traits::integral_sign::kind::unsigned_type>;
 };
 /// @}
 

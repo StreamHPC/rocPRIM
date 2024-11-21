@@ -21,7 +21,7 @@ This interface is strict but flexible, similar to operator overloading. Users sh
 Interface
 =========
 
-.. doxygengroup::  type_traits_interfeces
+.. doxygengroup::  type_traits_interfaces
   :content-only:
   :members:
 

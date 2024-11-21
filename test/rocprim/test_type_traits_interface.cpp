@@ -35,7 +35,7 @@
 #define ROCPRIM_STATIC_ASSERT_EQ(val1, val2) ROCPRIM_STATIC_ASSERT((val1) == (val2))
 #define ROCPRIM_STATIC_ASSERT_NE(val1, val2) ROCPRIM_STATIC_ASSERT((val1) != (val2))
 
-namespace type_triats_test
+namespace type_traits_test
 {
 // Custom type to model types like Eigen::half or Eigen::bfloat16, that wrap around floating point
 // types.
@@ -163,14 +163,14 @@ inline std::ostream& operator<<(std::ostream& stream, const custom_int_type& val
     return stream;
 }
 
-} // namespace type_triats_test
+} // namespace type_traits_test
 
 template<>
 struct rocprim::traits::define<type_triats_test::custom_float_type>
 {
     using is_arithmetic   = rocprim::traits::is_arithmetic::values<true>;
     using number_format
-        = rocprim::traits::number_format::values<number_format::options::floating_point_type>;
+        = rocprim::traits::number_format::values<number_format::kind::floating_point_type>;
     using float_bit_mask  = rocprim::traits::float_bit_mask::values<uint32_t, 10, 10, 10>;
 };
 
@@ -179,9 +179,9 @@ struct rocprim::traits::define<type_triats_test::custom_int_type>
 {
     using is_arithmetic         = rocprim::traits::is_arithmetic::values<true>;
     using number_format
-        = rocprim::traits::number_format::values<number_format::options::integral_type>;
+        = rocprim::traits::number_format::values<number_format::kind::integral_type>;
     using integral_sign
-        = rocprim::traits::integral_sign::values<traits::integral_sign::options::signed_type>;
+        = rocprim::traits::integral_sign::values<traits::integral_sign::kind::signed_type>;
 };
 
 template<>
@@ -238,7 +238,7 @@ TYPED_TEST(RocprimFloatingPointTests, FloatingPoint)
 
     ROCPRIM_STATIC_ASSERT_EQ(input_traits.is_integral(), rocprim::is_integral<input_type>::value);
 
-    // cannot do static_assert befause under c++ 14 there is no if constexpr
+    // cannot do static_assert because under c++ 14 there is no if constexpr
     if ROCPRIM_IF_CONSTEXPR(rocprim::is_arithmetic<input_type>::value)
     { // for c++ arithmetic types
         ASSERT_EQ(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
@@ -248,7 +248,7 @@ TYPED_TEST(RocprimFloatingPointTests, FloatingPoint)
         ASSERT_EQ(input_traits.is_floating_point(), rocprim::is_floating_point<input_type>::value);
     }
     else
-    { // for costom_types
+    { // for custom_types
         ASSERT_NE(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
         ASSERT_NE(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
         ASSERT_NE(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
@@ -287,7 +287,7 @@ TYPED_TEST(RocprimIntegralTests, Integral)
         ASSERT_EQ(input_traits.is_unsigned(), rocprim::is_unsigned<input_type>::value);
     }
     else
-    { // for costom_types
+    { // for custom_types
         ASSERT_NE(input_traits.is_compound(), rocprim::is_compound<input_type>::value);
         ASSERT_NE(input_traits.is_scalar(), rocprim::is_scalar<input_type>::value);
         ASSERT_NE(input_traits.is_fundamental(), rocprim::is_fundamental<input_type>::value);
