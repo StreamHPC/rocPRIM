@@ -60,20 +60,20 @@ template<select_method SelectMethod,
          class OffsetLookbackScanState,
          class... UnaryPredicates>
 ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void partition_kernel(
-        KeyIterator             keys_input,
-        ValueIterator           values_input,
-        FlagIterator            flags,
-        OutputKeyIterator       keys_output,
-        OutputValueIterator     values_output,
-        size_t*                 selected_count,
-        size_t*                 prev_selected_count,
-        size_t                  prev_processed,
-        const size_t            total_size,
-        InequalityOp            inequality_op,
-        OffsetLookbackScanState offset_scan_state,
-        const unsigned int      number_of_blocks,
-        UnaryPredicates... predicates)
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    partition_kernel(KeyIterator             keys_input,
+                     ValueIterator           values_input,
+                     FlagIterator            flags,
+                     OutputKeyIterator       keys_output,
+                     OutputValueIterator     values_output,
+                     size_t*                 selected_count,
+                     size_t*                 prev_selected_count,
+                     size_t                  prev_processed,
+                     const size_t            total_size,
+                     InequalityOp            inequality_op,
+                     OffsetLookbackScanState offset_scan_state,
+                     const unsigned int      number_of_blocks,
+                     UnaryPredicates... predicates)
 {
     partition_kernel_impl<SelectMethod, OnlySelected, Config>(keys_input,
                                                               values_input,

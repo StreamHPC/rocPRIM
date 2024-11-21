@@ -54,13 +54,12 @@ template<bool         WithInitialValue,
          class OutputIterator,
          class InitValueType,
          class BinaryFunction>
-ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().reduce_config.block_size) void block_reduce_kernel(
-        InputIterator  input,
-        const size_t   size,
-        OutputIterator output,
-        InitValueType  initial_value,
-        BinaryFunction reduce_op)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().reduce_config.block_size) void
+    block_reduce_kernel(InputIterator  input,
+                        const size_t   size,
+                        OutputIterator output,
+                        InitValueType  initial_value,
+                        BinaryFunction reduce_op)
 {
     block_reduce_kernel_impl<WithInitialValue, FitLarger, FitItems, Config, ResultType>(
         input,

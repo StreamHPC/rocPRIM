@@ -52,15 +52,14 @@ template<class Config,
          class ValuesOutputIterator,
          class OffsetT,
          class BinaryFunction>
-ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().block_sort_config.block_size)
-void block_sort_kernel(KeysInputIterator    keys_input,
-                       KeysOutputIterator   keys_output,
-                       ValuesInputIterator  values_input,
-                       ValuesOutputIterator values_output,
-                       const OffsetT        size,
-                       const unsigned int   num_blocks,
-                       BinaryFunction       compare_function)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().block_sort_config.block_size) void
+    block_sort_kernel(KeysInputIterator    keys_input,
+                      KeysOutputIterator   keys_output,
+                      ValuesInputIterator  values_input,
+                      ValuesOutputIterator values_output,
+                      const OffsetT        size,
+                      const unsigned int   num_blocks,
+                      BinaryFunction       compare_function)
 {
     static constexpr merge_sort_block_sort_config_params params = device_params<Config>();
     block_sort_kernel_impl<params.block_sort_config.block_size,
@@ -80,17 +79,14 @@ template<class Config,
          class ValuesOutputIterator,
          class OffsetT,
          class BinaryFunction>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
-    device_params<Config>()
-        .merge_oddeven_config
-        .block_size)
-void device_block_merge_oddeven_kernel(KeysInputIterator    keys_input,
-                                       KeysOutputIterator   keys_output,
-                                       ValuesInputIterator  values_input,
-                                       ValuesOutputIterator values_output,
-                                       const OffsetT        input_size,
-                                       const OffsetT        sorted_block_size,
-                                       BinaryFunction       compare_function)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().merge_oddeven_config.block_size) void
+    device_block_merge_oddeven_kernel(KeysInputIterator    keys_input,
+                                      KeysOutputIterator   keys_output,
+                                      ValuesInputIterator  values_input,
+                                      ValuesOutputIterator values_output,
+                                      const OffsetT        input_size,
+                                      const OffsetT        sorted_block_size,
+                                      BinaryFunction       compare_function)
 {
     static constexpr merge_sort_block_merge_config_params params = device_params<Config>();
     block_merge_oddeven_kernel<params.merge_oddeven_config.block_size,
@@ -110,19 +106,16 @@ template<class Config,
          class ValuesOutputIterator,
          class OffsetT,
          class BinaryFunction>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
-    device_params<Config>()
-        .merge_mergepath_config
-        .block_size)
-void device_block_merge_mergepath_kernel(KeysInputIterator    keys_input,
-                                         KeysOutputIterator   keys_output,
-                                         ValuesInputIterator  values_input,
-                                         ValuesOutputIterator values_output,
-                                         const OffsetT        input_size,
-                                         const OffsetT        sorted_block_size,
-                                         const unsigned int   num_blocks,
-                                         BinaryFunction       compare_function,
-                                         const OffsetT*       merge_partitions)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().merge_mergepath_config.block_size) void
+    device_block_merge_mergepath_kernel(KeysInputIterator    keys_input,
+                                        KeysOutputIterator   keys_output,
+                                        ValuesInputIterator  values_input,
+                                        ValuesOutputIterator values_output,
+                                        const OffsetT        input_size,
+                                        const OffsetT        sorted_block_size,
+                                        const unsigned int   num_blocks,
+                                        BinaryFunction       compare_function,
+                                        const OffsetT*       merge_partitions)
 {
     static constexpr merge_sort_block_merge_config_params params = device_params<Config>();
     block_merge_mergepath_kernel<params.merge_mergepath_config.block_size,
@@ -138,16 +131,14 @@ void device_block_merge_mergepath_kernel(KeysInputIterator    keys_input,
 }
 
 template<typename Config, typename KeysInputIterator, typename OffsetT, typename CompareOpT>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
-    device_params<Config>()
-        .merge_mergepath_partition_config
-        .block_size)
-void device_block_merge_mergepath_partition_kernel(KeysInputIterator  keys,
-                                                   const OffsetT      input_size,
-                                                   const unsigned int num_partitions,
-                                                   OffsetT*           merge_partitions,
-                                                   const CompareOpT   compare_op,
-                                                   const OffsetT      sorted_block_size)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>()
+                                         .merge_mergepath_partition_config.block_size) void
+    device_block_merge_mergepath_partition_kernel(KeysInputIterator  keys,
+                                                  const OffsetT      input_size,
+                                                  const unsigned int num_partitions,
+                                                  OffsetT*           merge_partitions,
+                                                  const CompareOpT   compare_op,
+                                                  const OffsetT      sorted_block_size)
 {
     static constexpr merge_sort_block_merge_config_params params = device_params<Config>();
     static constexpr unsigned int                         items_per_tile

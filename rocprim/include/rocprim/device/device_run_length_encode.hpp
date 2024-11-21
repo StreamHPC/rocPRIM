@@ -102,15 +102,15 @@ template<typename Config,
          typename RunsCountOutputIterator,
          typename LookbackScanState,
          typename OrderedBlockIdType>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
-void non_trivial_kernel(const InputIterator           input,
-                        const OffsetsOutputIterator   offsets_output,
-                        const CountsOutputIterator    counts_output,
-                        const RunsCountOutputIterator runs_count_output,
-                        const LookbackScanState       scan_state,
-                        const OrderedBlockIdType      ordered_block_id,
-                        const std::size_t             grid_size,
-                        const std::size_t             size)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    non_trivial_kernel(const InputIterator           input,
+                       const OffsetsOutputIterator   offsets_output,
+                       const CountsOutputIterator    counts_output,
+                       const RunsCountOutputIterator runs_count_output,
+                       const LookbackScanState       scan_state,
+                       const OrderedBlockIdType      ordered_block_id,
+                       const std::size_t             grid_size,
+                       const std::size_t             size)
 {
     run_length_encode::non_trivial_kernel_impl<Config, OffsetCountPairType>(input,
                                                                             offsets_output,

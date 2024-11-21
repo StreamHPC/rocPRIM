@@ -46,15 +46,14 @@ template<class Config,
          class KeysInputIterator1,
          class KeysInputIterator2,
          class BinaryFunction>
-ROCPRIM_KERNEL
-ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
-void partition_kernel(IndexIterator      index,
-                      KeysInputIterator1 keys_input1,
-                      KeysInputIterator2 keys_input2,
-                      const size_t       input1_size,
-                      const size_t       input2_size,
-                      const unsigned int spacing,
-                      BinaryFunction     compare_function)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    partition_kernel(IndexIterator      index,
+                     KeysInputIterator1 keys_input1,
+                     KeysInputIterator2 keys_input2,
+                     const size_t       input1_size,
+                     const size_t       input2_size,
+                     const unsigned int spacing,
+                     BinaryFunction     compare_function)
 {
     partition_kernel_impl(
         index, keys_input1, keys_input2, input1_size, input2_size,
@@ -71,18 +70,17 @@ template<class Config,
          class ValuesInputIterator2,
          class ValuesOutputIterator,
          class BinaryFunction>
-ROCPRIM_KERNEL
-ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size)
-void merge_kernel(IndexIterator        index,
-                  KeysInputIterator1   keys_input1,
-                  KeysInputIterator2   keys_input2,
-                  KeysOutputIterator   keys_output,
-                  ValuesInputIterator1 values_input1,
-                  ValuesInputIterator2 values_input2,
-                  ValuesOutputIterator values_output,
-                  const size_t         input1_size,
-                  const size_t         input2_size,
-                  BinaryFunction       compare_function)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    merge_kernel(IndexIterator        index,
+                 KeysInputIterator1   keys_input1,
+                 KeysInputIterator2   keys_input2,
+                 KeysOutputIterator   keys_output,
+                 ValuesInputIterator1 values_input1,
+                 ValuesInputIterator2 values_input2,
+                 ValuesOutputIterator values_output,
+                 const size_t         input1_size,
+                 const size_t         input2_size,
+                 BinaryFunction       compare_function)
 {
     static constexpr merge_config_params params = device_params<Config>();
     merge_kernel_impl<params.kernel_config.block_size, params.kernel_config.items_per_thread>(

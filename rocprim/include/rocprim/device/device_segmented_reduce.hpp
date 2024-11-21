@@ -48,14 +48,13 @@ template<class Config,
          class OffsetIterator,
          class ResultType,
          class BinaryFunction>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
-    device_params<Config>()
-        .reduce_config.block_size) void segmented_reduce_kernel(InputIterator  input,
-                                                                OutputIterator output,
-                                                                OffsetIterator begin_offsets,
-                                                                OffsetIterator end_offsets,
-                                                                BinaryFunction reduce_op,
-                                                                ResultType     initial_value)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().reduce_config.block_size) void
+    segmented_reduce_kernel(InputIterator  input,
+                            OutputIterator output,
+                            OffsetIterator begin_offsets,
+                            OffsetIterator end_offsets,
+                            BinaryFunction reduce_op,
+                            ResultType     initial_value)
 {
     segmented_reduce<Config>(
         input, output,

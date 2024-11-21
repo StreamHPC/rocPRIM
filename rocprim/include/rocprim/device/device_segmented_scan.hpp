@@ -72,24 +72,21 @@ struct transform_op_t
     }
 };
 
-template<
-    bool Exclusive,
-    class Config,
-    class ResultType,
-    class InputIterator,
-    class OutputIterator,
-    class OffsetIterator,
-    class InitValueType,
-    class BinaryFunction
->
-ROCPRIM_KERNEL
-ROCPRIM_LAUNCH_BOUNDS(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
-void segmented_scan_kernel(InputIterator input,
-                           OutputIterator output,
-                           OffsetIterator begin_offsets,
-                           OffsetIterator end_offsets,
-                           InitValueType initial_value,
-                           BinaryFunction scan_op)
+template<bool Exclusive,
+         class Config,
+         class ResultType,
+         class InputIterator,
+         class OutputIterator,
+         class OffsetIterator,
+         class InitValueType,
+         class BinaryFunction>
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE) void
+    segmented_scan_kernel(InputIterator  input,
+                          OutputIterator output,
+                          OffsetIterator begin_offsets,
+                          OffsetIterator end_offsets,
+                          InitValueType  initial_value,
+                          BinaryFunction scan_op)
 {
     segmented_scan<Exclusive, Config, ResultType>(
         input, output, begin_offsets, end_offsets,

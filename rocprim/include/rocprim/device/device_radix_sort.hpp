@@ -83,14 +83,14 @@ using offset_type_t = std::conditional_t<
 
 template<class Config, bool Descending, class KeysInputIterator, class Offset, class Decomposer>
 ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().histogram.block_size) void onesweep_histograms_kernel(
-        KeysInputIterator  keys_input,
-        Offset*            global_digit_counts,
-        const Offset       size,
-        const Offset       full_blocks,
-        Decomposer         decomposer,
-        const unsigned int begin_bit,
-        const unsigned int end_bit)
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().histogram.block_size) void
+    onesweep_histograms_kernel(KeysInputIterator  keys_input,
+                               Offset*            global_digit_counts,
+                               const Offset       size,
+                               const Offset       full_blocks,
+                               Decomposer         decomposer,
+                               const unsigned int begin_bit,
+                               const unsigned int end_bit)
 {
     static constexpr radix_sort_onesweep_config_params params = device_params<Config>();
     onesweep_histograms<params.histogram.block_size,
@@ -106,9 +106,8 @@ ROCPRIM_KERNEL
 }
 
 template<class Config, class Offset>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(
-    device_params<Config>()
-        .histogram.block_size) void onesweep_scan_histograms_kernel(Offset* global_digit_offsets)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().histogram.block_size) void
+    onesweep_scan_histograms_kernel(Offset* global_digit_offsets)
 {
     static constexpr radix_sort_onesweep_config_params params = device_params<Config>();
     onesweep_scan_histograms<params.histogram.block_size, params.radix_bits_per_place>(
@@ -208,20 +207,19 @@ template<class Config,
          class ValuesOutputIterator,
          class Offset,
          class Decomposer>
-ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().sort.block_size) void onesweep_iteration_kernel(
-        KeysInputIterator        keys_input,
-        KeysOutputIterator       keys_output,
-        ValuesInputIterator      values_input,
-        ValuesOutputIterator     values_output,
-        const unsigned int       size,
-        Offset*                  global_digit_offsets_in,
-        Offset*                  global_digit_offsets_out,
-        onesweep_lookback_state* lookback_states,
-        Decomposer               decomposer,
-        const unsigned int       bit,
-        const unsigned int       current_radix_bits,
-        const unsigned int       full_blocks)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().sort.block_size) void
+    onesweep_iteration_kernel(KeysInputIterator        keys_input,
+                              KeysOutputIterator       keys_output,
+                              ValuesInputIterator      values_input,
+                              ValuesOutputIterator     values_output,
+                              const unsigned int       size,
+                              Offset*                  global_digit_offsets_in,
+                              Offset*                  global_digit_offsets_out,
+                              onesweep_lookback_state* lookback_states,
+                              Decomposer               decomposer,
+                              const unsigned int       bit,
+                              const unsigned int       current_radix_bits,
+                              const unsigned int       full_blocks)
 {
     static constexpr radix_sort_onesweep_config_params params = device_params<Config>();
     onesweep_iteration<params.sort.block_size,

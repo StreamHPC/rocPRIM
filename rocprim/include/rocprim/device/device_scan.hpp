@@ -100,13 +100,12 @@ template<bool Exclusive,
          class BinaryFunction,
          class InitValueType,
          class AccType>
-ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void single_scan_kernel(
-        InputIterator       input,
-        const size_t        size,
-        const InitValueType initial_value,
-        OutputIterator      output,
-        BinaryFunction      scan_op)
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    single_scan_kernel(InputIterator       input,
+                       const size_t        size,
+                       const InitValueType initial_value,
+                       OutputIterator      output,
+                       BinaryFunction      scan_op)
 {
     single_scan_kernel_impl<Exclusive, Config>(input,
                                                size,
@@ -127,18 +126,18 @@ template<lookback_scan_determinism Determinism,
          class AccType,
          class LookBackScanState>
 ROCPRIM_KERNEL
-    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void lookback_scan_kernel(
-        InputIterator       input,
-        OutputIterator      output,
-        const size_t        size,
-        const InitValueType initial_value,
-        BinaryFunction      scan_op,
-        LookBackScanState   lookback_scan_state,
-        const unsigned int  number_of_blocks,
-        AccType*            previous_last_element = nullptr,
-        AccType*            new_last_element      = nullptr,
-        bool                override_first_value  = false,
-        bool                save_last_value       = false)
+    ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    lookback_scan_kernel(InputIterator       input,
+                         OutputIterator      output,
+                         const size_t        size,
+                         const InitValueType initial_value,
+                         BinaryFunction      scan_op,
+                         LookBackScanState   lookback_scan_state,
+                         const unsigned int  number_of_blocks,
+                         AccType*            previous_last_element = nullptr,
+                         AccType*            new_last_element      = nullptr,
+                         bool                override_first_value  = false,
+                         bool                save_last_value       = false)
 {
     lookback_scan_kernel_impl<Determinism, Exclusive, Config>(
         input,
