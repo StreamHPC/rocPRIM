@@ -33,6 +33,11 @@ Available traits
   :content-only:
   :members:
 
+Type traits wrappers
+====================
+.. doxygengroup::  rocprim_type_traits_wrapper
+  :content-only:
+  :no-link:
 
 Types with predefined traits
 ============================

@@ -34,10 +34,6 @@
 #ifndef ROCPRIM_COMPILE_ERROR
     #define ROCPRIM_COMPILE_ERROR(msg) static_assert(false, msg)
 #endif
-#ifndef ROCPRIM_COMPILE_WARN
-    #define ROCPRIM_COMPILE_WARN(msg)
-    // #define ROCPRIM_COMPILE_WARN(msg) [[deprecated(msg)]]
-#endif
 /// \brief Wrapper macro for std::enable_if aims to increase code readability
 #ifndef ROCPRIM_REQUIRES
     #define ROCPRIM_REQUIRES(...) typename std::enable_if<(__VA_ARGS__)>::type* = nullptr
@@ -62,43 +58,7 @@ template<class...>
 using void_t = void;
 
 template<class Key>
-struct float_bit_mask;
-
-template<>
-struct float_bit_mask<float>
-{
-    static constexpr uint32_t sign_bit = 0x80000000;
-    static constexpr uint32_t exponent = 0x7F800000;
-    static constexpr uint32_t mantissa = 0x007FFFFF;
-    using bit_type                     = uint32_t;
-};
-
-template<>
-struct float_bit_mask<double>
-{
-    static constexpr uint64_t sign_bit = 0x8000000000000000;
-    static constexpr uint64_t exponent = 0x7FF0000000000000;
-    static constexpr uint64_t mantissa = 0x000FFFFFFFFFFFFF;
-    using bit_type                     = uint64_t;
-};
-
-template<>
-struct float_bit_mask<rocprim::bfloat16>
-{
-    static constexpr uint16_t sign_bit = 0x8000;
-    static constexpr uint16_t exponent = 0x7F80;
-    static constexpr uint16_t mantissa = 0x007F;
-    using bit_type                     = uint16_t;
-};
-
-template<>
-struct float_bit_mask<rocprim::half>
-{
-    static constexpr uint16_t sign_bit = 0x8000;
-    static constexpr uint16_t exponent = 0x7C00;
-    static constexpr uint16_t mantissa = 0x03FF;
-    using bit_type                     = uint16_t;
-};
+struct [[deprecated]] float_bit_mask;
 
 } // namespace detail
 
@@ -163,9 +123,6 @@ struct get;
 /// \par Definability
 /// * **Undefinable**: For types with `predefined traits`.
 /// * **Optional**:  For other types.
-/// \par Value Option
-/// * `true`
-/// * `false` [[default]]
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
@@ -184,7 +141,7 @@ struct is_arithmetic
     template<bool Val>
     struct values
     {
-        /// \brief value
+        /// \brief This indicates if the `InputType` is arithmetic.
         static constexpr auto value = Val;
     };
 
@@ -224,9 +181,6 @@ struct is_arithmetic
 /// * **Undefinable**: For types with `predefined traits`.
 /// * **Optional**: For other types. If both `is_arithmetic` and `is_scalar` are defined, their values
 /// must be consistent; otherwise, a compile-time error will occur.
-/// \par Value Option
-/// * `true`
-/// * `false` [[default]]
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
@@ -245,7 +199,7 @@ struct is_scalar
     template<bool Val>
     struct values
     {
-        /// \brief value
+        /// \brief This indicates if the `InputType` is scalar.
         static constexpr auto value = Val;
     };
 
@@ -288,10 +242,6 @@ struct is_scalar
 /// * **Undefinable**: For types with `predefined traits` and non-arithmetic types.
 /// * **Required**: If you define `is_arithmetic` as `true`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
-/// \par Value Option
-/// * `0`: For floating-point types
-/// * `1`: For integral types
-/// * `2`: For non-arithmetic types
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
@@ -307,7 +257,7 @@ struct is_scalar
 /// \endparblock
 struct number_format
 {
-    /// \brief the kind enum that indecates the values avaliable for this trait
+    /// \brief The kind enum that indecates the values avaliable for this trait
     enum class kind
     {
         unknown_type        = 0,
@@ -319,7 +269,7 @@ struct number_format
     template<kind Val>
     struct values
     {
-        /// \brief value
+        /// \brief This indicates if the `InputType` is floating_point_type or integral_type or unknown_type.
         static constexpr auto value = Val;
     };
 
@@ -364,10 +314,6 @@ struct number_format
 /// * **Undefinable**: For types with `predefined traits`, non-arithmetic types and floating-point types.
 /// * **Required**: If you define `number_format` as `number_format::kind::floating_point_type`, you must also define this trait; otherwise, a
 /// compile-time error will occur.
-/// \par Value Option
-/// * `0`: For signed integral types
-/// * `1`: For unsigned integral types
-/// * `2`: For other types
 /// \par How to define
 /// \parblock
 /// \code{.cpp}
@@ -383,7 +329,7 @@ struct number_format
 /// \endparblock
 struct integral_sign
 {
-    /// \brief the kind enum that indecates the values avaliable for this trait
+    /// \brief The kind enum that indecates the values avaliable for this trait
     enum class kind
     {
         unknown_type  = 0,
@@ -395,7 +341,7 @@ struct integral_sign
     template<kind Val>
     struct values
     {
-        /// \brief value
+        /// \brief This indicates if the `InputType` is signed_type or unsigned_type or unknown_type.
         static constexpr auto value = Val;
     };
 
@@ -480,11 +426,11 @@ struct float_bit_mask
         ROCPRIM_DO_NOT_COMPILE_IF(number_format::get<BitType>().value
                                       != number_format::kind::integral_type,
                                   "BitType should be integral");
-        /// \brief sign_bit value
+        /// \brief Trait sign_bit for the `InputType`.
         static constexpr BitType sign_bit = SignBit;
-        /// \brief exponent value
+        /// \brief Trait exponent for the `InputType`.
         static constexpr BitType exponent = Exponent;
-        /// \brief mantissa value
+        /// \brief Trait mantissa for the `InputType`.
         static constexpr BitType mantissa = Mantissa;
     };
 
@@ -511,11 +457,10 @@ struct float_bit_mask
     }
 
     // This function acts as a bridge for old interface. Will be removed in certain version
+    // "`rocprim::detail::float_bit_mask` will be deprecated on next main release,"
+    // "`please use rocprim::trait::define` to define tratis for types."
     template<class InputType,
              ROCPRIM_REQUIRES(!is_defined<InputType> && has_old_float_bit_mask<InputType>)>
-    ROCPRIM_COMPILE_WARN(
-        "`rocprim::detail::float_bit_mask` will be deprecated on next main release,"
-        "`please use rocprim::trait::define` to define tratis for types.")
     static constexpr auto get()
     {
         using mask = typename ::rocprim::detail::float_bit_mask<InputType>;
@@ -556,7 +501,7 @@ struct is_fundamental
     template<bool Val>
     struct values
     {
-        /// \brief value
+        /// \brief This indicates if the `InputType` is fundamental.
         static constexpr auto value = Val;
     };
 
@@ -769,46 +714,58 @@ struct traits::define<rocprim::uint128_t>
 };
 /// @}
 
-/// \defgroup rocprim_pre_type_traits_wrapper Handy wrappers for obtaining type traits
-/// \addtogroup rocprim_pre_type_traits_wrapper
+/// \defgroup rocprim_type_traits_wrapper Handy wrappers for obtaining type traits
+/// \addtogroup rocprim_type_traits_wrapper
 /// @{
-/// \brief Extension of `std::is_floating_point`, which includes support for \ref rocprim::half and \ref rocprim::bfloat16.
+
+/// \brief An extension of `std::is_floating_point` that supports additional arithmetic types,
+/// including `rocprim::half`, `rocprim::bfloat16`, and any types with trait
+/// `rocprim::traits::number_format::values<number_format::kind::floating_point_type>` implemented.
 template<class T>
 struct is_floating_point
     : std::integral_constant<bool, ::rocprim::traits::get<T>().is_floating_point()>
 {};
 
-/// \brief Extension of `std::is_integral`, which includes support for 128-bit integers.
+/// \brief An extension of `std::is_integral` that supports additional arithmetic types,
+/// including `rocprim::int128_t`, `rocprim::uint128_t`, and any types with trait
+/// `rocprim::traits::number_format::values<number_format::kind::integral_type>` implemented.
 template<class T>
 struct is_integral : std::integral_constant<bool, ::rocprim::traits::get<T>().is_integral()>
 {};
 
-/// \brief Extension of `std::is_arithmetic`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+/// \brief An extension of `std::is_arithmetic` that supports additional arithmetic types,
+/// including any types with trait `rocprim::traits::is_arithmetic::values<true>` implemented.
 template<class T>
 struct is_arithmetic : std::integral_constant<bool, ::rocprim::traits::get<T>().is_arithmetic()>
 {};
 
-/// \brief Extension of `std::is_fundamental`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+/// \brief An extension of `std::is_fundamental` that supports additional arithmetic types,
+/// including any types with trait `rocprim::traits::is_arithmetic::values<true>` implemented.
 template<class T>
 struct is_fundamental : std::integral_constant<bool, ::rocprim::traits::get<T>().is_fundamental()>
 {};
 
-/// \brief Extension of `std::is_unsigned`, which includes support for 128-bit integers.
+/// \brief An extension of `std::is_unsigned` that supports additional arithmetic types,
+/// including `rocprim::uint128_t`, and any types with trait
+/// `rocprim::traits::integral_sign::values<integral_sign::kind::unsigned_type>` implemented.
 template<class T>
 struct is_unsigned : std::integral_constant<bool, ::rocprim::traits::get<T>().is_unsigned()>
 {};
 
-/// \brief Extension of `std::is_signed`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+/// \brief An extension of `std::is_signed` that supports additional arithmetic types,
+/// including `rocprim::int128_t`, and any types with trait
+/// `rocprim::traits::integral_sign::values<integral_sign::kind::signed_type>` implemented.
 template<class T>
 struct is_signed : std::integral_constant<bool, ::rocprim::traits::get<T>().is_signed()>
 {};
 
-/// \brief Extension of `std::is_scalar`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+/// \brief An extension of `std::is_scalar` that supports additional arithmetic types,
+/// including any types with trait `rocprim::traits::is_scalar::values<true>` implemented.
 template<class T>
 struct is_scalar : std::integral_constant<bool, ::rocprim::traits::get<T>().is_scalar()>
 {};
 
-/// \brief Extension of `std::is_compound`, which includes support for \ref rocprim::half , \ref rocprim::bfloat16 and 128-bit integers.
+/// \brief An extension of `std::is_scalar` that supports additional non-arithmetic types.
 template<class T>
 struct is_compound : std::integral_constant<bool, ::rocprim::traits::get<T>().is_compound()>
 {};
