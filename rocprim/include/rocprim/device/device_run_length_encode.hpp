@@ -100,24 +100,21 @@ template<typename Config,
          typename OffsetsOutputIterator,
          typename CountsOutputIterator,
          typename RunsCountOutputIterator,
-         typename LookbackScanState,
-         typename OrderedBlockIdType>
-ROCPRIM_KERNEL __launch_bounds__(device_params<Config>().kernel_config.block_size)
-void non_trivial_kernel(const InputIterator           input,
-                        const OffsetsOutputIterator   offsets_output,
-                        const CountsOutputIterator    counts_output,
-                        const RunsCountOutputIterator runs_count_output,
-                        const LookbackScanState       scan_state,
-                        const OrderedBlockIdType      ordered_block_id,
-                        const std::size_t             grid_size,
-                        const std::size_t             size)
+         typename LookbackScanState>
+ROCPRIM_KERNEL __launch_bounds__(device_params<Config>().kernel_config.block_size) void
+    non_trivial_kernel(const InputIterator           input,
+                       const OffsetsOutputIterator   offsets_output,
+                       const CountsOutputIterator    counts_output,
+                       const RunsCountOutputIterator runs_count_output,
+                       const LookbackScanState       scan_state,
+                       const std::size_t             grid_size,
+                       const std::size_t             size)
 {
     run_length_encode::non_trivial_kernel_impl<Config, OffsetCountPairType>(input,
                                                                             offsets_output,
                                                                             counts_output,
                                                                             runs_count_output,
                                                                             scan_state,
-                                                                            ordered_block_id,
                                                                             grid_size,
                                                                             size);
 }
@@ -150,8 +147,6 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
     using scan_state_with_sleep_type
         = ::rocprim::detail::lookback_scan_state<offset_count_pair_type, /*UseSleep=*/true>;
 
-    using ordered_block_id_type = detail::ordered_block_id<unsigned int>;
-
     detail::target_arch target_arch;
     ROCPRIM_RETURN_ON_ERROR(host_target_arch(stream, target_arch));
 
@@ -161,8 +156,7 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
     const std::size_t  grid_size       = detail::ceiling_div(size, items_per_block);
 
     // Calculate required temporary storage
-    void*                           scan_state_storage;
-    ordered_block_id_type::id_type* ordered_bid_storage;
+    void* scan_state_storage;
 
     detail::temp_storage::layout layout{};
     ROCPRIM_RETURN_ON_ERROR(scan_state_type::get_temp_storage_layout(grid_size, stream, layout));
@@ -172,10 +166,8 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
         storage_size,
         detail::temp_storage::make_linear_partition(
             // This is valid even with scan_state_with_sleep_type
-            detail::temp_storage::make_partition(&scan_state_storage, layout),
-            detail::temp_storage::make_partition(
-                &ordered_bid_storage,
-                ordered_block_id_type::get_temp_storage_layout())));
+            detail::temp_storage::make_partition(&scan_state_storage, layout)));
+
     if(result != hipSuccess || temporary_storage == nullptr)
     {
         return result;
@@ -204,8 +196,6 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
             return func(scan_state);
         }
     };
-
-    auto ordered_bid = ordered_block_id_type::create(ordered_bid_storage);
 
     if(size == 0)
     {
@@ -240,8 +230,7 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
                                0,
                                stream,
                                scan_state,
-                               grid_size,
-                               ordered_bid);
+                               grid_size);
         });
     ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("init_lookback_scan_state_kernel",
                                                 grid_size,
@@ -262,7 +251,6 @@ hipError_t run_length_encode_non_trivial_runs_impl(void*                   tempo
                 counts_output,
                 runs_count_output,
                 scan_state,
-                ordered_bid,
                 grid_size,
                 size);
         });
