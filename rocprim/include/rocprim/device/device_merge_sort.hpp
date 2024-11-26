@@ -197,8 +197,9 @@ inline hipError_t merge_sort_block_merge(
     BinaryFunction                                             compare_function,
     const hipStream_t                                          stream,
     bool                                                       debug_synchronous,
-    typename std::iterator_traits<KeysIterator>::value_type*   keys_double_buffer   = nullptr,
-    typename std::iterator_traits<ValuesIterator>::value_type* values_double_buffer = nullptr)
+    typename std::iterator_traits<KeysIterator>::value_type*   keys_double_buffer     = nullptr,
+    typename std::iterator_traits<ValuesIterator>::value_type* values_double_buffer   = nullptr,
+    const bool                                                 no_allocate_tmp_buffer = false)
 {
     using key_type             = typename std::iterator_traits<KeysIterator>::value_type;
     using value_type           = typename std::iterator_traits<ValuesIterator>::value_type;
@@ -244,7 +245,7 @@ inline hipError_t merge_sort_block_merge(
     value_type* values_buffer      = nullptr;
 
     hipError_t partition_result;
-    if(keys_double_buffer == nullptr)
+    if(!no_allocate_tmp_buffer)
     {
         partition_result = detail::temp_storage::partition(
             temporary_storage,
@@ -539,7 +540,8 @@ inline hipError_t merge_sort_impl(
     const hipStream_t                                               stream,
     bool                                                            debug_synchronous,
     typename std::iterator_traits<KeysInputIterator>::value_type*   keys_buffer   = nullptr,
-    typename std::iterator_traits<ValuesInputIterator>::value_type* values_buffer = nullptr)
+    typename std::iterator_traits<ValuesInputIterator>::value_type* values_buffer = nullptr,
+    bool                                                            no_allocate_tmp_buffer = false)
 {
     using key_type   = typename std::iterator_traits<KeysInputIterator>::value_type;
     using value_type = typename std::iterator_traits<ValuesInputIterator>::value_type;
@@ -573,7 +575,8 @@ inline hipError_t merge_sort_impl(
                                                           stream,
                                                           debug_synchronous,
                                                           keys_buffer,
-                                                          values_buffer);
+                                                          values_buffer,
+                                                          no_allocate_tmp_buffer);
     }
 
     if(size == size_t(0))
@@ -608,7 +611,8 @@ inline hipError_t merge_sort_impl(
                                                           stream,
                                                           debug_synchronous,
                                                           keys_buffer,
-                                                          values_buffer);
+                                                          values_buffer,
+                                                          no_allocate_tmp_buffer);
     }
     return hipSuccess;
 }

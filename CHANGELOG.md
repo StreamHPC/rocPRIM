@@ -2,6 +2,12 @@
 
 Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
+
+### Resolved issues
+
+* Fixed device radix sort not returning the correct required temporary storage when a double buffer contains `nullptr`.
+
 ## (Unreleased) rocPRIM 3.4.x for ROCm 6.4.x
 
 ### Added
