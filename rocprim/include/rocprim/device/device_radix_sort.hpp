@@ -441,6 +441,7 @@ hipError_t radix_sort_onesweep_impl(
     const unsigned int                                              begin_bit,
     const unsigned int                                              end_bit,
     const hipStream_t                                               stream,
+    const bool                                                      no_allocate_tmp_buffer,
     const bool                                                      debug_synchronous)
 {
     using key_type    = typename std::iterator_traits<KeysInputIterator>::value_type;
@@ -470,8 +471,7 @@ hipError_t radix_sort_onesweep_impl(
     const unsigned int num_lookback_states
         = radix_size_per_place * ceiling_div(items_per_batch, sort_items_per_block);
 
-    constexpr bool with_values        = !std::is_same<value_type, ::rocprim::empty_type>::value;
-    const bool     with_double_buffer = keys_tmp != nullptr;
+    constexpr bool with_values = !std::is_same<value_type, ::rocprim::empty_type>::value;
 
     offset_type*             global_digit_offsets;
     offset_type*             global_digit_offsets_tmp;
@@ -488,10 +488,10 @@ hipError_t radix_sort_onesweep_impl(
                                                     radix_size_per_place),
             detail::temp_storage::ptr_aligned_array(&lookback_states, num_lookback_states),
             detail::temp_storage::ptr_aligned_array(&keys_tmp_storage,
-                                                    !with_double_buffer ? size : 0),
+                                                    !no_allocate_tmp_buffer ? size : 0),
             detail::temp_storage::ptr_aligned_array(&values_tmp_storage,
-                                                    !with_double_buffer && with_values ? size
-                                                                                       : 0)));
+                                                    !no_allocate_tmp_buffer && with_values ? size
+                                                                                           : 0)));
 
     if(partition_result != hipSuccess || temporary_storage == nullptr)
     {
@@ -529,16 +529,16 @@ hipError_t radix_sort_onesweep_impl(
             return error;
     }
 
-    if(!with_double_buffer)
+    if(!no_allocate_tmp_buffer)
     {
         keys_tmp   = keys_tmp_storage;
         values_tmp = values_tmp_storage;
     }
 
     // Copy input keys and values if necessary (in-place sorting: input and output iterators are equal).
-    bool to_output  = with_double_buffer || (places - 1) % 2 == 0;
+    bool to_output  = no_allocate_tmp_buffer || (places - 1) % 2 == 0;
     bool from_input = true;
-    if(!with_double_buffer && to_output)
+    if(!no_allocate_tmp_buffer && to_output)
     {
         const bool keys_alias
             = ::rocprim::detail::can_iterators_alias(keys_input, keys_output, size);
@@ -628,6 +628,7 @@ hipError_t
                     unsigned int begin_bit,
                     unsigned int end_bit,
                     hipStream_t  stream,
+                    bool         no_allocate_tmp_buffer,
                     bool         debug_synchronous)
 {
     using key_type   = typename std::iterator_traits<KeysInputIterator>::value_type;
@@ -721,6 +722,7 @@ hipError_t
                                                                     begin_bit,
                                                                     end_bit,
                                                                     stream,
+                                                                    no_allocate_tmp_buffer,
                                                                     debug_synchronous);
     }
     else
@@ -741,6 +743,7 @@ hipError_t
                                                                      begin_bit,
                                                                      end_bit,
                                                                      stream,
+                                                                     no_allocate_tmp_buffer,
                                                                      debug_synchronous);
     }
 }
@@ -863,6 +866,7 @@ hipError_t radix_sort_keys(void*              temporary_storage,
                                                   begin_bit,
                                                   end_bit,
                                                   stream,
+                                                  false,
                                                   debug_synchronous);
 }
 
@@ -979,6 +983,7 @@ hipError_t radix_sort_keys(void*               temporary_storage,
                                                               begin_bit,
                                                               end_bit,
                                                               stream,
+                                                              true,
                                                               debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -1128,6 +1133,7 @@ auto radix_sort_keys(void*              temporary_storage,
                                                   begin_bit,
                                                   end_bit,
                                                   stream,
+                                                  false,
                                                   debug_synchronous);
 }
 
@@ -1260,6 +1266,7 @@ auto radix_sort_keys(void*              temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        false,
         debug_synchronous);
 }
 
@@ -1401,6 +1408,7 @@ auto radix_sort_keys(void*               temporary_storage,
                                                               begin_bit,
                                                               end_bit,
                                                               stream,
+                                                              true,
                                                               debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -1535,6 +1543,7 @@ auto radix_sort_keys(void*               temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        true,
         debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -1658,6 +1667,7 @@ hipError_t radix_sort_keys_desc(void*              temporary_storage,
                                                  begin_bit,
                                                  end_bit,
                                                  stream,
+                                                 false,
                                                  debug_synchronous);
 }
 
@@ -1774,6 +1784,7 @@ hipError_t radix_sort_keys_desc(void*               temporary_storage,
                                                              begin_bit,
                                                              end_bit,
                                                              stream,
+                                                             true,
                                                              debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -1923,6 +1934,7 @@ auto radix_sort_keys_desc(void*              temporary_storage,
                                                  begin_bit,
                                                  end_bit,
                                                  stream,
+                                                 false,
                                                  debug_synchronous);
 }
 
@@ -2055,6 +2067,7 @@ auto radix_sort_keys_desc(void*              temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        false,
         debug_synchronous);
 }
 
@@ -2196,6 +2209,7 @@ auto radix_sort_keys_desc(void*               temporary_storage,
                                                              begin_bit,
                                                              end_bit,
                                                              stream,
+                                                             true,
                                                              debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -2330,6 +2344,7 @@ auto radix_sort_keys_desc(void*               temporary_storage,
                                                 0,
                                                 detail::decomposer_max_bits<Decomposer, Key>::value,
                                                 stream,
+                                                true,
                                                 debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -2471,6 +2486,7 @@ hipError_t radix_sort_pairs(void*                temporary_storage,
                                                   begin_bit,
                                                   end_bit,
                                                   stream,
+                                                  false,
                                                   debug_synchronous);
 }
 
@@ -2600,6 +2616,7 @@ hipError_t radix_sort_pairs(void*                 temporary_storage,
                                                               begin_bit,
                                                               end_bit,
                                                               stream,
+                                                              true,
                                                               debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -2768,6 +2785,7 @@ auto radix_sort_pairs(void*                temporary_storage,
                                                   begin_bit,
                                                   end_bit,
                                                   stream,
+                                                  false,
                                                   debug_synchronous);
 }
 
@@ -2914,6 +2932,7 @@ auto radix_sort_pairs(void*                temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        false,
         debug_synchronous);
 }
 
@@ -3066,6 +3085,7 @@ auto radix_sort_pairs(void*                 temporary_storage,
                                                               begin_bit,
                                                               end_bit,
                                                               stream,
+                                                              true,
                                                               debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -3208,6 +3228,7 @@ auto radix_sort_pairs(void*                 temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        true,
         debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -3346,6 +3367,7 @@ hipError_t radix_sort_pairs_desc(void*                temporary_storage,
                                                  begin_bit,
                                                  end_bit,
                                                  stream,
+                                                 false,
                                                  debug_synchronous);
 }
 
@@ -3469,6 +3491,7 @@ hipError_t radix_sort_pairs_desc(void*                 temporary_storage,
                                                              begin_bit,
                                                              end_bit,
                                                              stream,
+                                                             true,
                                                              debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -3637,6 +3660,7 @@ auto radix_sort_pairs_desc(void*                temporary_storage,
                                                  begin_bit,
                                                  end_bit,
                                                  stream,
+                                                 false,
                                                  debug_synchronous);
 }
 
@@ -3783,6 +3807,7 @@ auto radix_sort_pairs_desc(void*                temporary_storage,
         0,
         detail::decomposer_max_bits<Decomposer, Key>::value,
         stream,
+        false,
         debug_synchronous);
 }
 
@@ -3935,6 +3960,7 @@ auto radix_sort_pairs_desc(void*                 temporary_storage,
                                                              begin_bit,
                                                              end_bit,
                                                              stream,
+                                                             true,
                                                              debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {
@@ -4077,6 +4103,7 @@ auto radix_sort_pairs_desc(void*                 temporary_storage,
                                                 0,
                                                 detail::decomposer_max_bits<Decomposer, Key>::value,
                                                 stream,
+                                                true,
                                                 debug_synchronous);
     if(temporary_storage != nullptr && error == hipSuccess && is_result_in_output)
     {

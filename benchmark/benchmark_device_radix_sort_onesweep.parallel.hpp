@@ -136,6 +136,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                        0,
                                                                        sizeof(key_type) * 8,
                                                                        stream,
+                                                                       false,
                                                                        false)));
 
         HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
@@ -159,6 +160,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                      0,
                                                                      sizeof(key_type) * 8,
                                                                      stream,
+                                                                     false,
                                                                      false)));
         }
         HIP_CHECK(hipDeviceSynchronize());
@@ -190,6 +192,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                          0,
                                                                          sizeof(key_type) * 8,
                                                                          stream,
+                                                                         false,
                                                                          false)));
             }
 
@@ -276,6 +279,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                        0,
                                                                        sizeof(key_type) * 8,
                                                                        stream,
+                                                                       false,
                                                                        false)));
 
         HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
@@ -299,6 +303,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                      0,
                                                                      sizeof(key_type) * 8,
                                                                      stream,
+                                                                     false,
                                                                      false)));
         }
         HIP_CHECK(hipDeviceSynchronize());
@@ -330,6 +335,7 @@ struct device_radix_sort_onesweep_benchmark : public config_autotune_interface
                                                                          0,
                                                                          sizeof(key_type) * 8,
                                                                          stream,
+                                                                         false,
                                                                          false)));
             }
 
