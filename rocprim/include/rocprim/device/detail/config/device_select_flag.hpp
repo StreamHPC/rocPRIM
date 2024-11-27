@@ -439,6 +439,72 @@ struct default_select_flag_config<
                       && (sizeof(data_type) <= 1))>> : select_config<256, 24>
 {};
 
+// Based on data_type = double
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 8)
+                      && (sizeof(data_type) > 4))>> : select_config<512, 7>
+{};
+
+// Based on data_type = float
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 4)
+                      && (sizeof(data_type) > 2))>> : select_config<512, 15>
+{};
+
+// Based on data_type = rocprim::half
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 2))>> : select_config<512, 28>
+{};
+
+// Based on data_type = int64_t
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 8) && (sizeof(data_type) > 4))>>
+    : select_config<512, 7>
+{};
+
+// Based on data_type = int
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 4) && (sizeof(data_type) > 2))>>
+    : select_config<512, 15>
+{};
+
+// Based on data_type = short
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 2) && (sizeof(data_type) > 1))>>
+    : select_config<512, 30>
+{};
+
+// Based on data_type = int8_t
+template<class data_type>
+struct default_select_flag_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 1))>> : select_config<512, 24>
+{};
+
 } // end namespace detail
 
 END_ROCPRIM_NAMESPACE

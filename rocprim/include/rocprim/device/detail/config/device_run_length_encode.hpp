@@ -715,6 +715,118 @@ struct default_trivial_runs_config<
                            1>
 {};
 
+// Based on key_type = double
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = float
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = rocprim::half
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value)
+                      && (sizeof(key_type) <= 2))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = int64_t
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = int
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = short
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
+// Based on key_type = int8_t
+template<typename key_type, typename value_type>
+struct default_trivial_runs_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value)
+                      && (sizeof(key_type) <= 1))>>
+    : reduce_by_key_config<512,
+                           15,
+                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_transpose,
+                           block_scan_algorithm::using_warp_scan,
+                           1>
+{};
+
 } // end namespace detail
 
 END_ROCPRIM_NAMESPACE

@@ -3162,6 +3162,451 @@ struct default_histogram_config<
     : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
 {};
 
+// Based on value_type = double, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 1)
+                      && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 3>, 2048, 2048, 4>
+{};
+
+// Based on value_type = double, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 2)
+                      && (active_channels == 2))>>
+    : histogram_config<kernel_config<128, 3>, 2048, 2048, 4>
+{};
+
+// Based on value_type = double, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 3)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<128, 1>, 2048, 2048, 3>
+{};
+
+// Based on value_type = double, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 4)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<128, 1>, 2048, 2048, 4>
+{};
+
+// Based on value_type = double, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 4)
+                      && (active_channels == 4))>>
+    : histogram_config<kernel_config<128, 1>, 2048, 2048, 3>
+{};
+
+// Based on value_type = float, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 1)
+                      && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 16>, 2048, 2048, 4>
+{};
+
+// Based on value_type = float, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 2)
+                      && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 6>, 2048, 2048, 4>
+{};
+
+// Based on value_type = float, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 3)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 5>, 2048, 2048, 4>
+{};
+
+// Based on value_type = float, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 4)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<128, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = float, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 4)
+                      && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 3>, 2048, 2048, 4>
+{};
+
+// Based on value_type = rocprim::half, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (channels == 1) && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 13>, 2048, 2048, 4>
+{};
+
+// Based on value_type = rocprim::half, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (channels == 2) && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 5>, 2048, 2048, 4>
+{};
+
+// Based on value_type = rocprim::half, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (channels == 3) && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
+{};
+
+// Based on value_type = rocprim::half, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (channels == 4) && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
+{};
+
+// Based on value_type = rocprim::half, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (channels == 4) && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int64_t, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 1)
+                      && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 3>
+{};
+
+// Based on value_type = int64_t, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 2)
+                      && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 1>, 2048, 2048, 3>
+{};
+
+// Based on value_type = int64_t, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 3)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 1>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int64_t, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 4)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<128, 1>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int64_t, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4) && (channels == 4)
+                      && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 1>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 1)
+                      && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 7>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 2)
+                      && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 7>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 3)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 4)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<128, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2) && (channels == 4)
+                      && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = short, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1) && (channels == 1)
+                      && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 16>, 2048, 2048, 4>
+{};
+
+// Based on value_type = short, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1) && (channels == 2)
+                      && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
+{};
+
+// Based on value_type = short, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1) && (channels == 3)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 3>, 2048, 2048, 4>
+{};
+
+// Based on value_type = short, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1) && (channels == 4)
+                      && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = short, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1) && (channels == 4)
+                      && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 2>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int8_t, channels = 1, active_channels = 1
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 1) && (channels == 1) && (active_channels == 1))>>
+    : histogram_config<kernel_config<256, 15>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int8_t, channels = 2, active_channels = 2
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 1) && (channels == 2) && (active_channels == 2))>>
+    : histogram_config<kernel_config<256, 8>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int8_t, channels = 3, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 1) && (channels == 3) && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 5>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int8_t, channels = 4, active_channels = 3
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 1) && (channels == 4) && (active_channels == 3))>>
+    : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
+{};
+
+// Based on value_type = int8_t, channels = 4, active_channels = 4
+template<class value_type, unsigned int channels, unsigned int active_channels>
+struct default_histogram_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    channels,
+    active_channels,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 1) && (channels == 4) && (active_channels == 4))>>
+    : histogram_config<kernel_config<256, 4>, 2048, 2048, 4>
+{};
+
 } // end namespace detail
 
 END_ROCPRIM_NAMESPACE

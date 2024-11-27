@@ -253,6 +253,41 @@ struct default_find_first_of_config<static_cast<unsigned int>(target_arch::gfx90
     : find_first_of_config<256, 10>
 {};
 
+// Based on value_type = int64_t
+template<class value_type>
+struct default_find_first_of_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    std::enable_if_t<((sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
+    : find_first_of_config<1024, 7>
+{};
+
+// Based on value_type = int
+template<class value_type>
+struct default_find_first_of_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    std::enable_if_t<((sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
+    : find_first_of_config<1024, 7>
+{};
+
+// Based on value_type = short
+template<class value_type>
+struct default_find_first_of_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    value_type,
+    std::enable_if_t<((sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
+    : find_first_of_config<1024, 9>
+{};
+
+// Based on value_type = int8_t
+template<class value_type>
+struct default_find_first_of_config<static_cast<unsigned int>(target_arch::gfx942),
+                                    value_type,
+                                    std::enable_if_t<((sizeof(value_type) <= 1))>>
+    : find_first_of_config<1024, 12>
+{};
+
 } // end namespace detail
 
 END_ROCPRIM_NAMESPACE
