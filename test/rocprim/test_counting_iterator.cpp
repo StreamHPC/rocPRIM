@@ -27,6 +27,7 @@
 #include <rocprim/device/device_transform.hpp>
 
 // required test headers
+#include "test_utils_device_ptr.hpp"
 #include "test_utils_types.hpp"
 
 // Params for tests
@@ -87,9 +88,7 @@ TYPED_TEST(RocprimCountingIteratorTests, Transform)
         Iterator input_begin(test_utils::get_random_value<T>(0, 200, seed_value));
 
         std::vector<T> output(size);
-        T * d_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(T)));
-        HIP_CHECK(hipDeviceSynchronize());
+        test_utils::device_ptr<T> d_output(output.size());
 
         // Calculate expected results on host
         std::vector<T> expected(size);
@@ -101,32 +100,23 @@ TYPED_TEST(RocprimCountingIteratorTests, Transform)
         );
 
         // Run
-        HIP_CHECK(
-            rocprim::transform(
-                input_begin, d_output, size,
-                transform<T>(), stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(rocprim::transform(input_begin,
+                                     d_output.get(),
+                                     size,
+                                     transform<T>(),
+                                     stream,
+                                     debug_synchronous));
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
-        HIP_CHECK(hipDeviceSynchronize());
+        output = d_output.load();
 
         // Validating results
         for(size_t i = 0; i < output.size(); i++)
         {
             ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
         }
-
-        HIP_CHECK(hipFree(d_output));
     }
 
 }

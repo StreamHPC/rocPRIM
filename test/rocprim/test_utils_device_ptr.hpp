@@ -203,9 +203,9 @@ public:
                             hipMemcpyHostToDevice));
     }
 
-    /// \brief Copy from host to device
+    /// \brief Copy from device to device
     template<typename InPtrValueType>
-    void store(device_ptr<InPtrValueType> const& device_ptr, size_type offset = 0)
+    void replace(device_ptr<InPtrValueType> const& device_ptr, size_type offset = 0)
     {
         static_assert(sizeof(InPtrValueType) == sizeof(value_type),
                       "sizeof(InPtrValueType) must equal to sizeof(value_type)");
@@ -228,6 +228,16 @@ public:
         HIP_CHECK(hipMemcpy(ret.data(),
                             device_raw_ptr_,
                             number_of_ele_ * sizeof(value_type),
+                            hipMemcpyDeviceToHost));
+        return ret;
+    }
+    /// \brief Copy from device to host
+    std::vector<value_type> load(size_type target_size, size_type offset = 0) const
+    {
+        std::vector<value_type> ret(target_size);
+        HIP_CHECK(hipMemcpy(ret.data(),
+                            device_raw_ptr_ + offset,
+                            target_size * sizeof(value_type),
                             hipMemcpyDeviceToHost));
         return ret;
     }

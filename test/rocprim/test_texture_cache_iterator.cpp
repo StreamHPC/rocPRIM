@@ -27,6 +27,7 @@
 #include <rocprim/device/device_transform.hpp>
 
 // required test headers
+#include "test_utils_device_ptr.hpp"
 #include "test_utils_types.hpp"
 
 // Params for tests
@@ -102,21 +103,11 @@ TYPED_TEST(RocprimTextureCacheIteratorTests, Transform)
         }
 
         std::vector<T> output(size);
-        T * d_input;
-        T * d_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(T)));
-        HIP_CHECK(
-            hipMemcpy(
-                d_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-        HIP_CHECK(hipDeviceSynchronize());
+        test_utils::device_ptr<T> d_input(input);
+        test_utils::device_ptr<T> d_output(output.size());
 
         Iterator x;
-        HIP_CHECK(x.bind_texture(d_input, sizeof(T) * input.size()));
+        HIP_CHECK(x.bind_texture(d_input.get(), sizeof(T) * input.size()));
 
         // Calculate expected results on host
         std::vector<T> expected(size);
@@ -129,23 +120,12 @@ TYPED_TEST(RocprimTextureCacheIteratorTests, Transform)
 
         // Run
         HIP_CHECK(
-            rocprim::transform(
-                x, d_output, size,
-                transform<T>(), stream, debug_synchronous
-            )
-        );
+            rocprim::transform(x, d_output.get(), size, transform<T>(), stream, debug_synchronous));
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
-        HIP_CHECK(hipDeviceSynchronize());
+        output = d_output.load();
 
         // Validating results
         for(size_t i = 0; i < output.size(); i++)
@@ -154,7 +134,5 @@ TYPED_TEST(RocprimTextureCacheIteratorTests, Transform)
         }
 
         HIP_CHECK(x.unbind_texture());
-        HIP_CHECK(hipFree(d_input));
-        HIP_CHECK(hipFree(d_output));
     }
 }

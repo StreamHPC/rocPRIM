@@ -79,18 +79,7 @@ typed_test_def(RocprimWarpSortShuffleBasedTests, name_suffix, Sort)
         }
 
         // Writing to device memory
-        T* d_output;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(typename decltype(output)::value_type))
-        );
-
-        HIP_CHECK(
-            hipMemcpy(
-                d_output, output.data(),
-                output.size() * sizeof(typename decltype(output)::value_type),
-                hipMemcpyHostToDevice
-            )
-        );
+        test_utils::device_ptr<T> d_output(output);
 
         // Launching kernel
         hipLaunchKernelGGL(
@@ -99,23 +88,15 @@ typed_test_def(RocprimWarpSortShuffleBasedTests, name_suffix, Sort)
             dim3(block_size),
             0,
             0,
-            d_output);
+            d_output.get());
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Read from device memory
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(typename decltype(output)::value_type),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output = d_output.load();
 
         test_utils::assert_eq(output, expected);
-
-        HIP_CHECK(hipFree(d_output));
     }
 
 }
@@ -185,59 +166,28 @@ typed_test_def(RocprimWarpSortShuffleBasedTests, name_suffix, SortKeyInt)
         }
 
         // Writing to device memory
-        T* d_output_key;
-        T* d_output_value;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(&d_output_key, output_key.size() * sizeof(typename decltype(output_key)::value_type))
-        );
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(&d_output_value, output_value.size() * sizeof(typename decltype(output_value)::value_type))
-        );
-
-        HIP_CHECK(
-            hipMemcpy(
-                d_output_key, output_key.data(),
-                output_key.size() * sizeof(typename decltype(output_key)::value_type),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        HIP_CHECK(
-            hipMemcpy(
-                d_output_value, output_value.data(),
-                output_value.size() * sizeof(typename decltype(output_value)::value_type),
-                hipMemcpyHostToDevice
-            )
-        );
+        test_utils::device_ptr<T> d_output_key(output_key);
+        test_utils::device_ptr<T> d_output_value(output_value);
 
         // Launching kernel
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(test_hip_sort_key_value_kernel<
-                items_per_thread, block_size, logical_warp_size, T, T
-            >),
-            dim3(grid_size), dim3(block_size), 0, 0,
-            d_output_key, d_output_value
-        );
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(test_hip_sort_key_value_kernel<items_per_thread,
+                                                                          block_size,
+                                                                          logical_warp_size,
+                                                                          T,
+                                                                          T>),
+                           dim3(grid_size),
+                           dim3(block_size),
+                           0,
+                           0,
+                           d_output_key.get(),
+                           d_output_value.get());
 
         HIP_CHECK(hipGetLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Read from device memory
-        HIP_CHECK(
-            hipMemcpy(
-                output_key.data(), d_output_key,
-                output_key.size() * sizeof(typename decltype(output_key)::value_type),
-                hipMemcpyDeviceToHost
-            )
-        );
-
-        HIP_CHECK(
-            hipMemcpy(
-                output_value.data(), d_output_value,
-                output_value.size() * sizeof(typename decltype(output_value)::value_type),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output_key   = d_output_key.load();
+        output_value = d_output_value.load();
 
         std::vector<T> expected_key(expected.size());
         std::vector<T> expected_value(expected.size());
@@ -262,9 +212,5 @@ typed_test_def(RocprimWarpSortShuffleBasedTests, name_suffix, SortKeyInt)
 
         test_utils::assert_eq(output_key, expected_key);
         test_utils::assert_eq(output_value, expected_value);
-
-        HIP_CHECK(hipFree(d_output_key));
-        HIP_CHECK(hipFree(d_output_value));
     }
-
 }

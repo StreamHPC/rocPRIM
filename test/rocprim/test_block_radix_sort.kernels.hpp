@@ -216,16 +216,10 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 0>::type
         }
 
         // Preparing device
-        key_type* device_keys_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_keys_output, size * sizeof(key_type)));
-
-        HIP_CHECK(hipMemcpy(device_keys_output,
-                            keys_output.get(),
-                            size * sizeof(keys_output[0]),
-                            hipMemcpyHostToDevice));
+        test_utils::device_ptr<key_type> device_keys_output(keys_output.get(), size);
 
         sort_key_kernel<block_size, items_per_thread, radix_bits_per_pass, key_type>
-            <<<dim3(grid_size), dim3(block_size), 0, 0>>>(device_keys_output,
+            <<<dim3(grid_size), dim3(block_size), 0, 0>>>(device_keys_output.get(),
                                                           to_striped,
                                                           descending,
                                                           start_bit,
@@ -234,7 +228,7 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 0>::type
 
         // Getting results to host
         HIP_CHECK(hipMemcpy(keys_output.get(),
-                            device_keys_output,
+                            device_keys_output.get(),
                             size * sizeof(keys_output[0]),
                             hipMemcpyDeviceToHost));
 
@@ -243,8 +237,6 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 0>::type
                                                       keys_output.get() + size,
                                                       expected.begin(),
                                                       expected.end()));
-
-        HIP_CHECK(hipFree(device_keys_output));
     }
 
 }
@@ -332,23 +324,8 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 1>::type
             values_expected[i] = expected[i].second;
         }
 
-        key_type* device_keys_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_keys_output, size * sizeof(key_type)));
-        value_type* device_values_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_values_output, values_output.size() * sizeof(value_type)));
-
-        HIP_CHECK(hipMemcpy(device_keys_output,
-                            keys_output.get(),
-                            size * sizeof(keys_output[0]),
-                            hipMemcpyHostToDevice));
-
-        HIP_CHECK(
-            hipMemcpy(
-                device_values_output, values_output.data(),
-                values_output.size() * sizeof(typename decltype(values_output)::value_type),
-                hipMemcpyHostToDevice
-            )
-        );
+        test_utils::device_ptr<key_type>   device_keys_output(keys_output.get(), size);
+        test_utils::device_ptr<value_type> device_values_output(values_output);
 
         // Running kernel
         sort_key_value_kernel<block_size,
@@ -356,8 +333,8 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 1>::type
                               radix_bits_per_pass,
                               key_type,
                               value_type>
-            <<<dim3(grid_size), dim3(block_size), 0, 0>>>(device_keys_output,
-                                                          device_values_output,
+            <<<dim3(grid_size), dim3(block_size), 0, 0>>>(device_keys_output.get(),
+                                                          device_values_output.get(),
                                                           to_striped,
                                                           descending,
                                                           start_bit,
@@ -366,26 +343,16 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 1>::type
 
         // Getting results to host
         HIP_CHECK(hipMemcpy(keys_output.get(),
-                            device_keys_output,
+                            device_keys_output.get(),
                             size * sizeof(keys_output[0]),
                             hipMemcpyDeviceToHost));
-
-        HIP_CHECK(
-            hipMemcpy(
-                values_output.data(), device_values_output,
-                values_output.size() * sizeof(typename decltype(values_output)::value_type),
-                hipMemcpyDeviceToHost
-            )
-        );
+        values_output = device_values_output.load();
 
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output.get(),
                                                       keys_output.get() + size,
                                                       keys_expected.begin(),
                                                       keys_expected.end()));
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
-
-        HIP_CHECK(hipFree(device_keys_output));
-        HIP_CHECK(hipFree(device_values_output));
     }
 
 }
