@@ -267,49 +267,26 @@ void test_block_reduce_input_arrays()
         }
 
         // Preparing device
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(T)));
-        T* device_output_reductions;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output_reductions, output_reductions.size() * sizeof(T)));
-
-        HIP_CHECK(
-            hipMemcpy(
-                device_output, output.data(),
-                output.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        HIP_CHECK(
-            hipMemcpy(
-                device_output_reductions, output_reductions.data(),
-                output_reductions.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
+        test_utils::device_ptr<T> device_output(output);
+        test_utils::device_ptr<T> device_output_reductions(output_reductions);
 
         // Running kernel
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(reduce_array_kernel<block_size, items_per_thread, algorithm, T, binary_op_type>),
-            dim3(grid_size), dim3(block_size), 0, 0,
-            device_output, device_output_reductions
-        );
+            HIP_KERNEL_NAME(
+                reduce_array_kernel<block_size, items_per_thread, algorithm, T, binary_op_type>),
+            dim3(grid_size),
+            dim3(block_size),
+            0,
+            0,
+            device_output.get(),
+            device_output_reductions.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        HIP_CHECK(
-            hipMemcpy(
-                output_reductions.data(), device_output_reductions,
-                output_reductions.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output_reductions = device_output_reductions.load();
 
         // Verifying results
         test_utils::assert_eq(output_reductions, expected_reductions);
-
-        HIP_CHECK(hipFree(device_output));
-        HIP_CHECK(hipFree(device_output_reductions));
     }
 
 }

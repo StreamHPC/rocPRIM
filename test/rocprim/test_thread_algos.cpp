@@ -98,38 +98,17 @@ TYPED_TEST(RocprimThreadOperationTests, Load)
         std::vector<T> expected = input;
 
         // Preparing device
-        T* device_input;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_input),
-                                                     input.size() * sizeof(T)));
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output),
-                                                     output.size() * sizeof(T)));
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
 
-        HIP_CHECK(
-            hipMemcpy(
-                device_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        thread_load_kernel<T><<<grid_size, block_size>>>(device_input, device_output);
+        thread_load_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), device_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output = device_output.load();
 
         // Verifying results
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
-
-        HIP_CHECK(hipFree(device_input));
-        HIP_CHECK(hipFree(device_output));
     }
 }
 
@@ -163,38 +142,17 @@ TYPED_TEST(RocprimThreadOperationTests, Store)
         std::vector<T> expected = input;
 
         // Preparing device
-        T* device_input;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_input),
-                                                     input.size() * sizeof(T)));
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output),
-                                                     output.size() * sizeof(T)));
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
 
-        HIP_CHECK(
-            hipMemcpy(
-                device_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        thread_store_kernel<T><<<grid_size, block_size>>>(device_input, device_output);
+        thread_store_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), device_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output = device_output.load();
 
         // Verifying results
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
-
-        HIP_CHECK(hipFree(device_input));
-        HIP_CHECK(hipFree(device_output));
     }
 }
 
@@ -253,41 +211,21 @@ TYPED_TEST(RocprimThreadOperationTests, Reduction)
         //std::vector<T> expected = input;
 
         // Preparing device
-        T* device_input;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_input),
-                                                     input.size() * sizeof(T)));
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output),
-                                                     output.size() * sizeof(T)));
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
 
-        HIP_CHECK(
-            hipMemcpy(
-                device_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        thread_reduce_kernel<T, length><<<grid_size, block_size>>>(device_input, device_output);
+        thread_reduce_kernel<T, length>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), device_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output = device_output.load();
 
         // Verifying results
         for(size_t i = 0; i < output.size(); i+=length)
         {
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output[i], expected[i]));
         }
-
-        HIP_CHECK(hipFree(device_input));
-        HIP_CHECK(hipFree(device_output));
     }
 }
 
@@ -339,38 +277,18 @@ TYPED_TEST(RocprimThreadOperationTests, Scan)
         }
 
         // Preparing device
-        T* device_input;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_input),
-                                                     input.size() * sizeof(T)));
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(reinterpret_cast<void**>(&device_output),
-                                                     output.size() * sizeof(T)));
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
 
-        HIP_CHECK(
-            hipMemcpy(
-                device_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
-
-        thread_scan_kernel<T, length><<<grid_size, block_size>>>(device_input, device_output);
+        thread_scan_kernel<T, length>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), device_output,
-                output.size() * sizeof(T),
-                hipMemcpyDeviceToHost
-            )
-        );
+        output = device_output.load();
 
         // Verifying results
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
-
-        HIP_CHECK(hipFree(device_input));
-        HIP_CHECK(hipFree(device_output));
     }
 }
 

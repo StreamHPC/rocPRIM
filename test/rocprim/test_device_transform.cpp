@@ -28,6 +28,7 @@
 #include <rocprim/iterator/discard_iterator.hpp>
 
 // required test headers
+#include "test_utils_device_ptr.hpp"
 #include "test_utils_types.hpp"
 
 // Params for tests
@@ -141,18 +142,8 @@ TYPED_TEST(RocprimDeviceTransformTests, Transform)
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
             std::vector<U> output(input.size(), (U)0);
 
-            T * d_input;
-            U * d_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_input, input.data(),
-                    input.size() * sizeof(T),
-                    hipMemcpyHostToDevice
-                )
-            );
-            HIP_CHECK(hipDeviceSynchronize());
+            test_utils::device_ptr<T> d_input(input);
+            test_utils::device_ptr<U> d_output(output.size());
 
             // Calculate expected results on host
             std::vector<U> expected(input.size());
@@ -165,15 +156,14 @@ TYPED_TEST(RocprimDeviceTransformTests, Transform)
             }
 
             // Run
-            HIP_CHECK(
-                rocprim::transform<Config>(
-                    d_input,
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                    input.size(), transform<U>(), stream, TestFixture::debug_synchronous
-                )
-            );
+            HIP_CHECK(rocprim::transform<Config>(
+                d_input.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                input.size(),
+                transform<U>(),
+                stream,
+                TestFixture::debug_synchronous));
 
-            
             if(TestFixture::use_graphs)
             {
                 gHelper.createAndLaunchGraph(stream, true, false);
@@ -183,21 +173,11 @@ TYPED_TEST(RocprimDeviceTransformTests, Transform)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Copy output to host
-            HIP_CHECK(
-                hipMemcpy(
-                    output.data(), d_output,
-                    output.size() * sizeof(U),
-                    hipMemcpyDeviceToHost
-                )
-            );
-            HIP_CHECK(hipDeviceSynchronize());
+            output = d_output.load();
 
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, test_utils::precision<U>));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_output));
 
             if (TestFixture::use_graphs)
             {
@@ -252,27 +232,9 @@ TYPED_TEST(RocprimDeviceTransformTests, BinaryTransform)
             std::vector<T2> input2 = test_utils::get_random_data<T2>(size, 1, 100, seed_value);
             std::vector<U> output(input1.size(), (U)0);
 
-            T1 * d_input1;
-            T2 * d_input2;
-            U * d_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input1, input1.size() * sizeof(T1)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input2, input2.size() * sizeof(T2)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_input1, input1.data(),
-                    input1.size() * sizeof(T1),
-                    hipMemcpyHostToDevice
-                )
-            );
-            HIP_CHECK(
-                hipMemcpy(
-                    d_input2, input2.data(),
-                    input2.size() * sizeof(T2),
-                    hipMemcpyHostToDevice
-                )
-            );
-            HIP_CHECK(hipDeviceSynchronize());
+            test_utils::device_ptr<T1> d_input1(input1);
+            test_utils::device_ptr<T2> d_input2(input2);
+            test_utils::device_ptr<U>  d_output(output.size());
 
             // Calculate expected results on host
             std::vector<U> expected(input1.size());
@@ -288,15 +250,15 @@ TYPED_TEST(RocprimDeviceTransformTests, BinaryTransform)
             }
 
             // Run
-            HIP_CHECK(
-                rocprim::transform<Config>(
-                    d_input1, d_input2,
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                    input1.size(), binary_transform<T1, T2, U>(), stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(rocprim::transform<Config>(
+                d_input1.get(),
+                d_input2.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                input1.size(),
+                binary_transform<T1, T2, U>(),
+                stream,
+                debug_synchronous));
 
-            
             if(TestFixture::use_graphs)
             {
                 gHelper.createAndLaunchGraph(stream, true, false);
@@ -306,22 +268,11 @@ TYPED_TEST(RocprimDeviceTransformTests, BinaryTransform)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Copy output to host
-            HIP_CHECK(
-                hipMemcpy(
-                    output.data(), d_output,
-                    output.size() * sizeof(U),
-                    hipMemcpyDeviceToHost
-                )
-            );
-            HIP_CHECK(hipDeviceSynchronize());
+            output = d_output.load();
 
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, test_utils::precision<U>));
-
-            HIP_CHECK(hipFree(d_input1));
-            HIP_CHECK(hipFree(d_input2));
-            HIP_CHECK(hipFree(d_output));
 
             if (TestFixture::use_graphs)
             {

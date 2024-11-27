@@ -29,6 +29,7 @@
 #include <rocprim/iterator/discard_iterator.hpp>
 
 // required test headers
+#include "test_utils_device_ptr.hpp"
 #include "test_utils_types.hpp"
 
 // Params for tests
@@ -117,18 +118,10 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
             std::vector<F> flags = test_utils::get_random_data01<F>(size, 0.25, seed_value);
 
-            T * d_input;
-            F * d_flags;
-            U * d_output;
-            unsigned int * d_selected_count_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_flags, flags.size() * sizeof(F)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, input.size() * sizeof(U)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-            HIP_CHECK(
-                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
-            HIP_CHECK(
-                hipMemcpy(d_flags, flags.data(), flags.size() * sizeof(F), hipMemcpyHostToDevice));
+            test_utils::device_ptr<T>            d_input(input);
+            test_utils::device_ptr<F>            d_flags(flags);
+            test_utils::device_ptr<U>            d_output(input.size());
+            test_utils::device_ptr<unsigned int> d_selected_count_output(1);
 
             // Calculate expected_selected and expected_rejected results on host
             std::vector<U> expected_selected;
@@ -155,10 +148,10 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
             HIP_CHECK(rocprim::partition<config>(
                 nullptr,
                 temp_storage_size_bytes,
-                d_input,
-                d_flags,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                d_flags.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 stream,
                 debug_synchronous));
@@ -167,8 +160,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
             ASSERT_GT(temp_storage_size_bytes, 0);
 
             // allocate temporary storage
-            void* d_temp_storage = nullptr;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
             test_utils::GraphHelper gHelper;;
             if(TestFixture::use_graphs)
@@ -178,12 +170,12 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
 
             // Run
             HIP_CHECK(rocprim::partition<config>(
-                d_temp_storage,
+                d_temp_storage.get(),
                 temp_storage_size_bytes,
-                d_input,
-                d_flags,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                d_flags.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 stream,
                 debug_synchronous));
@@ -194,19 +186,11 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
             }
 
             // Check if number of selected value is as expected_selected
-            unsigned int selected_count_output = 0;
-            HIP_CHECK(hipMemcpy(&selected_count_output,
-                                d_selected_count_output,
-                                sizeof(unsigned int),
-                                hipMemcpyDeviceToHost));
+            unsigned int selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected_selected.size());
 
             // Check if output values are as expected_selected
-            std::vector<U> output(input.size());
-            HIP_CHECK(hipMemcpy(output.data(),
-                                d_output,
-                                output.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
+            auto output = d_output.load();
 
             std::vector<U> output_rejected;
             for(size_t i = 0; i < expected_rejected.size(); i++)
@@ -216,12 +200,6 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
             }
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_flags));
-            HIP_CHECK(hipFree(d_output));
-            HIP_CHECK(hipFree(d_selected_count_output));
-            HIP_CHECK(hipFree(d_temp_storage));
 
             if(TestFixture::use_graphs)
             {
@@ -270,18 +248,12 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
 
     auto select_op = select_op_t<T>{};
 
-    U * d_output;
-    unsigned int * d_selected_count_output;
-    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, sizeof(U)));
-    HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
     unsigned int selected_count_output = 123;
-    HIP_CHECK(hipMemcpy(d_selected_count_output,
-                        &selected_count_output,
-                        sizeof(unsigned int),
-                        hipMemcpyHostToDevice));
+    test_utils::device_ptr<U>            d_output(1);
+    test_utils::device_ptr<unsigned int> d_selected_count_output(selected_count_output);
 
     test_utils::out_of_bounds_flag out_of_bounds;
-    test_utils::bounds_checking_iterator<U> d_checking_output(d_output,
+    test_utils::bounds_checking_iterator<U> d_checking_output(d_output.get(),
                                                               out_of_bounds.device_pointer(),
                                                               0);
 
@@ -292,15 +264,14 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
                                          temp_storage_size_bytes,
                                          rocprim::make_constant_iterator<T>(T(345)),
                                          d_checking_output,
-                                         d_selected_count_output,
+                                         d_selected_count_output.get(),
                                          0,
                                          select_op,
                                          stream,
                                          debug_synchronous));
 
     // allocate temporary storage
-    void* d_temp_storage = nullptr;
-    HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+    test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
     test_utils::GraphHelper gHelper;;
     if(TestFixture::use_graphs)
@@ -309,17 +280,16 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
     }
 
     // Run
-    HIP_CHECK(rocprim::partition<config>(d_temp_storage,
+    HIP_CHECK(rocprim::partition<config>(d_temp_storage.get(),
                                          temp_storage_size_bytes,
                                          rocprim::make_constant_iterator<T>(T(345)),
                                          d_checking_output,
-                                         d_selected_count_output,
+                                         d_selected_count_output.get(),
                                          0,
                                          select_op,
                                          stream,
                                          debug_synchronous));
 
-    
     if(TestFixture::use_graphs)
     {
         gHelper.createAndLaunchGraph(stream, true, false);
@@ -329,18 +299,8 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateEmptyInput)
     ASSERT_FALSE(out_of_bounds.get());
 
     // Check if number of selected value is 0
-    HIP_CHECK(
-        hipMemcpy(
-            &selected_count_output, d_selected_count_output,
-            sizeof(unsigned int),
-            hipMemcpyDeviceToHost
-        )
-    );
+    selected_count_output = d_selected_count_output.load()[0];
     ASSERT_EQ(selected_count_output, 0);
-
-    HIP_CHECK(hipFree(d_output));
-    HIP_CHECK(hipFree(d_selected_count_output));
-    HIP_CHECK(hipFree(d_temp_storage));
 
     if (TestFixture::use_graphs)
     {
@@ -382,14 +342,9 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             // Generate data
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
 
-            T * d_input;
-            U * d_output;
-            unsigned int * d_selected_count_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, input.size() * sizeof(U)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-            HIP_CHECK(
-                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
+            test_utils::device_ptr<T>            d_input(input);
+            test_utils::device_ptr<U>            d_output(input.size());
+            test_utils::device_ptr<unsigned int> d_selected_count_output(1);
 
             // Calculate expected_selected and expected_rejected results on host
             std::vector<U> expected_selected;
@@ -415,9 +370,9 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             HIP_CHECK(rocprim::partition<config>(
                 nullptr,
                 temp_storage_size_bytes,
-                d_input,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op,
                 stream,
@@ -427,8 +382,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             ASSERT_GT(temp_storage_size_bytes, 0);
 
             // allocate temporary storage
-            void* d_temp_storage = nullptr;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
             test_utils::GraphHelper gHelper;;
             if(TestFixture::use_graphs)
@@ -438,17 +392,16 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
 
             // Run
             HIP_CHECK(rocprim::partition<config>(
-                d_temp_storage,
+                d_temp_storage.get(),
                 temp_storage_size_bytes,
-                d_input,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op,
                 stream,
                 debug_synchronous));
 
-            
             if(TestFixture::use_graphs)
             {
                 gHelper.createAndLaunchGraph(stream, true, false);
@@ -457,19 +410,11 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected_selected
-            unsigned int selected_count_output = 0;
-            HIP_CHECK(hipMemcpy(&selected_count_output,
-                                d_selected_count_output,
-                                sizeof(unsigned int),
-                                hipMemcpyDeviceToHost));
+            unsigned int selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected_selected.size());
             
             // Check if output values are as expected_selected
-            std::vector<U> output(input.size());
-            HIP_CHECK(hipMemcpy(output.data(),
-                                d_output,
-                                output.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
+            const auto output = d_output.load();
 
             std::vector<U> output_rejected;
             for(size_t i = 0; i < expected_rejected.size(); i++)
@@ -479,11 +424,6 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             }
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_output));
-            HIP_CHECK(hipFree(d_selected_count_output));
-            HIP_CHECK(hipFree(d_temp_storage));
 
             if(TestFixture::use_graphs)
             {
@@ -532,19 +472,10 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
             // Generate data
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
 
-            T* d_input;
-            U* d_selected;
-            U* d_rejected;
-
-            unsigned int* d_selected_count_output;
-
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected, input.size() * sizeof(U)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_rejected, input.size() * sizeof(U)));
-            HIP_CHECK(
-                test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-            HIP_CHECK(
-                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
+            test_utils::device_ptr<T>            d_input(input);
+            test_utils::device_ptr<U>            d_selected(input.size());
+            test_utils::device_ptr<U>            d_rejected(input.size());
+            test_utils::device_ptr<unsigned int> d_selected_count_output(1);
 
             // Calculate expected_selected and expected_rejected results on host
             std::vector<U> expected_selected;
@@ -569,10 +500,10 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
             HIP_CHECK(rocprim::partition_two_way<config>(
                 nullptr,
                 temp_storage_size_bytes,
-                d_input,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_selected),
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_rejected),
-                d_selected_count_output,
+                d_input.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_selected.get()),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_rejected.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op,
                 stream,
@@ -582,8 +513,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
             ASSERT_GT(temp_storage_size_bytes, 0);
 
             // allocate temporary storage
-            void* d_temp_storage = nullptr;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
             test_utils::GraphHelper gHelper;;
             if(TestFixture::use_graphs)
@@ -593,18 +523,17 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
 
             // Run
             HIP_CHECK(rocprim::partition_two_way<config>(
-                d_temp_storage,
+                d_temp_storage.get(),
                 temp_storage_size_bytes,
-                d_input,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_selected),
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_rejected),
-                d_selected_count_output,
+                d_input.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_selected.get()),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_rejected.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op,
                 stream,
                 debug_synchronous));
 
-            
             if(TestFixture::use_graphs)
             {
                 gHelper.createAndLaunchGraph(stream, true, false);
@@ -613,35 +542,17 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
-            unsigned int selected_count_output = 0;
-            HIP_CHECK(hipMemcpy(&selected_count_output,
-                                d_selected_count_output,
-                                sizeof(unsigned int),
-                                hipMemcpyDeviceToHost));
+            unsigned int selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected_selected.size());
 
             // Check if output values are as expected
-            std::vector<U> selected(input.size());
-            std::vector<U> rejected(input.size());
-            HIP_CHECK(hipMemcpy(selected.data(),
-                                d_selected,
-                                selected.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
-            HIP_CHECK(hipMemcpy(rejected.data(),
-                                d_rejected,
-                                rejected.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
+            const auto selected = d_selected.load();
+            const auto rejected = d_rejected.load();
 
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_eq(selected, expected_selected, expected_selected.size()));
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_eq(rejected, expected_rejected, expected_rejected.size()));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_selected));
-            HIP_CHECK(hipFree(d_rejected));
-            HIP_CHECK(hipFree(d_selected_count_output));
-            HIP_CHECK(hipFree(d_temp_storage));
 
             if(TestFixture::use_graphs)
             {
@@ -713,25 +624,11 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 // Output
                 auto selected_counts = std::array<unsigned int, 2>{};
 
-                T* d_input                      = nullptr;
-                U* d_first_output               = nullptr;
-                U* d_second_output              = nullptr;
-                U* d_unselected_output          = nullptr;
-                unsigned int* d_selected_counts = nullptr;
-
-                HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(T)));
-                HIP_CHECK(hipMalloc(&d_first_output, input.size() * sizeof(U)));
-                HIP_CHECK(hipMalloc(&d_second_output, input.size() * sizeof(U)));
-                HIP_CHECK(hipMalloc(&d_unselected_output, input.size() * sizeof(U)));
-                HIP_CHECK(hipMalloc(&d_selected_counts, sizeof(selected_counts)));
-                HIP_CHECK(
-                    hipMemcpy(
-                        d_input, input.data(),
-                        input.size() * sizeof(T),
-                        hipMemcpyHostToDevice
-                    )
-                );
-
+                test_utils::device_ptr<T>            d_input(input);
+                test_utils::device_ptr<U>            d_first_output(input.size());
+                test_utils::device_ptr<U>            d_second_output(input.size());
+                test_utils::device_ptr<U>            d_unselected_output(input.size());
+                test_utils::device_ptr<unsigned int> d_selected_counts(2);
 
                 const auto first_op = LessOp<T>{std::get<0>(limits)};
                 const auto second_op = LessOp<T>{std::get<1>(limits)};
@@ -760,12 +657,14 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 HIP_CHECK(rocprim::partition_three_way<config>(
                     nullptr,
                     temp_storage_size_bytes,
-                    d_input,
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_first_output),
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_second_output),
+                    d_input.get(),
                     test_utils::wrap_in_identity_iterator<use_identity_iterator>(
-                        d_unselected_output),
-                    d_selected_counts,
+                        d_first_output.get()),
+                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(
+                        d_second_output.get()),
+                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(
+                        d_unselected_output.get()),
+                    d_selected_counts.get(),
                     input.size(),
                     first_op,
                     second_op,
@@ -776,8 +675,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 ASSERT_GT(temp_storage_size_bytes, 0);
 
                 // allocate temporary storage
-                void* d_temp_storage = nullptr;
-                HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size_bytes));
+                test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
                 test_utils::GraphHelper gHelper;;
                 if(TestFixture::use_graphs)
@@ -787,21 +685,22 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
 
                 // Run
                 HIP_CHECK(rocprim::partition_three_way<config>(
-                    d_temp_storage,
+                    d_temp_storage.get(),
                     temp_storage_size_bytes,
-                    d_input,
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_first_output),
-                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_second_output),
+                    d_input.get(),
                     test_utils::wrap_in_identity_iterator<use_identity_iterator>(
-                        d_unselected_output),
-                    d_selected_counts,
+                        d_first_output.get()),
+                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(
+                        d_second_output.get()),
+                    test_utils::wrap_in_identity_iterator<use_identity_iterator>(
+                        d_unselected_output.get()),
+                    d_selected_counts.get(),
                     input.size(),
                     first_op,
                     second_op,
                     stream,
                     debug_synchronous));
 
-                
                 if(TestFixture::use_graphs)
                 {
                     gHelper.createAndLaunchGraph(stream);
@@ -810,51 +709,32 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected_selected
-                HIP_CHECK(
-                    hipMemcpy(
-                        selected_counts.data(), d_selected_counts,
-                        sizeof(selected_counts),
-                        hipMemcpyDeviceToHost
-                    )
-                );
+                HIP_CHECK(hipMemcpy(selected_counts.data(),
+                                    d_selected_counts.get(),
+                                    sizeof(selected_counts),
+                                    hipMemcpyDeviceToHost));
                 ASSERT_EQ(selected_counts, expected_counts);
 
                 // Check if output values are as expected_selected
                 const auto output = [&]{
                     auto result = std::vector<U>(input.size());
-                    HIP_CHECK(
-                        hipMemcpy(
-                            result.data(), d_first_output,
-                            expected_counts[0] * sizeof(result[0]),
-                            hipMemcpyDeviceToHost
-                        )
-                    );
-                    HIP_CHECK(
-                        hipMemcpy(
-                            result.data() + expected_counts[0], d_second_output,
-                            expected_counts[1] * sizeof(result[0]),
-                            hipMemcpyDeviceToHost
-                        )
-                    );
-                    HIP_CHECK(
-                        hipMemcpy(
-                            result.data() + expected_counts[0] + expected_counts[1],
-                            d_unselected_output,
-                            (input.size() - expected_counts[0] - expected_counts[1]) * sizeof(result[0]),
-                            hipMemcpyDeviceToHost
-                        )
-                    );
+                    HIP_CHECK(hipMemcpy(result.data(),
+                                        d_first_output.get(),
+                                        expected_counts[0] * sizeof(result[0]),
+                                        hipMemcpyDeviceToHost));
+                    HIP_CHECK(hipMemcpy(result.data() + expected_counts[0],
+                                        d_second_output.get(),
+                                        expected_counts[1] * sizeof(result[0]),
+                                        hipMemcpyDeviceToHost));
+                    HIP_CHECK(hipMemcpy(result.data() + expected_counts[0] + expected_counts[1],
+                                        d_unselected_output.get(),
+                                        (input.size() - expected_counts[0] - expected_counts[1])
+                                            * sizeof(result[0]),
+                                        hipMemcpyDeviceToHost));
                     return result;
                 }();
 
                 ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
-
-                HIP_CHECK(hipFree(d_input));
-                HIP_CHECK(hipFree(d_first_output));
-                HIP_CHECK(hipFree(d_second_output));
-                HIP_CHECK(hipFree(d_unselected_output));
-                HIP_CHECK(hipFree(d_selected_counts));
-                HIP_CHECK(hipFree(d_temp_storage));
 
                 if(TestFixture::use_graphs)
                 {
@@ -1152,9 +1032,8 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
         size_t* d_count_output{};
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, sizeof(*d_count_output)));
 
-        void*  d_temporary_storage{};
         size_t temporary_storage_size{};
-        HIP_CHECK(rocprim::partition(d_temporary_storage,
+        HIP_CHECK(rocprim::partition(nullptr,
                                      temporary_storage_size,
                                      input_iterator,
                                      output_checker_it,
@@ -1163,9 +1042,8 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
                                      predicate,
                                      stream,
                                      debug_synchronous));
-
         ASSERT_NE(0, temporary_storage_size);
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_size));
+        test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
         test_utils::GraphHelper gHelper;;
         if(use_graphs)
@@ -1173,7 +1051,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
             gHelper.startStreamCapture(stream);
         }
 
-        HIP_CHECK(rocprim::partition(d_temporary_storage,
+        HIP_CHECK(rocprim::partition(d_temporary_storage.get(),
                                      temporary_storage_size,
                                      input_iterator,
                                      output_checker_it,
@@ -1183,7 +1061,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
                                      stream,
                                      debug_synchronous));
 
-        
         if(use_graphs)
         {
             gHelper.createAndLaunchGraph(stream);
@@ -1208,7 +1085,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
 
         ASSERT_EQ(incorrect_flag, 0);
 
-        HIP_CHECK(hipFree(d_temporary_storage));
         HIP_CHECK(hipFree(d_count_output));
         HIP_CHECK(hipFree(d_incorrect_flag));
 
@@ -1272,9 +1148,8 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
         size_t* d_count_output{};
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, sizeof(*d_count_output)));
 
-        void*  d_temporary_storage{};
         size_t temporary_storage_size{};
-        HIP_CHECK(rocprim::partition_two_way(d_temporary_storage,
+        HIP_CHECK(rocprim::partition_two_way(nullptr,
                                              temporary_storage_size,
                                              input_iterator,
                                              select_checker_it,
@@ -1286,7 +1161,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
                                              debug_synchronous));
 
         ASSERT_NE(0, temporary_storage_size);
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_size));
+        test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
         test_utils::GraphHelper gHelper;;
         if(use_graphs)
@@ -1294,7 +1169,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
             gHelper.startStreamCapture(stream);
         }
 
-        HIP_CHECK(rocprim::partition_two_way(d_temporary_storage,
+        HIP_CHECK(rocprim::partition_two_way(d_temporary_storage.get(),
                                              temporary_storage_size,
                                              input_iterator,
                                              select_checker_it,
@@ -1305,7 +1180,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
                                              stream,
                                              debug_synchronous));
 
-        
         if(use_graphs)
         {
             gHelper.createAndLaunchGraph(stream);
@@ -1337,7 +1211,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
         ASSERT_EQ(incorrect_select_flag, 0);
         ASSERT_EQ(incorrect_reject_flag, 0);
 
-        HIP_CHECK(hipFree(d_temporary_storage));
         HIP_CHECK(hipFree(d_count_output));
         HIP_CHECK(hipFree(d_incorrect_select_flag));
         HIP_CHECK(hipFree(d_incorrect_reject_flag));
@@ -1399,9 +1272,8 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
         size_t* d_count_output{};
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, 2 * sizeof(*d_count_output)));
 
-        void*  d_temporary_storage{};
         size_t temporary_storage_size{};
-        HIP_CHECK(rocprim::partition_three_way(d_temporary_storage,
+        HIP_CHECK(rocprim::partition_three_way(nullptr,
                                                temporary_storage_size,
                                                input_iterator,
                                                output_checker_a,
@@ -1413,17 +1285,16 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
                                                predicate_b,
                                                stream,
                                                debug_synchronous));
-
         ASSERT_NE(0, temporary_storage_size);
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_size));
+        test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
-        test_utils::GraphHelper gHelper;;
+        test_utils::GraphHelper gHelper;
         if(use_graphs)
         {
             gHelper.startStreamCapture(stream);
         }
 
-        HIP_CHECK(rocprim::partition_three_way(d_temporary_storage,
+        HIP_CHECK(rocprim::partition_three_way(d_temporary_storage.get(),
                                                temporary_storage_size,
                                                input_iterator,
                                                output_checker_a,
@@ -1436,7 +1307,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
                                                stream,
                                                debug_synchronous));
 
-        
         if(use_graphs)
         {
             gHelper.createAndLaunchGraph(stream);
@@ -1465,7 +1335,6 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
 
         ASSERT_EQ(incorrect_flag, 0);
 
-        HIP_CHECK(hipFree(d_temporary_storage));
         HIP_CHECK(hipFree(d_count_output));
         HIP_CHECK(hipFree(d_incorrect_flag));
 
@@ -1553,14 +1422,9 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
             for (size_t i = 0; i < size; i++)
                 memcpy(input[i].data, input_data.data() + i * test_obj_size, test_obj_size);
 
-            T * d_input;
-            U * d_output;
-            unsigned int * d_selected_count_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, input.size() * sizeof(U)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-            HIP_CHECK(
-                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
+            test_utils::device_ptr<T>            d_input(input);
+            test_utils::device_ptr<U>            d_output(input.size());
+            test_utils::device_ptr<unsigned int> d_selected_count_output(1);
 
             // Calculate expected_selected and expected_rejected results on host
             std::vector<U> expected_selected;
@@ -1583,52 +1447,41 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
             // temp storage
             size_t temp_storage_size_bytes;
             // Get size of d_temp_storage
-            HIP_CHECK(rocprim::partition(
-                nullptr,
-                temp_storage_size_bytes,
-                d_input,
-                d_output,
-                d_selected_count_output,
-                input.size(),
-                select_op,
-                stream,
-                debug_synchronous));
+            HIP_CHECK(rocprim::partition(nullptr,
+                                         temp_storage_size_bytes,
+                                         d_input.get(),
+                                         d_output.get(),
+                                         d_selected_count_output.get(),
+                                         input.size(),
+                                         select_op,
+                                         stream,
+                                         debug_synchronous));
 
             // temp_storage_size_bytes must be >0
             ASSERT_GT(temp_storage_size_bytes, 0);
 
             // allocate temporary storage
-            void* d_temp_storage = nullptr;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
             // Run
-            HIP_CHECK(rocprim::partition(
-                d_temp_storage,
-                temp_storage_size_bytes,
-                d_input,
-                d_output,
-                d_selected_count_output,
-                input.size(),
-                select_op,
-                stream,
-                debug_synchronous));
+            HIP_CHECK(rocprim::partition(d_temp_storage.get(),
+                                         temp_storage_size_bytes,
+                                         d_input.get(),
+                                         d_output.get(),
+                                         d_selected_count_output.get(),
+                                         input.size(),
+                                         select_op,
+                                         stream,
+                                         debug_synchronous));
 
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected_selected
-            unsigned int selected_count_output = 0;
-            HIP_CHECK(hipMemcpy(&selected_count_output,
-                                d_selected_count_output,
-                                sizeof(unsigned int),
-                                hipMemcpyDeviceToHost));
+            unsigned int selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected_selected.size());
 
             // Check if output values are as expected_selected
-            std::vector<U> output(input.size());
-            HIP_CHECK(hipMemcpy(output.data(),
-                                d_output,
-                                output.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
+            const auto output = d_output.load();
 
             std::vector<U> output_rejected;
             for(size_t i = 0; i < expected_rejected.size(); i++)
@@ -1637,12 +1490,9 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
                 output_rejected.push_back(output[j]);
             }
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_output));
-            HIP_CHECK(hipFree(d_selected_count_output));
-            HIP_CHECK(hipFree(d_temp_storage));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected,
+                                                          expected_rejected,
+                                                          expected_rejected.size()));
         }
     }
 }

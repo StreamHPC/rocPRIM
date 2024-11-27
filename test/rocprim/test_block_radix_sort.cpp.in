@@ -28,6 +28,7 @@
 #include <rocprim/block/block_store.hpp>
 
 // required test headers
+#include "test_utils_device_ptr.hpp"
 #include "test_utils_sort_comparator.hpp"
 #include "test_utils_types.hpp"
 
