@@ -2417,8 +2417,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 8) && (sizeof(key_type) > 4)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2451,8 +2451,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 8) && (sizeof(key_type) > 4)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2))>>
-    : reduce_by_key_config<256,
-                           10,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2468,8 +2468,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 8) && (sizeof(key_type) > 4)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2485,8 +2485,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 8) && (sizeof(key_type) > 4)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
-                           10,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2502,8 +2502,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 8) && (sizeof(key_type) > 4)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : reduce_by_key_config<256,
-                           10,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2536,8 +2536,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 4) && (sizeof(key_type) > 2)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           10,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2553,8 +2553,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 4) && (sizeof(key_type) > 2)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2570,8 +2570,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 4) && (sizeof(key_type) > 2)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           12,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2587,8 +2587,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 4) && (sizeof(key_type) > 2)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           10,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2604,7 +2604,7 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 4) && (sizeof(key_type) > 2)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
+    : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
@@ -2622,7 +2622,7 @@ struct default_reduce_by_key_config<
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
     : reduce_by_key_config<192,
-                           15,
+                           12,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2639,7 +2639,7 @@ struct default_reduce_by_key_config<
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 1))>>
     : reduce_by_key_config<192,
-                           15,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2655,12 +2655,12 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           14,
+    : reduce_by_key_config<128,
+                           9,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
-                           1>
+                           2>
 {};
 
 // Based on key_type = short, value_type = float
@@ -2672,7 +2672,7 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
+    : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
@@ -2689,8 +2689,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2706,7 +2706,7 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
+    : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
@@ -2723,7 +2723,7 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
+    : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
@@ -2740,8 +2740,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2757,8 +2757,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 2) && (sizeof(key_type) > 1)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 1))>>
-    : reduce_by_key_config<512,
-                           10,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2773,8 +2773,8 @@ struct default_reduce_by_key_config<
     value_type,
     std::enable_if_t<((sizeof(key_type) <= 1) && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2789,8 +2789,8 @@ struct default_reduce_by_key_config<
     value_type,
     std::enable_if_t<((sizeof(key_type) <= 1) && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           12,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2805,8 +2805,8 @@ struct default_reduce_by_key_config<
     value_type,
     std::enable_if_t<((sizeof(key_type) <= 1) && bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2822,8 +2822,8 @@ struct default_reduce_by_key_config<
     std::enable_if_t<((sizeof(key_type) <= 1)
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : reduce_by_key_config<256,
-                           15,
+    : reduce_by_key_config<192,
+                           7,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2840,7 +2840,7 @@ struct default_reduce_by_key_config<
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
     : reduce_by_key_config<192,
-                           15,
+                           12,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2857,7 +2857,7 @@ struct default_reduce_by_key_config<
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
     : reduce_by_key_config<192,
-                           15,
+                           13,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -2874,7 +2874,7 @@ struct default_reduce_by_key_config<
                       && !bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 1))>>
     : reduce_by_key_config<192,
-                           15,
+                           13,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,

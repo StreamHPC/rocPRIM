@@ -628,7 +628,7 @@ struct default_trivial_runs_config<
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2))>>
     : reduce_by_key_config<256,
-                           14,
+                           15,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -643,8 +643,8 @@ struct default_trivial_runs_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value)
                       && (sizeof(key_type) <= 2))>>
-    : reduce_by_key_config<512,
-                           10,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -676,7 +676,7 @@ struct default_trivial_runs_config<
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2))>>
     : reduce_by_key_config<256,
-                           14,
+                           15,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -691,8 +691,8 @@ struct default_trivial_runs_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1))>>
-    : reduce_by_key_config<512,
-                           10,
+    : reduce_by_key_config<192,
+                           14,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
                            block_scan_algorithm::using_warp_scan,
@@ -707,7 +707,7 @@ struct default_trivial_runs_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value)
                       && (sizeof(key_type) <= 1))>>
-    : reduce_by_key_config<192,
+    : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
                            block_load_method::block_load_transpose,
