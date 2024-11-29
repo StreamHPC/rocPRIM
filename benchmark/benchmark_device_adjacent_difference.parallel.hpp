@@ -35,10 +35,10 @@
 #include <rocprim/device/device_adjacent_difference.hpp>
 #include <rocprim/type_traits.hpp>
 
+#include <array>
+#include <cstddef>
 #include <string>
 #include <vector>
-
-#include <cstddef>
 
 template<typename Config>
 std::string config_name()
@@ -239,40 +239,37 @@ struct device_adjacent_difference_benchmark : public config_autotune_interface
 template<typename T, unsigned int BlockSize, bool Left, bool InPlace>
 struct device_adjacent_difference_benchmark_generator
 {
-    static constexpr unsigned int min_items_per_thread = 0;
+    // Device Adjacent difference uses block_load/store_transpose to coalesce memory transaction to global memory
+    // However it accesses shared memory with a stride of items per thread, which leads to reduced performance if power
+    // of two is used for small types. Experiments shown that primes are the best choice for performance.
+    static constexpr std::array<int, 12> primes{1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31};
+
     static constexpr unsigned int max_items_per_thread_arg
         = TUNING_SHARED_MEMORY_MAX / (BlockSize * sizeof(T) * 2 + sizeof(T));
 
     template<unsigned int IptValueIndex>
     struct create_ipt
     {
-        // Device Adjacent difference uses block_load/store_transpose to coalesc memory transaction to global memory
-        // However it accesses shared memory with a stride of items per thread, which leads to reduced performance if power
-        // of two is used for small types. Experiments shown that primes are the best choice for performance.
-        static constexpr int  primes[] = {1,  2,  3,  5,  7,  11, 13, 17, 19, 23, 29, 31, 37,
-                                          41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97};
-        static constexpr uint ipt_num  = primes[IptValueIndex];
-        using generated_config         = rocprim::adjacent_difference_config<BlockSize, ipt_num>;
-
-        void operator()(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
+        template<int ipt_num = primes[IptValueIndex]>
+        auto operator()(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
+            -> std::enable_if_t<(ipt_num < max_items_per_thread_arg)>
         {
-            if(ipt_num < max_items_per_thread_arg)
-            {
-                storage.emplace_back(
-                    std::make_unique<device_adjacent_difference_benchmark<T,
-                                                                          Left,
-                                                                          InPlace,
-                                                                          generated_config>>());
-            }
+            using generated_config = rocprim::adjacent_difference_config<BlockSize, ipt_num>;
+
+            storage.emplace_back(
+                std::make_unique<
+                    device_adjacent_difference_benchmark<T, Left, InPlace, generated_config>>());
         }
+
+        template<int ipt_num = primes[IptValueIndex]>
+        auto operator()(std::vector<std::unique_ptr<config_autotune_interface>>&)
+            -> std::enable_if_t<!(ipt_num < max_items_per_thread_arg)>
+        {}
     };
 
     static void create(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
     {
-        static constexpr unsigned int max_items_per_thread
-            = rocprim::Log2<max_items_per_thread_arg>::VALUE;
-        static_for_each<make_index_range<unsigned int, min_items_per_thread, max_items_per_thread>,
-                        create_ipt>(storage);
+        static_for_each<make_index_range<unsigned int, 0, primes.size() - 1>, create_ipt>(storage);
     }
 };
 

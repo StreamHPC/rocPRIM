@@ -87,7 +87,7 @@ struct device_merge_sort_block_merge_benchmark : public config_autotune_interfac
     {
         using key_type = Key;
 
-        // Calculate the number of elements 
+        // Calculate the number of elements
         size_t size = bytes / sizeof(key_type);
 
         // Generate data
@@ -223,7 +223,7 @@ struct device_merge_sort_block_merge_benchmark : public config_autotune_interfac
         using key_type   = Key;
         using value_type = Value;
 
-        // Calculate the number of elements 
+        // Calculate the number of elements
         size_t size = bytes / sizeof(key_type);
 
         // Generate data
@@ -332,7 +332,7 @@ struct device_merge_sort_block_merge_benchmark : public config_autotune_interfac
                                      stream));
             HIP_CHECK(hipMemcpyAsync(d_values,
                                      d_values_input,
-                                     size * sizeof(key_type),
+                                     size * sizeof(value_type),
                                      hipMemcpyDeviceToDevice,
                                      stream));
             HIP_CHECK(hipEventRecord(start, stream));
