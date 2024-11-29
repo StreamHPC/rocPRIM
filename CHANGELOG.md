@@ -17,6 +17,10 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * Added configuration autotuning to device run-length-encode for trivial runs (`rocprim::run_length_encode`) for improved performance on selected architectures.
 * Added a new type traits interface to enable users to provide additional type trait information to rocPRIM, facilitating better compatibility with custom types.
 
+### Resolved issues
+
+* Fixed the warp-level reduction `rocprim::warp_reduce.reduce` DPP implementation to avoid undefined intermediate values during the reduction.
+
 ## rocPRIM 3.4.0 for ROCm 6.4.0
 
 ### Added
