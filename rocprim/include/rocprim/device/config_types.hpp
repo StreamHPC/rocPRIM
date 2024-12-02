@@ -37,10 +37,9 @@
 BEGIN_ROCPRIM_NAMESPACE
 
 /// \brief Special type used to show that the given device-level operation
-/// will be executed with optimal configuration dependent on types of the function's parameters
-/// and the target device architecture specified by ROCPRIM_TARGET_ARCH.
-/// Algorithms supporting dynamic dispatch will ignore ROCPRIM_TARGET_ARCH and
-/// launch using optimal configuration based on the target architecture derived from the stream.
+/// will be executed with optimal configuration dependent on types of the function's parameters.
+/// With dynamic dispatch algorithms will launch using optimal configuration based on the target
+/// architecture derived from the stream.
 struct default_config
 {
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
