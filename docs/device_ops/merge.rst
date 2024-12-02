@@ -11,7 +11,7 @@
 Configuring the kernel
 =======================
 
-.. doxygentypedef:: rocprim::merge_config
+.. doxygenstruct:: rocprim::merge_config
 
 merge
 ==========

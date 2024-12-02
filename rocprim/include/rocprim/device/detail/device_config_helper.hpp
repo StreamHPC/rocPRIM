@@ -1253,7 +1253,7 @@ struct search_config_params
 
 } // namespace detail
 
-/// \brief Configuration of device-level find_end
+/// \brief Configuration of device-level search/find_end.
 ///
 /// \tparam BlockSize number of threads in a block.
 /// \tparam ItemsPerThread number of items processed by each thread.
