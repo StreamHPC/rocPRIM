@@ -308,9 +308,8 @@ different types and operations, by passing compile-time configuration structures
 parameter. The main "knobs" are usually the size of the block and the number of items processed by a
 single thread.
 
-rocPRIM has built-in default configurations for each of its primitives. In order to use the included
-configurations, you need to define the macro `ROCPRIM_TARGET_ARCH` as `803` if you want the
-algorithms optimized for gfx803 GCN version, or to `900` for gfx900.
+rocPRIM has built-in default configurations for each of its primitives, these will be used automatically
+based on the input types and the target architecture from the stream used.
 
 ## hipCUB
 

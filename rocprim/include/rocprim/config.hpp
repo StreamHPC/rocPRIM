@@ -98,17 +98,6 @@
     #define ROCPRIM_THREAD_STORE_USE_CACHE_MODIFIERS 1
 #endif
 
-
-// Defines targeted AMD architecture. Supported values:
-// * 803 (gfx803)
-// * 900 (gfx900)
-// * 906 (gfx906)
-// * 908 (gfx908)
-// * 910 (gfx90a)
-#ifndef ROCPRIM_TARGET_ARCH
-    #define ROCPRIM_TARGET_ARCH 0
-#endif
-
 #ifndef ROCPRIM_NAVI
     #if defined(__HIP_DEVICE_COMPILE__) && (defined(__GFX10__) || defined(__GFX11__) || defined(__GFX12__))
         #define ROCPRIM_NAVI 1
