@@ -147,7 +147,7 @@ TYPED_TEST(RocprimDeviceSelectTests, Flagged)
             // allocate temporary storage
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-            test_utils::GraphHelper gHelper;;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -173,11 +173,11 @@ TYPED_TEST(RocprimDeviceSelectTests, Flagged)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
-            unsigned int selected_count_output = d_selected_count_output.load()[0];
+            const auto selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected.size());
 
             // Check if output values are as expected
-            std::vector<U> output = d_output.load();
+            const auto output = d_output.load();
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
 
             if(TestFixture::use_graphs)
@@ -272,7 +272,7 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectOp)
             // allocate temporary storage
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-            test_utils::GraphHelper gHelper;;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -298,11 +298,11 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectOp)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
-            unsigned int selected_count_output = d_selected_count_output.load()[0];
+            const auto selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected.size());
 
             // Check if output values are as expected
-            std::vector<U> output = d_output.load();
+            const auto output = d_output.load();
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
 
             if(TestFixture::use_graphs)
@@ -350,19 +350,10 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectFlagged)
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
             std::vector<F> flags = test_utils::get_random_data<F>(size, 0, 1, seed_value);
 
-            T*            d_input;
-            F*            d_flags;
-            U*            d_output;
-            unsigned int* d_selected_count_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_flags, flags.size() * sizeof(F)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, input.size() * sizeof(U)));
-            HIP_CHECK(
-                test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-            HIP_CHECK(
-                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
-            HIP_CHECK(
-                hipMemcpy(d_flags, flags.data(), flags.size() * sizeof(F), hipMemcpyHostToDevice));
+            test_utils::device_ptr<T>            d_input(input);
+            test_utils::device_ptr<F>            d_flags(flags);
+            test_utils::device_ptr<U>            d_output(input.size());
+            test_utils::device_ptr<unsigned int> d_selected_count_output(1);
 
             // Calculate expected results on host
             std::vector<U> expected;
@@ -381,10 +372,10 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectFlagged)
             HIP_CHECK(rocprim::select(
                 nullptr,
                 temp_storage_size_bytes,
-                d_input,
-                d_flags,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                d_flags.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op<F>(),
                 stream,
@@ -396,8 +387,7 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectFlagged)
             ASSERT_GT(temp_storage_size_bytes, 0);
 
             // allocate temporary storage
-            void* d_temp_storage = nullptr;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
             test_utils::GraphHelper gHelper;
             if(TestFixture::use_graphs)
@@ -407,12 +397,12 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectFlagged)
 
             // Run
             HIP_CHECK(rocprim::select(
-                d_temp_storage,
+                d_temp_storage.get(),
                 temp_storage_size_bytes,
-                d_input,
-                d_flags,
-                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output),
-                d_selected_count_output,
+                d_input.get(),
+                d_flags.get(),
+                test_utils::wrap_in_identity_iterator<use_identity_iterator>(d_output.get()),
+                d_selected_count_output.get(),
                 input.size(),
                 select_op<F>(),
                 stream,
@@ -426,26 +416,12 @@ TYPED_TEST(RocprimDeviceSelectTests, SelectFlagged)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
-            unsigned int selected_count_output = 0;
-            HIP_CHECK(hipMemcpy(&selected_count_output,
-                                d_selected_count_output,
-                                sizeof(unsigned int),
-                                hipMemcpyDeviceToHost));
+            const auto selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected.size());
 
             // Check if output values are as expected
-            std::vector<U> output(input.size());
-            HIP_CHECK(hipMemcpy(output.data(),
-                                d_output,
-                                output.size() * sizeof(U),
-                                hipMemcpyDeviceToHost));
+            const auto output = d_output.load();
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
-
-            HIP_CHECK(hipFree(d_input));
-            HIP_CHECK(hipFree(d_flags));
-            HIP_CHECK(hipFree(d_output));
-            HIP_CHECK(hipFree(d_selected_count_output));
-            HIP_CHECK(hipFree(d_temp_storage));
 
             if(TestFixture::use_graphs)
             {
@@ -551,7 +527,7 @@ TYPED_TEST(RocprimDeviceSelectTests, Unique)
                 // allocate temporary storage
                 test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-                test_utils::GraphHelper gHelper;;
+                test_utils::GraphHelper gHelper;
                 if(TestFixture::use_graphs)
                 {
                     gHelper.startStreamCapture(stream);
@@ -577,11 +553,11 @@ TYPED_TEST(RocprimDeviceSelectTests, Unique)
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected
-                unsigned int selected_count_output = d_selected_count_output.load()[0];
+                const auto selected_count_output = d_selected_count_output.load()[0];
                 ASSERT_EQ(selected_count_output, expected.size());
 
                 // Check if output values are as expected
-                std::vector<U> output = d_output.load();
+                const auto output = d_output.load();
                 ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
 
                 if(TestFixture::use_graphs)
@@ -715,7 +691,7 @@ void testUniqueGuardedOperator()
                 // allocate temporary storage
                 test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-                test_utils::GraphHelper gHelper;;
+                test_utils::GraphHelper gHelper;
                 if(UseGraphs)
                 {
                     gHelper.startStreamCapture(stream);
@@ -741,11 +717,11 @@ void testUniqueGuardedOperator()
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected
-                unsigned int selected_count_output = d_selected_count_output.load()[0];
+                const auto selected_count_output = d_selected_count_output.load()[0];
                 ASSERT_EQ(selected_count_output, expected.size());
 
                 // Check if output values are as expected
-                auto output = d_output.load();
+                const auto output = d_output.load();
                 ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
 
                 if(UseGraphs)
@@ -919,7 +895,7 @@ TYPED_TEST(RocprimDeviceUniqueByKeyTests, UniqueByKey)
                 // allocate temporary storage
                 test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-                test_utils::GraphHelper gHelper;;
+                test_utils::GraphHelper gHelper;
                 if(TestFixture::use_graphs)
                 {
                     gHelper.startStreamCapture(stream);
@@ -949,12 +925,12 @@ TYPED_TEST(RocprimDeviceUniqueByKeyTests, UniqueByKey)
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected
-                auto selected_count_output = d_selected_count_output.load()[0];
+                const auto selected_count_output = d_selected_count_output.load()[0];
                 ASSERT_EQ(selected_count_output, expected_keys.size());
 
                 // Check if outputs are as expected
-                auto output_keys   = d_keys_output.load();
-                auto output_values = d_values_output.load();
+                const auto output_keys   = d_keys_output.load();
+                const auto output_values = d_values_output.load();
                 ASSERT_NO_FATAL_FAILURE(
                     test_utils::assert_eq(output_keys, expected_keys, expected_keys.size()));
                 ASSERT_NO_FATAL_FAILURE(
@@ -1077,7 +1053,7 @@ TYPED_TEST(RocprimDeviceUniqueByKeyTests, UniqueByKeyAlias)
                 // allocate temporary storage
                 test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-                test_utils::GraphHelper gHelper;;
+                test_utils::GraphHelper gHelper;
                 if(TestFixture::use_graphs)
                 {
                     gHelper.startStreamCapture(stream);
@@ -1107,12 +1083,12 @@ TYPED_TEST(RocprimDeviceUniqueByKeyTests, UniqueByKeyAlias)
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected
-                auto selected_count_output = d_selected_count_output.load()[0];
+                const auto selected_count_output = d_selected_count_output.load()[0];
                 ASSERT_EQ(selected_count_output, expected_keys.size());
 
                 // Check if outputs are as expected
-                auto output_keys   = d_keys_input.load();
-                auto output_values = d_values_input.load();
+                const auto output_keys   = d_keys_input.load();
+                const auto output_values = d_values_input.load();
                 ASSERT_NO_FATAL_FAILURE(
                     test_utils::assert_eq(output_keys, expected_keys, expected_keys.size()));
                 ASSERT_NO_FATAL_FAILURE(
@@ -1190,12 +1166,10 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputFlagged)
                                                                  return 0;
                                                          });
 
-        size_t                         selected_count_output = 0;
         test_utils::device_ptr<size_t> d_selected_count_output(1);
 
         size_t expected_output_size = rocprim::detail::ceiling_div(size, flag_selector);
 
-        std::vector<size_t> output(expected_output_size);
         test_utils::device_ptr<size_t> d_output(expected_output_size);
 
         // Calculate expected results on host
@@ -1223,7 +1197,7 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputFlagged)
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0);
         test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
-        test_utils::GraphHelper gHelper;;
+        test_utils::GraphHelper      gHelper;
         if(use_graphs)
         {
             gHelper.startStreamCapture(stream);
@@ -1248,11 +1222,11 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputFlagged)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if number of selected value is as expected
-        selected_count_output = d_selected_count_output.load()[0];
+        const auto selected_count_output = d_selected_count_output.load()[0];
         ASSERT_EQ(selected_count_output, expected_output_size);
 
         // Check if output values are as expected
-        output = d_output.load();
+        const auto output = d_output.load();
 
         ASSERT_NO_FATAL_FAILURE(
             test_utils::assert_eq(output, expected_output, expected_output.size()));
@@ -1310,33 +1284,25 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectOp)
         // Generate data
         auto input_iota = rocprim::make_counting_iterator(std::size_t{0});
 
-        size_t  selected_count_output = 0;
-        size_t* d_selected_count_output;
+        test_utils::device_ptr<size_t> d_selected_count_output(1);
 
         size_t expected_output_size = selected_input;
 
-        size_t*             d_output;
-        std::vector<size_t> output(expected_output_size);
+        test_utils::device_ptr<size_t> d_output(expected_output_size);
 
         // Calculate expected results on host
         std::vector<size_t> expected_output(expected_output_size);
         std::iota(expected_output.begin(), expected_output.end(), 0);
 
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output,
-                                                     sizeof(d_output[0]) * expected_output_size));
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output,
-                                                     sizeof(d_selected_count_output[0])));
-
         // temp storage
         size_t temp_storage_size_bytes;
-        void*  d_temp_storage = nullptr;
 
         // Get size of d_temp_storage
-        HIP_CHECK(rocprim::select(d_temp_storage,
+        HIP_CHECK(rocprim::select(nullptr,
                                   temp_storage_size_bytes,
                                   input_iota,
-                                  d_output,
-                                  d_selected_count_output,
+                                  d_output.get(),
+                                  d_selected_count_output.get(),
                                   size,
                                   select_op,
                                   stream,
@@ -1348,7 +1314,7 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectOp)
         ASSERT_GT(temp_storage_size_bytes, 0);
 
         // allocate temporary storage
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+        test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
         test_utils::GraphHelper gHelper;
         if(use_graphs)
@@ -1357,11 +1323,11 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectOp)
         }
 
         // Run
-        HIP_CHECK(rocprim::select(d_temp_storage,
+        HIP_CHECK(rocprim::select(d_temp_storage.get(),
                                   temp_storage_size_bytes,
                                   input_iota,
-                                  d_output,
-                                  d_selected_count_output,
+                                  d_output.get(),
+                                  d_selected_count_output.get(),
                                   size,
                                   select_op,
                                   stream,
@@ -1375,24 +1341,14 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectOp)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if number of selected value is as expected
-        HIP_CHECK(hipMemcpy(&selected_count_output,
-                            d_selected_count_output,
-                            sizeof(size_t),
-                            hipMemcpyDeviceToHost));
+        const auto selected_count_output = d_selected_count_output.load()[0];
         ASSERT_EQ(selected_count_output, expected_output_size);
 
         // Check if output values are as expected
-        HIP_CHECK(hipMemcpy(output.data(),
-                            d_output,
-                            sizeof(output[0]) * expected_output_size,
-                            hipMemcpyDeviceToHost));
+        const auto output = d_output.load();
 
         ASSERT_NO_FATAL_FAILURE(
             test_utils::assert_eq(output, expected_output, expected_output.size()));
-
-        HIP_CHECK(hipFree(d_output));
-        HIP_CHECK(hipFree(d_selected_count_output));
-        HIP_CHECK(hipFree(d_temp_storage));
 
         if(use_graphs)
         {
@@ -1440,34 +1396,26 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectFlagged)
 
         auto flags_it = rocprim::make_counting_iterator(size_t(0));
 
-        size_t  selected_count_output = 0;
-        size_t* d_selected_count_output;
+        test_utils::device_ptr<size_t> d_selected_count_output(1);
 
         size_t expected_output_size = selected_flags;
 
-        size_t*             d_output;
-        std::vector<size_t> output(expected_output_size);
+        test_utils::device_ptr<size_t> d_output(expected_output_size);
 
         // Calculate expected results on host
         std::vector<size_t> expected_output(expected_output_size);
         std::iota(expected_output.begin(), expected_output.end(), 0);
 
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output,
-                                                     sizeof(d_output[0]) * expected_output_size));
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output,
-                                                     sizeof(d_selected_count_output[0])));
-
         // temp storage
         size_t temp_storage_size_bytes;
-        void*  d_temp_storage = nullptr;
 
         // Get size of d_temp_storage
-        HIP_CHECK(rocprim::select(d_temp_storage,
+        HIP_CHECK(rocprim::select(nullptr,
                                   temp_storage_size_bytes,
                                   input_begin,
                                   flags_it,
-                                  d_output,
-                                  d_selected_count_output,
+                                  d_output.get(),
+                                  d_selected_count_output.get(),
                                   size,
                                   select_op,
                                   stream,
@@ -1479,7 +1427,7 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectFlagged)
         ASSERT_GT(temp_storage_size_bytes, 0);
 
         // allocate temporary storage
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+        test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
         test_utils::GraphHelper gHelper;
         if(use_graphs)
@@ -1488,12 +1436,12 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectFlagged)
         }
 
         // Run
-        HIP_CHECK(rocprim::select(d_temp_storage,
+        HIP_CHECK(rocprim::select(d_temp_storage.get(),
                                   temp_storage_size_bytes,
                                   input_begin,
                                   flags_it,
-                                  d_output,
-                                  d_selected_count_output,
+                                  d_output.get(),
+                                  d_selected_count_output.get(),
                                   size,
                                   select_op,
                                   stream,
@@ -1507,24 +1455,13 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputSelectFlagged)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if number of selected value is as expected
-        HIP_CHECK(hipMemcpy(&selected_count_output,
-                            d_selected_count_output,
-                            sizeof(size_t),
-                            hipMemcpyDeviceToHost));
+        const auto selected_count_output = d_selected_count_output.load()[0];
         ASSERT_EQ(selected_count_output, expected_output_size);
 
         // Check if output values are as expected
-        HIP_CHECK(hipMemcpy(output.data(),
-                            d_output,
-                            sizeof(output[0]) * expected_output_size,
-                            hipMemcpyDeviceToHost));
-
+        const auto output = d_output.load();
         ASSERT_NO_FATAL_FAILURE(
             test_utils::assert_eq(output, expected_output, expected_output.size()));
-
-        HIP_CHECK(hipFree(d_output));
-        HIP_CHECK(hipFree(d_selected_count_output));
-        HIP_CHECK(hipFree(d_temp_storage));
 
         if(use_graphs)
         {
@@ -1587,7 +1524,7 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputUnique)
 
         ASSERT_GT(temp_storage_size_bytes, 0);
         test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
-        test_utils::GraphHelper gHelper;;
+        test_utils::GraphHelper      gHelper;
         if(use_graphs)
         {
             gHelper.startStreamCapture(stream);
@@ -1608,10 +1545,10 @@ TEST_P(RocprimDeviceSelectLargeInputTests, LargeInputUnique)
             gHelper.createAndLaunchGraph(stream);
         }
 
-        auto unique_count_output = d_unique_count_output.load()[0];
+        const auto unique_count_output = d_unique_count_output.load()[0];
         ASSERT_EQ(unique_count_output, expected_output_size);
 
-        auto output = d_output.load();
+        const auto output = d_output.load();
         ASSERT_NO_FATAL_FAILURE(
             test_utils::assert_eq(output, expected_output, expected_output.size()));
 
