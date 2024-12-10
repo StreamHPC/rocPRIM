@@ -132,24 +132,6 @@ struct limit_block_size<MaxBlockSize, SharedMemoryPerThread, MinBlockSize, Extra
     static constexpr unsigned int value = MaxBlockSize;
 };
 
-template<unsigned int Arch, class T>
-struct select_arch_case
-{
-    static constexpr unsigned int arch = Arch;
-    using type = T;
-};
-
-template<unsigned int TargetArch, class Case, class... OtherCases>
-struct select_arch
-    : std::conditional<
-        Case::arch == TargetArch,
-        extract_type<typename Case::type>,
-        select_arch<TargetArch, OtherCases...>
-    >::type { };
-
-template<unsigned int TargetArch, class Universal>
-struct select_arch<TargetArch, Universal> : extract_type<Universal> { };
-
 template<class Config, class Default>
 using default_or_custom_config =
     typename std::conditional<
