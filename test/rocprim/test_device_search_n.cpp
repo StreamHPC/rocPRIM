@@ -389,6 +389,105 @@ TYPED_TEST(RocprimDeviceSearchNTests, MinCount)
     }
 }
 
+TYPED_TEST(RocprimDeviceSearchNTests, SmallCount)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using input_type  = typename TestFixture::input_type;
+    using output_type = typename TestFixture::output_type;
+    using op_type     = typename TestFixture::op_type;
+    using config      = typename TestFixture::config;
+
+    constexpr bool debug_synchronous = TestFixture::debug_synchronous;
+    op_type        op{};
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+
+        for(const auto size : test_utils::get_sizes(seed_value))
+        {
+            hipStream_t                         stream = 0; // default
+            size_t                              count  = 0;
+            size_t                              temp_storage_size;
+            input_type                          h_value{1};
+            input_type                          h_noise{0};
+            std::vector<input_type>             h_input(size, h_noise);
+            output_type                         h_output;
+            test_utils::device_ptr<input_type>  d_input(h_input);
+            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<output_type> d_output(1);
+
+            if(size > 0 && size - 1 > 0)
+            {
+                count             = 1;
+                size_t random_idx = test_utils::get_random_value<size_t>(0, size - 1, ++seed_value);
+                h_input[random_idx] = h_noise;
+            }
+
+            SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
+            SCOPED_TRACE(testing::Message() << "with count = " << count);
+            SCOPED_TRACE(testing::Message() << "with value = " << h_value);
+
+            if ROCPRIM_IF_CONSTEXPR(TestFixture::use_graphs)
+            {
+                // Default stream does not support hipGraph stream capture, so create one
+                HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+            }
+            // get size
+            HIP_CHECK(rocprim::search_n<config>(0,
+                                                temp_storage_size,
+                                                d_input.get(),
+                                                d_output.get(),
+                                                h_input.size(),
+                                                count,
+                                                nullptr));
+
+            test_utils::device_ptr<void> d_temp_storage(temp_storage_size);
+            test_utils::GraphHelper      gHelper;
+            if(TestFixture::use_graphs)
+            {
+                gHelper.startStreamCapture(stream);
+            }
+            HIP_CHECK(rocprim::search_n<config>(d_temp_storage.get(),
+                                                temp_storage_size,
+                                                d_input.get(),
+                                                d_output.get(),
+                                                h_input.size(),
+                                                count,
+                                                d_value.get(),
+                                                op,
+                                                stream,
+                                                debug_synchronous));
+
+            if ROCPRIM_IF_CONSTEXPR(TestFixture::use_graphs)
+            {
+                gHelper.createAndLaunchGraph(stream);
+            }
+
+            HIP_CHECK(hipGetLastError());
+            HIP_CHECK(hipStreamSynchronize(stream));
+
+            const auto expected
+                = std::search_n(h_input.cbegin(), h_input.cend(), count, h_value, op)
+                  - h_input.cbegin();
+
+            h_output = d_output.load()[0];
+
+            ASSERT_EQ(h_output, expected);
+
+            if ROCPRIM_IF_CONSTEXPR(TestFixture::use_graphs)
+            {
+                gHelper.cleanupGraphHelper();
+                HIP_CHECK(hipStreamDestroy(stream));
+            }
+        }
+    }
+}
+
 TYPED_TEST(RocprimDeviceSearchNTests, StartFromBegin)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -967,7 +1066,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_2block)
                                                 nullptr));
 
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size);
-            test_utils::GraphHelper gHelper;
+            test_utils::GraphHelper      gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -1087,7 +1186,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_3block)
                                                 nullptr));
 
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size);
-            test_utils::GraphHelper gHelper;
+            test_utils::GraphHelper      gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -1209,7 +1308,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult1)
                                                 nullptr));
 
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size);
-            test_utils::GraphHelper gHelper;
+            test_utils::GraphHelper      gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -1325,7 +1424,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult2)
                                                 nullptr));
 
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size);
-            test_utils::GraphHelper gHelper;
+            test_utils::GraphHelper      gHelper;
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);

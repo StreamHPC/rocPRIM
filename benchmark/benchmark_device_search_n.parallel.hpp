@@ -339,26 +339,74 @@ inline void add_one_benchmark_search_n(std::vector<benchmark::internal::Benchmar
                                        const size_t                                  _size_byte)
 {
     // normal
-    auto start_from_0
-        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NORMAL>(_seed,
-                                                                             _stream,
-                                                                             _size_byte,
-                                                                             _size_byte,
-                                                                             0);
-    auto start_from_mid
-        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NORMAL>(_seed,
-                                                                             _stream,
-                                                                             _size_byte,
-                                                                             _size_byte / 2,
-                                                                             _size_byte / 2);
+    auto half = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NORMAL>(_seed,
+                                                                                   _stream,
+                                                                                   _size_byte,
+                                                                                   _size_byte / 2,
+                                                                                   _size_byte / 2);
     // small count test
+    auto small_count1
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            1);
+    auto small_count2
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            2);
+    auto small_count4
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            4);
     auto small_count6
         = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
                                                                             _stream,
                                                                             _size_byte,
                                                                             1, // count times
                                                                             6);
+    auto small_count8
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            8);
+    auto small_count10
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            10);
+    auto small_count12
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            12);
+    auto small_count36
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            36);
     // mid count test
+    auto mid_count1023
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            1023);
+    auto mid_count2047
+        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
+                                                                            _stream,
+                                                                            _size_byte,
+                                                                            1, // count times
+                                                                            2047);
+
     auto mid_count4095
         = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
                                                                             _stream,
@@ -366,26 +414,59 @@ inline void add_one_benchmark_search_n(std::vector<benchmark::internal::Benchmar
                                                                             1, // count times
                                                                             4095);
     // big input
-    auto big_count6
-        = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(_seed,
-                                                                            _stream,
-                                                                            _size_byte,
-                                                                            6, // count times
-                                                                            (size_t)-1);
-    std::vector<benchmark::internal::Benchmark*> bs = {start_from_0->bench_register(),
-                                                       start_from_mid->bench_register(),
-                                                       small_count6->bench_register(),
-                                                       mid_count4095->bench_register(),
-                                                       big_count6->bench_register()};
+    auto big_count3 = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(
+        _seed,
+        _stream,
+        _size_byte,
+        3, // count times
+        (size_t)-1); // block_size
+    auto big_count6 = new benchmark_search_n<T, size_t, benchmark_search_n_mode::NOISE>(
+        _seed,
+        _stream,
+        _size_byte,
+        6, // count times
+        (size_t)-1); // block_size
+    std::vector<benchmark::internal::Benchmark*> bs = {
+
+        small_count1->bench_register(),
+        small_count2->bench_register(),
+        small_count4->bench_register(),
+        small_count6->bench_register(),
+        small_count8->bench_register(),
+        small_count10->bench_register(),
+        small_count12->bench_register(),
+        small_count36->bench_register(),
+
+        mid_count1023->bench_register(),
+        mid_count2047->bench_register(),
+        mid_count4095->bench_register(),
+
+        big_count3->bench_register(),
+        big_count6->bench_register(),
+        half->bench_register()};
+
     destructors.emplace_back(
         [=]()
         {
-            delete start_from_0;
-            delete start_from_mid;
+            delete small_count1;
+            delete small_count2;
+            delete small_count4;
             delete small_count6;
+            delete small_count8;
+            delete small_count10;
+            delete small_count12;
+            delete small_count36;
+
+            delete mid_count1023;
+            delete mid_count2047;
             delete mid_count4095;
+
+            delete big_count3;
             delete big_count6;
+
+            delete half;
         });
+
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
 }
 
