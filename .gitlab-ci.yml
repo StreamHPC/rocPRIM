@@ -42,6 +42,10 @@ stages:
   - test
   - benchmark
 
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS !~ /CI Skip/
+
 variables:
   PACKAGE_DIR: $BUILD_DIR/package
   AUTOTUNE_CONFIG_DIR: ${CI_PROJECT_DIR}/autotune_config
@@ -111,7 +115,6 @@ copyright-date:
       -D BUILD_EXAMPLE=ON
       -D BUILD_BENCHMARK=ON
       -D GPU_TARGETS=$GPU_TARGETS
-      -D AMDGPU_TEST_TARGETS=$GPU_TARGETS
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
       -D CMAKE_CXX_STANDARD=14
@@ -182,7 +185,6 @@ build:cmake-minimum-apt:
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
       -D BUILD_EXAMPLE=ON
       -D GPU_TARGETS=$GPU_TARGETS
-      -D AMDGPU_TEST_TARGETS=$GPU_TARGETS
       -D CMAKE_CXX_STANDARD="$BUILD_VERSION"
       -S $CI_PROJECT_DIR
       -B $BUILD_DIR
@@ -286,6 +288,14 @@ build:windows:
       - $CI_PROJECT_DIR/build/.ninja_log
       - $CI_PROJECT_DIR/build/CTestTestfile.cmake
     expire_in: 2 weeks
+  rules:
+    - if: $CI_MERGE_REQUEST_TITLE !~ /Draft:/ || $CI_MERGE_REQUEST_LABELS =~ /windows/
+      when: always
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
+          $CI_MERGE_REQUEST_LABELS !~ /windows/ &&
+          $BUILD_TYPE == "Release"
+      when: always
+    - when: never
 
 autotune:build:
   stage: autotune
@@ -334,12 +344,14 @@ autotune:build:
       - $BUILD_DIR/deps/googlebenchmark/
     expire_in: 1 week
 
-test:
+.test:common:
   stage: test
+  tags:
+    - rocm
+    - $GPU
   extends:
     - .cmake-minimum
     - .rules:test
-    - .gpus:rocm
   needs:
     - job: build:cmake-minimum
       parallel:
@@ -359,9 +371,35 @@ test:
     - HSA_ENABLE_SDMA=0 ctest
       --output-on-failure
       --repeat-until-fail 2
-      --tests-regex "hip|$GPU_TARGET"
       --resource-spec-file ./resources.json
       --parallel $PARALLEL_JOBS
+
+test:any-gpu:
+  variables:
+    GPU: ""
+    PARALLEL_JOBS: 1
+  extends:
+    - .test:common
+  rules:
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
+          $CI_MERGE_REQUEST_LABELS !~ /Arch::/
+      when: always
+    - when: never
+
+test:label-arch:
+  extends:
+    - .gpus:rocm
+    - .test:common
+    - .rules:arch-labels
+
+test:all-gpus:
+  extends:
+    - .gpus:rocm
+    - .test:common
+  rules:
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
+      when: always
+    - when: never
 
 .test-windows-base:
   stage: test
