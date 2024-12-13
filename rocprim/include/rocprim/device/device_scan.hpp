@@ -153,17 +153,6 @@ ROCPRIM_KERNEL
         save_last_value);
 }
 
-#define ROCPRIM_DETAIL_HIP_SYNC(name, size, start) \
-    if(debug_synchronous) \
-    { \
-        std::cout << name << "(" << size << ")"; \
-        auto error = hipStreamSynchronize(stream); \
-        if(error != hipSuccess) return error; \
-        auto end = std::chrono::steady_clock::now(); \
-        auto d = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
-        std::cout << " " << d.count() * 1000 << " ms" << '\n'; \
-    }
-
 template<lookback_scan_determinism Determinism,
          bool                      Exclusive,
          class Config,
@@ -384,9 +373,6 @@ inline auto scan_impl(void*               temporary_storage,
     }
     return hipSuccess;
 }
-
-
-#undef ROCPRIM_DETAIL_HIP_SYNC
 
 } // end of detail namespace
 
