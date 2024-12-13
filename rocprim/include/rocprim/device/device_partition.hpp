@@ -90,18 +90,6 @@ ROCPRIM_KERNEL
                                                               predicates...);
 }
 
-#define ROCPRIM_DETAIL_HIP_SYNC(name, size, start) \
-    if(debug_synchronous) \
-    { \
-        std::cout << name << "(" << size << ")"; \
-        auto error = hipStreamSynchronize(stream); \
-        if(error != hipSuccess) return error; \
-        auto end = std::chrono::steady_clock::now(); \
-        auto d = std::chrono::duration_cast<std::chrono::duration<double>>(end - start); \
-        std::cout << " " << d.count() * 1000 << " ms" << '\n'; \
-    }
-
-
 template<partition_subalgo SubAlgo,
          class Config,
          class OffsetT,
@@ -343,9 +331,6 @@ inline hipError_t partition_impl(void*                       temporary_storage,
 
     return hipSuccess;
 }
-
-
-#undef ROCPRIM_DETAIL_HIP_SYNC
 
 } // end of detail namespace
 

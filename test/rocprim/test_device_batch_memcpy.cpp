@@ -69,6 +69,7 @@ struct RocprimDeviceBatchMemcpyTests : public ::testing::Test
 {
     using value_type                                    = typename Params::value_type;
     using size_type                                     = typename Params::size_type;
+    static constexpr bool         debug_synchronous     = false;
     static constexpr bool         isMemCpy              = Params::isMemCpy;
     static constexpr bool         shuffled              = Params::shuffled;
     static constexpr unsigned int num_buffers           = Params::num_buffers;
@@ -233,7 +234,8 @@ void batch_copy(void*              temporary_storage,
                 OutputBufferItType destinations,
                 BufferSizeItType   sizes,
                 unsigned int       num_copies,
-                hipStream_t        stream)
+                hipStream_t        stream,
+                bool               debug_synchronous)
 {
     HIP_CHECK(rocprim::batch_memcpy(temporary_storage,
                                     storage_size,
@@ -241,7 +243,8 @@ void batch_copy(void*              temporary_storage,
                                     destinations,
                                     sizes,
                                     num_copies,
-                                    stream));
+                                    stream,
+                                    debug_synchronous));
 }
 
 template<bool IsMemCpy,
@@ -255,7 +258,8 @@ void batch_copy(void*              temporary_storage,
                 OutputBufferItType destinations,
                 BufferSizeItType   sizes,
                 unsigned int       num_copies,
-                hipStream_t        stream)
+                hipStream_t        stream,
+                bool               debug_synchronous)
 {
     HIP_CHECK(rocprim::batch_copy(temporary_storage,
                                   storage_size,
@@ -263,7 +267,8 @@ void batch_copy(void*              temporary_storage,
                                   destinations,
                                   sizes,
                                   num_copies,
-                                  stream));
+                                  stream,
+                                  debug_synchronous));
 }
 
 template<bool IsMemCpy,
@@ -340,6 +345,7 @@ TYPED_TEST(RocprimDeviceBatchMemcpyTests, SizeAndTypeVariation)
     constexpr bool shuffled              = TestFixture::shuffled;
     constexpr bool isMemCpy              = TestFixture::isMemCpy;
     constexpr bool use_indirect_iterator = TestFixture::use_indirect_iterator;
+    constexpr bool debug_synchronous     = TestFixture::debug_synchronous;
 
     constexpr int wlev_min_size = rocprim::batch_memcpy_config<>::wlev_size_threshold;
     constexpr int blev_min_size = rocprim::batch_memcpy_config<>::blev_size_threshold;
@@ -411,7 +417,8 @@ TYPED_TEST(RocprimDeviceBatchMemcpyTests, SizeAndTypeVariation)
                              d_buffer_dsts,
                              d_buffer_sizes,
                              num_buffers,
-                             hipStreamDefault);
+                             hipStreamDefault,
+                             debug_synchronous);
 
         void* d_temp_storage = nullptr;
 
@@ -516,7 +523,8 @@ TYPED_TEST(RocprimDeviceBatchMemcpyTests, SizeAndTypeVariation)
                              output_src_it,
                              d_buffer_sizes,
                              num_buffers,
-                             hipStreamDefault);
+                             hipStreamDefault,
+                             debug_synchronous);
 
         // Verify results.
         check_result<isMemCpy>(h_input_for_memcpy,
@@ -570,11 +578,12 @@ struct GetRunLength
     unsigned int* d_offsets;
 };
 
-TEST(RocprimDeviceBatchMemcpyTests, IteratorTest)
+TYPED_TEST(RocprimDeviceBatchMemcpyTests, IteratorTest)
 {
     // Create the data and copy it to the device.
-    const unsigned int num_ranges  = 5;
-    const unsigned int num_outputs = 14;
+    const unsigned int num_ranges        = 5;
+    const unsigned int num_outputs       = 14;
+    constexpr bool     debug_synchronous = TestFixture::debug_synchronous;
 
     std::vector<unsigned int> h_data_in = {4, 2, 7, 3, 1}; // size should be num_ranges
     std::vector<unsigned int> h_data_out(num_outputs, 0); // size should be num_outputs
@@ -621,7 +630,8 @@ TEST(RocprimDeviceBatchMemcpyTests, IteratorTest)
                       ptrs_out,
                       sizes,
                       num_ranges,
-                      0);
+                      0,
+                      debug_synchronous);
 
     // Allocate temporary storage
     HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_bytes));
@@ -633,7 +643,8 @@ TEST(RocprimDeviceBatchMemcpyTests, IteratorTest)
                       ptrs_out,
                       sizes,
                       num_ranges,
-                      0);
+                      0,
+                      debug_synchronous);
 
     // Copy results back to host and print
     HIP_CHECK(
