@@ -4,9 +4,14 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 
 ## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
 
+### Added
+
+* Added missing operator `rocprim::key_value_pair::operator==`.
+
 ### Resolved issues
 
 * Fixed device radix sort not returning the correct required temporary storage when a double buffer contains `nullptr`.
+* Fixed constness of equality operators (`==` and `!=`) in `rocprim::key_value_pair`. 
 
 ## (Unreleased) rocPRIM 3.4.x for ROCm 6.4.x
 
