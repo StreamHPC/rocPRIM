@@ -60,8 +60,8 @@ public:
     };
 
     /// \brief Construct by host vectors with the same sized value_type
-    template<typename InVecValueType>
-    explicit device_ptr(std::vector<InVecValueType> const& data)
+    template<typename InVecValueType, typename Allocator>
+    explicit device_ptr(std::vector<InVecValueType, Allocator> const& data)
         : device_raw_ptr_(nullptr), number_of_ele_(data.size())
     {
         static_assert(
@@ -185,8 +185,8 @@ public:
     }
 
     /// \brief Copy from host to device
-    template<typename InVecValueType>
-    void store(std::vector<InVecValueType> const& host_vec, size_type offset = 0)
+    template<typename InVecValueType, typename Allocator>
+    void store(std::vector<InVecValueType, Allocator> const& host_vec, size_type offset = 0)
     {
         static_assert(
             sizeof(InVecValueType) == sizeof(value_type),
