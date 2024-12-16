@@ -412,7 +412,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
             // Check if number of selected value is as expected_selected
             unsigned int selected_count_output = d_selected_count_output.load()[0];
             ASSERT_EQ(selected_count_output, expected_selected.size());
-            
+
             // Check if output values are as expected_selected
             const auto output = d_output.load();
 
@@ -576,7 +576,7 @@ struct LessOp {
     }
 
     ROCPRIM_HOST_DEVICE bool operator()(const T& val) const {
-        return val < pivot_; 
+        return val < pivot_;
     }
 private:
     T pivot_;
@@ -597,7 +597,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
         // Default stream does not support hipGraph stream capture, so create one
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
-    
+
     const std::vector<std::array<T,2>> limit_pairs{
         { static_cast<T>(30), static_cast<T>(60) }, // all sections may contain items
         { static_cast<T>(0), static_cast<T>(60) },  // first section is empty
@@ -999,7 +999,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
     auto param = GetParam();
     const size_t modulo = std::get<0>(param);
     const bool use_graphs = std::get<1>(param);
-    
+
     hipStream_t stream = 0; // default
     if (use_graphs)
     {
@@ -1023,26 +1023,29 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
         const auto input_iterator = rocprim::make_counting_iterator(static_cast<size_t>(0));
         const modulo_predicate predicate{modulo};
 
-        unsigned int* d_incorrect_flag{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_incorrect_flag, sizeof(*d_incorrect_flag)));
-        HIP_CHECK(hipMemsetAsync(d_incorrect_flag, 0, sizeof(*d_incorrect_flag), stream));
+        test_utils::device_ptr<unsigned int> d_incorrect_flag(1);
+
+        HIP_CHECK(hipMemsetAsync(d_incorrect_flag.get(), 0, sizeof(unsigned int), stream));
+
         const auto output_checker_it
-            = check_modulo_iterator<check_two_way_modulo>(modulo, size, d_incorrect_flag);
+            = check_modulo_iterator<check_two_way_modulo>(modulo, size, d_incorrect_flag.get());
 
-        size_t* d_count_output{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, sizeof(*d_count_output)));
+        test_utils::device_ptr<size_t> d_count_output(1);
 
-        size_t temporary_storage_size{};
+        size_t temporary_storage_size;
+
         HIP_CHECK(rocprim::partition(nullptr,
                                      temporary_storage_size,
                                      input_iterator,
                                      output_checker_it,
-                                     d_count_output,
+                                     d_count_output.get(),
                                      size,
                                      predicate,
                                      stream,
                                      debug_synchronous));
+
         ASSERT_NE(0, temporary_storage_size);
+
         test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
         test_utils::GraphHelper gHelper;;
@@ -1055,7 +1058,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
                                      temporary_storage_size,
                                      input_iterator,
                                      output_checker_it,
-                                     d_count_output,
+                                     d_count_output.get(),
                                      size,
                                      predicate,
                                      stream,
@@ -1068,7 +1071,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
 
         size_t count_output{};
         HIP_CHECK(hipMemcpyWithStream(&count_output,
-                                      d_count_output,
+                                      d_count_output.get(),
                                       sizeof(count_output),
                                       hipMemcpyDeviceToHost,
                                       stream));
@@ -1078,15 +1081,12 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartition)
 
         unsigned int incorrect_flag{};
         HIP_CHECK(hipMemcpyWithStream(&incorrect_flag,
-                                      d_incorrect_flag,
+                                      d_incorrect_flag.get(),
                                       sizeof(incorrect_flag),
                                       hipMemcpyDeviceToHost,
                                       stream));
 
         ASSERT_EQ(incorrect_flag, 0);
-
-        HIP_CHECK(hipFree(d_count_output));
-        HIP_CHECK(hipFree(d_incorrect_flag));
 
         if(use_graphs)
         {
@@ -1130,37 +1130,35 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
         const auto input_iterator = rocprim::make_counting_iterator(static_cast<size_t>(0));
         const modulo_predicate predicate{modulo};
 
-        unsigned int* d_incorrect_select_flag{};
-        unsigned int* d_incorrect_reject_flag{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_incorrect_select_flag,
-                                                     sizeof(*d_incorrect_select_flag)));
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_incorrect_reject_flag,
-                                                     sizeof(*d_incorrect_reject_flag)));
-        HIP_CHECK(
-            hipMemsetAsync(d_incorrect_select_flag, 0, sizeof(*d_incorrect_select_flag), stream));
-        HIP_CHECK(
-            hipMemsetAsync(d_incorrect_reject_flag, 0, sizeof(*d_incorrect_reject_flag), stream));
+        test_utils::device_ptr<unsigned int> d_incorrect_select_flag(1);
+        test_utils::device_ptr<unsigned int> d_incorrect_reject_flag(1);
+
+        HIP_CHECK(hipMemsetAsync(d_incorrect_select_flag.get(), 0, sizeof(unsigned int), stream));
+        HIP_CHECK(hipMemsetAsync(d_incorrect_reject_flag.get(), 0, sizeof(unsigned int), stream));
+
         const auto select_checker_it
-            = check_modulo_iterator<check_modulo>(modulo, size, d_incorrect_select_flag);
+            = check_modulo_iterator<check_modulo>(modulo, size, d_incorrect_select_flag.get());
         const auto reject_checker_it
-            = check_modulo_iterator<check_modulo_exclude2>(modulo, size, d_incorrect_reject_flag);
+            = check_modulo_iterator<check_modulo_exclude2>(modulo,
+                                                           size,
+                                                           d_incorrect_reject_flag.get());
 
-        size_t* d_count_output{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, sizeof(*d_count_output)));
+        test_utils::device_ptr<size_t> d_count_output(1);
 
-        size_t temporary_storage_size{};
+        size_t temporary_storage_size;
         HIP_CHECK(rocprim::partition_two_way(nullptr,
                                              temporary_storage_size,
                                              input_iterator,
                                              select_checker_it,
                                              reject_checker_it,
-                                             d_count_output,
+                                             d_count_output.get(),
                                              size,
                                              predicate,
                                              stream,
                                              debug_synchronous));
 
         ASSERT_NE(0, temporary_storage_size);
+
         test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
         test_utils::GraphHelper gHelper;;
@@ -1174,7 +1172,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
                                              input_iterator,
                                              select_checker_it,
                                              reject_checker_it,
-                                             d_count_output,
+                                             d_count_output.get(),
                                              size,
                                              predicate,
                                              stream,
@@ -1187,7 +1185,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
 
         size_t count_output{};
         HIP_CHECK(hipMemcpyWithStream(&count_output,
-                                      d_count_output,
+                                      d_count_output.get(),
                                       sizeof(count_output),
                                       hipMemcpyDeviceToHost,
                                       stream));
@@ -1197,23 +1195,19 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionTwoWay)
 
         unsigned int incorrect_select_flag{};
         HIP_CHECK(hipMemcpyWithStream(&incorrect_select_flag,
-                                      d_incorrect_select_flag,
+                                      d_incorrect_select_flag.get(),
                                       sizeof(incorrect_select_flag),
                                       hipMemcpyDeviceToHost,
                                       stream));
         unsigned int incorrect_reject_flag{};
         HIP_CHECK(hipMemcpyWithStream(&incorrect_reject_flag,
-                                      d_incorrect_reject_flag,
+                                      d_incorrect_reject_flag.get(),
                                       sizeof(incorrect_reject_flag),
                                       hipMemcpyDeviceToHost,
                                       stream));
 
         ASSERT_EQ(incorrect_select_flag, 0);
         ASSERT_EQ(incorrect_reject_flag, 0);
-
-        HIP_CHECK(hipFree(d_count_output));
-        HIP_CHECK(hipFree(d_incorrect_select_flag));
-        HIP_CHECK(hipFree(d_incorrect_reject_flag));
 
         if(use_graphs)
         {
@@ -1232,7 +1226,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
     static constexpr bool        debug_synchronous = false;
     auto param = GetParam();
     const bool use_graphs = std::get<1>(param);
-    
+
     hipStream_t stream = 0; // default
     if (use_graphs)
     {
@@ -1260,32 +1254,35 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
         const auto predicate_a    = modulo_predicate{modulo_a};
         const auto predicate_b    = modulo_predicate{modulo_b};
 
-        unsigned int* d_incorrect_flag{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_incorrect_flag, sizeof(*d_incorrect_flag)));
-        HIP_CHECK(hipMemsetAsync(d_incorrect_flag, 0, sizeof(*d_incorrect_flag), stream));
+        test_utils::device_ptr<unsigned int> d_incorrect_flag(1);
+
+        HIP_CHECK(hipMemsetAsync(d_incorrect_flag.get(), 0, sizeof(unsigned int), stream));
+
         const auto output_checker_a
-            = check_modulo_iterator<check_modulo>(modulo_a, size, d_incorrect_flag);
+            = check_modulo_iterator<check_modulo>(modulo_a, size, d_incorrect_flag.get());
         const auto output_checker_b
-            = check_modulo_iterator<check_modulo_exclude>(modulo_b, size, d_incorrect_flag);
+            = check_modulo_iterator<check_modulo_exclude>(modulo_b, size, d_incorrect_flag.get());
+
         const auto unselected_output = rocprim::make_discard_iterator();
 
-        size_t* d_count_output{};
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_count_output, 2 * sizeof(*d_count_output)));
+        test_utils::device_ptr<size_t> d_count_output(2);
 
-        size_t temporary_storage_size{};
+        size_t temporary_storage_size;
         HIP_CHECK(rocprim::partition_three_way(nullptr,
                                                temporary_storage_size,
                                                input_iterator,
                                                output_checker_a,
                                                output_checker_b,
                                                unselected_output,
-                                               d_count_output,
+                                               d_count_output.get(),
                                                size,
                                                predicate_a,
                                                predicate_b,
                                                stream,
                                                debug_synchronous));
+
         ASSERT_NE(0, temporary_storage_size);
+
         test_utils::device_ptr<void> d_temporary_storage(temporary_storage_size);
 
         test_utils::GraphHelper gHelper;
@@ -1300,7 +1297,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
                                                output_checker_a,
                                                output_checker_b,
                                                unselected_output,
-                                               d_count_output,
+                                               d_count_output.get(),
                                                size,
                                                predicate_a,
                                                predicate_b,
@@ -1314,7 +1311,7 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
 
         size_t count_output[2]{};
         HIP_CHECK(hipMemcpyWithStream(&count_output,
-                                      d_count_output,
+                                      d_count_output.get(),
                                       sizeof(count_output),
                                       hipMemcpyDeviceToHost,
                                       stream));
@@ -1328,15 +1325,12 @@ TEST_P(RocprimDevicePartitionLargeInputTests, LargeInputPartitionThreeWay)
 
         unsigned int incorrect_flag{};
         HIP_CHECK(hipMemcpyWithStream(&incorrect_flag,
-                                      d_incorrect_flag,
+                                      d_incorrect_flag.get(),
                                       sizeof(incorrect_flag),
                                       hipMemcpyDeviceToHost,
                                       stream));
 
         ASSERT_EQ(incorrect_flag, 0);
-
-        HIP_CHECK(hipFree(d_count_output));
-        HIP_CHECK(hipFree(d_incorrect_flag));
 
         if(use_graphs)
         {
@@ -1375,12 +1369,12 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
     HIP_CHECK(hipSetDevice(device_id));
 
     // Create a large struct to test with. It must be big enough that when
-    // we the use default block size (defined in rocprim::default_select_config 
+    // we the use default block size (defined in rocprim::default_select_config
     // struct as 256), giving one instance to each thread will cause us to hit
     // 32 KiB of shared memory (the limit enforced by the rocprim::limit_block_size
     // struct's boolean template parameter). Since the device_partition algorithm also
     // uses some shared memory to store state, this will cause the total usage to exceed
-    // the 32 KiB limit. If everything's working correctly, this should be detected in 
+    // the 32 KiB limit. If everything's working correctly, this should be detected in
     // the limit_block_size's template logic, and it should reduce the block size.
     const size_t test_obj_size = 128; // Choose 128, since 256 * 128 = 2^15 bytes (32 KiB).
     struct TestObject
