@@ -294,14 +294,6 @@ build:windows:
       - $CI_PROJECT_DIR/build/.ninja_log
       - $CI_PROJECT_DIR/build/CTestTestfile.cmake
     expire_in: 2 weeks
-  rules:
-    - if: $CI_MERGE_REQUEST_TITLE !~ /Draft:/ || $CI_MERGE_REQUEST_LABELS =~ /windows/
-      when: always
-    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
-          $CI_MERGE_REQUEST_LABELS !~ /windows/ &&
-          $BUILD_TYPE == "Release"
-      when: always
-    - when: never
 
 autotune:build:
   stage: autotune
