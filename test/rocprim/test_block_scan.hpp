@@ -72,20 +72,27 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScan)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+        test_utils::device_ptr<T> device_output(output.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 0>::run(
-            output, output, expected, expected,
-            device_output, NULL, T(0), grid_size
-        );
+            output,
+            output,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            T(0),
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 0>::run(
-            output2, output2, expected, expected,
-            device_output, NULL, T(0), grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
+            output2,
+            output2,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            T(0),
+            grid_size);
     }
 
 }
@@ -139,28 +146,28 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScanReduce)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-        T* device_output_reductions;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(
-                &device_output_reductions,
-                output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-            )
-        );
+        test_utils::device_ptr<T> device_output(output.size());
+        test_utils::device_ptr<T> device_output_reductions(output_reductions.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 1>::run(
-            output, output_reductions, expected, expected_reductions,
-            device_output, device_output_reductions, T(0), grid_size
-        );
+            output,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            T(0),
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 1>::run(
-            output2, output_reductions, expected, expected_reductions,
-            device_output, device_output_reductions, T(0), grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
-        HIP_CHECK(hipFree(device_output_reductions));
+            output2,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            T(0),
+            grid_size);
     }
 
 }
@@ -215,28 +222,28 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScanPrefixCallback)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-        T* device_output_bp;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(
-                &device_output_bp,
-                output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-            )
-        );
+        test_utils::device_ptr<T> device_output(output.size());
+        test_utils::device_ptr<T> device_output_bp(output_block_prefixes.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 2>::run(
-            output, output_block_prefixes, expected, expected_block_prefixes,
-            device_output, device_output_bp, block_prefix, grid_size
-        );
+            output,
+            output_block_prefixes,
+            expected,
+            expected_block_prefixes,
+            device_output.get(),
+            device_output_bp.get(),
+            block_prefix,
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 2>::run(
-            output2, output_block_prefixes, expected, expected_block_prefixes,
-            device_output, device_output_bp, block_prefix, grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
-        HIP_CHECK(hipFree(device_output_bp));
+            output2,
+            output_block_prefixes,
+            expected,
+            expected_block_prefixes,
+            device_output.get(),
+            device_output_bp.get(),
+            block_prefix,
+            grid_size);
     }
 
 }
@@ -289,20 +296,27 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScan)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+        test_utils::device_ptr<T> device_output(output.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 3>::run(
-            output, output, expected, expected,
-            device_output, NULL, init, grid_size
-        );
+            output,
+            output,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            init,
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 3>::run(
-            output2, output2, expected, expected,
-            device_output, NULL, init, grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
+            output2,
+            output2,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            init,
+            grid_size);
     }
 
 }
@@ -366,28 +380,28 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScanReduce)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-        T* device_output_reductions;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(
-                &device_output_reductions,
-                output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-            )
-        );
+        test_utils::device_ptr<T> device_output(output.size());
+        test_utils::device_ptr<T> device_output_reductions(output_reductions.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 4>::run(
-            output, output_reductions, expected, expected_reductions,
-            device_output, device_output_reductions, init, grid_size
-        );
+            output,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            init,
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 4>::run(
-            output2, output_reductions, expected, expected_reductions,
-            device_output, device_output_reductions, init, grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
-        HIP_CHECK(hipFree(device_output_reductions));
+            output2,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            init,
+            grid_size);
     }
 
 }
@@ -451,28 +465,28 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScanPrefixCallback)
         }
 
         // Writing to device memory
-        T* device_output;
-        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-        T* device_output_bp;
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(
-                &device_output_bp,
-                output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-            )
-        );
+        test_utils::device_ptr<T> device_output(output.size());
+        test_utils::device_ptr<T> device_output_bp(output_block_prefixes.size());
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 5>::run(
-            output, output_block_prefixes, expected, expected_block_prefixes,
-            device_output, device_output_bp, block_prefix, grid_size
-        );
+            output,
+            output_block_prefixes,
+            expected,
+            expected_block_prefixes,
+            device_output.get(),
+            device_output_bp.get(),
+            block_prefix,
+            grid_size);
 
         static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 5>::run(
-            output2, output_block_prefixes, expected, expected_block_prefixes,
-            device_output, device_output_bp, block_prefix, grid_size
-        );
-
-        HIP_CHECK(hipFree(device_output));
-        HIP_CHECK(hipFree(device_output_bp));
+            output2,
+            output_block_prefixes,
+            expected,
+            expected_block_prefixes,
+            device_output.get(),
+            device_output_bp.get(),
+            block_prefix,
+            grid_size);
     }
 
 }
