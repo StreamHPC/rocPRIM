@@ -78,7 +78,7 @@ TEST(RocprimConfigDispatchTests, HostMatchesDevice)
     hipLaunchKernelGGL(write_target_arch, dim3(1), dim3(1), 0, stream, device_arch_ptr.get());
     HIP_CHECK(hipGetLastError());
 
-    target_arch device_arch = device_arch_ptr.load()[0];
+    const auto device_arch = device_arch_ptr.load_value_at(0);
 
     ASSERT_NE(host_arch, target_arch::invalid);
     ASSERT_EQ(host_arch, device_arch);

@@ -204,7 +204,7 @@ TYPED_TEST(RocprimDeviceAdjacentFindTests, AdjacentFind)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Allocate memory for output and copy to host side
-            auto output = d_output.load()[0];
+            auto output = d_output.load_value_at(0);
 
             // Calculate expected results on host
             const auto expected
