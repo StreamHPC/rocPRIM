@@ -53,7 +53,9 @@ struct merge_sort_block_sort_config_params
 
 // Necessary to construct a parameterized type of `merge_sort_block_sort_config_params`.
 // Used in passing to host-side sub-algorithms and GPU kernels so non-default parameters can be available during compile-time.
-template<unsigned int BlockSize, unsigned int ItemsPerThread, rocprim::block_sort_algorithm Algo>
+template<unsigned int                  BlockSize,
+         unsigned int                  ItemsPerThread,
+         rocprim::block_sort_algorithm Algo = block_sort_algorithm::stable_merge_sort>
 struct merge_sort_block_sort_config : rocprim::detail::merge_sort_block_sort_config_params
 {
     using sort_config = kernel_config<BlockSize, ItemsPerThread>;
@@ -964,9 +966,9 @@ struct reduce_by_key_config_params
 
 /**
  * \brief Configuration of device-level reduce-by-key operation.
- * 
+ *
  * \tparam BlockSize number of threads in a block.
- * \tparam ItemsPerThread number of items processed by each thread per tile. 
+ * \tparam ItemsPerThread number of items processed by each thread per tile.
  * \tparam LoadKeysMethod method of loading keys
  * \tparam LoadValuesMethod method of loading values
  * \tparam ScanAlgorithm block level scan algorithm to use
@@ -1307,9 +1309,9 @@ struct merge_config_params
 
 /**
  * \brief Configuration of device-level merge operation.
- * 
+ *
  * \tparam BlockSize number of threads in a block.
- * \tparam ItemsPerThread number of items processed by each thread per tile. 
+ * \tparam ItemsPerThread number of items processed by each thread per tile.
  */
 template<unsigned int BlockSize, unsigned int ItemsPerThread>
 struct merge_config : public detail::merge_config_params

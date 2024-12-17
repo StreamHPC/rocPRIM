@@ -467,7 +467,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2))>>
-    : reduce_config<256, 4, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<128, 8, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = rocprim::half
@@ -476,7 +476,7 @@ struct default_reduce_config<static_cast<unsigned int>(target_arch::gfx90a),
                              key_type,
                              std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value)
                                                && (sizeof(key_type) <= 2))>>
-    : reduce_config<256, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<64, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = int64_t
@@ -486,7 +486,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4))>>
-    : reduce_config<256, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<256, 4, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = int
@@ -496,7 +496,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2))>>
-    : reduce_config<256, 4, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<128, 8, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = short
@@ -506,7 +506,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1))>>
-    : reduce_config<128, 8, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<64, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = int8_t
@@ -515,7 +515,7 @@ struct default_reduce_config<static_cast<unsigned int>(target_arch::gfx90a),
                              key_type,
                              std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value)
                                                && (sizeof(key_type) <= 1))>>
-    : reduce_config<256, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<128, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = double
@@ -525,7 +525,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4))>>
-    : reduce_config<256, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<256, 2, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = float
@@ -535,7 +535,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2))>>
-    : reduce_config<256, 8, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<256, 4, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = rocprim::half
@@ -574,7 +574,7 @@ struct default_reduce_config<
     key_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1))>>
-    : reduce_config<128, 16, ::rocprim::block_reduce_algorithm::using_warp_reduce>
+    : reduce_config<256, 8, ::rocprim::block_reduce_algorithm::using_warp_reduce>
 {};
 
 // Based on key_type = int8_t
