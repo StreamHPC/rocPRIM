@@ -168,6 +168,7 @@ endif()
 # Setup VERSION
 set(VERSION_STRING "3.4.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
+math(EXPR rocprim_VERSION_FULL "${rocprim_VERSION_MAJOR} * 100000 + ${rocprim_VERSION_MINOR} * 100 + ${rocprim_VERSION_PATCH}")
 
 # Print configuration summary
 include(cmake/Summary.cmake)

@@ -2,6 +2,12 @@
 
 Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
+
+### Changed
+
+* Changed symbol visibility: all kernels now have hidden visibility, inline namespace with the library version is added, e.g. `rocprim::ROCPRIM_300400_NS::...`. This allows to link multiple libraries built with different versions of rocPRIM.
+
 ## rocPRIM 3.4.0 for ROCm 6.4.0
 
 ### Added

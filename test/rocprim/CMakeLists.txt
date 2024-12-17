@@ -298,3 +298,78 @@ add_rocprim_test("rocprim.warp_scan" test_warp_scan.cpp)
 add_rocprim_test("rocprim.warp_sort" test_warp_sort.cpp)
 add_rocprim_test("rocprim.warp_store" test_warp_store.cpp)
 add_rocprim_test("rocprim.zip_iterator" test_zip_iterator.cpp)
+
+if(NOT WIN32)
+  # Check what symbols are exported by the libraries and what their names are
+
+  add_library(test_linking_lib1 SHARED test_linking_lib.cpp)
+  target_include_directories(test_linking_lib1 SYSTEM BEFORE
+    PUBLIC
+      $<BUILD_INTERFACE:${COMMON_TEST_HEADER_DIRECTORY}>
+      $<TARGET_PROPERTY:GTest::GTest,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+  target_link_libraries(test_linking_lib1 PUBLIC rocprim_hip)
+  set_target_properties(test_linking_lib1
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/rocprim"
+      COMPILE_DEFINITIONS "TEST_FUNC=test1"
+  )
+
+  add_library(test_linking_lib2 SHARED test_linking_lib.cpp)
+  target_include_directories(test_linking_lib2 SYSTEM BEFORE
+    PUBLIC
+      $<BUILD_INTERFACE:${COMMON_TEST_HEADER_DIRECTORY}>
+      $<TARGET_PROPERTY:GTest::GTest,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+  target_link_libraries(test_linking_lib2 PUBLIC rocprim_hip)
+  # Pretend that we build this library with another version of rocPRIM
+  set_target_properties(test_linking_lib2
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/rocprim"
+      COMPILE_DEFINITIONS "TEST_FUNC=test2;ROCPRIM_INLINE_NAMESPACE=ROCPRIM_300201_NS"
+  )
+
+  add_rocprim_test("rocprim.linking" "test_linking.cpp;test_linking_lib.cpp")
+  target_link_libraries(test_linking PUBLIC test_linking_lib1 test_linking_lib2)
+
+  set(NM_ARGS --demangle --defined-only --extern-only)
+  string(REPLACE ";" " " NM_ARGS_STR "${NM_ARGS}")
+
+  add_custom_command(
+    TARGET test_linking_lib1
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking_lib1> | grep "rocprim::"
+    COMMENT "Checking symbols in test_linking_lib1"
+  )
+  add_custom_command(
+    TARGET test_linking_lib2
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking_lib2> | grep "rocprim::"
+    COMMENT "Checking symbols in test_linking_lib2"
+  )
+  add_custom_command(
+    TARGET test_linking
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking> | grep "rocprim::"
+    COMMENT "Checking symbols in test_linking"
+  )
+
+  # The test fail if there are
+  #  * symbols in the rocprim namespace but not in the inline namespace with corresponding version
+  #  * kernels (usually have "kernel" in their names)
+  add_test(
+    NAME "rocprim.linking_lib1_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking_lib1> | grep -c -P \"(rocprim::(?!ROCPRIM_${rocprim_VERSION_FULL}_NS))|kernel\""
+  )
+  add_test(
+    NAME "rocprim.linking_lib2_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking_lib2> | grep -c -P \"(rocprim::(?!ROCPRIM_300201_NS))|kernel\""
+  )
+  add_test(
+    NAME "rocprim.linking_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking> | grep -c -P \"(rocprim::(?!ROCPRIM_${rocprim_VERSION_FULL}_NS))|kernel\""
+  )
+  set_property(TEST "rocprim.linking_lib1_symbols" PROPERTY PASS_REGULAR_EXPRESSION "^0")
+  set_property(TEST "rocprim.linking_lib2_symbols" PROPERTY PASS_REGULAR_EXPRESSION "^0")
+  set_property(TEST "rocprim.linking_symbols" PROPERTY PASS_REGULAR_EXPRESSION "^0")
+endif()

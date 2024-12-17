@@ -57,18 +57,18 @@ template<lookback_scan_determinism Determinism,
          typename BinaryFunction,
          typename LookbackScanState,
          typename AccType>
-void __global__ __launch_bounds__(device_params<Config>().kernel_config.block_size)
-    device_scan_by_key_kernel(const KeyInputIterator                       keys,
-                              const InputIterator                          values,
-                              const OutputIterator                         output,
-                              const InitialValueType                       initial_value,
-                              const CompareFunction                        compare,
-                              const BinaryFunction                         scan_op,
-                              const LookbackScanState                      scan_state,
-                              const size_t                                 size,
-                              const size_t                                 starting_block,
-                              const size_t                                 number_of_blocks,
-                              const ::rocprim::tuple<AccType, bool>* const previous_last_value)
+ROCPRIM_KERNEL void __launch_bounds__(device_params<Config>().kernel_config.block_size)
+device_scan_by_key_kernel(const KeyInputIterator                       keys,
+                          const InputIterator                          values,
+                          const OutputIterator                         output,
+                          const InitialValueType                       initial_value,
+                          const CompareFunction                        compare,
+                          const BinaryFunction                         scan_op,
+                          const LookbackScanState                      scan_state,
+                          const size_t                                 size,
+                          const size_t                                 starting_block,
+                          const size_t                                 number_of_blocks,
+                          const ::rocprim::tuple<AccType, bool>* const previous_last_value)
 {
     device_scan_by_key_kernel_impl<Determinism, Exclusive, Config>(
         keys,
