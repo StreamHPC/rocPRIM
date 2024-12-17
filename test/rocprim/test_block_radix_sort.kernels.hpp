@@ -216,7 +216,7 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 0>::type
         }
 
         // Preparing device
-        test_utils::device_ptr<key_type> device_keys_output(keys_output.get(), size);
+        test_utils::device_ptr<key_type> device_keys_output(keys_output, size);
 
         sort_key_kernel<block_size, items_per_thread, radix_bits_per_pass, key_type>
             <<<dim3(grid_size), dim3(block_size), 0, 0>>>(device_keys_output.get(),
@@ -227,10 +227,7 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 0>::type
         HIP_CHECK(hipGetLastError());
 
         // Getting results to host
-        HIP_CHECK(hipMemcpy(keys_output.get(),
-                            device_keys_output.get(),
-                            size * sizeof(keys_output[0]),
-                            hipMemcpyDeviceToHost));
+        keys_output = device_keys_output.load_to_unique_ptr();
 
         // Verifying results
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output.get(),
@@ -324,7 +321,7 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 1>::type
             values_expected[i] = expected[i].second;
         }
 
-        test_utils::device_ptr<key_type>   device_keys_output(keys_output.get(), size);
+        test_utils::device_ptr<key_type>   device_keys_output(keys_output, size);
         test_utils::device_ptr<value_type> device_values_output(values_output);
 
         // Running kernel
@@ -342,10 +339,7 @@ auto test_block_radix_sort() -> typename std::enable_if<Method == 1>::type
         HIP_CHECK(hipGetLastError());
 
         // Getting results to host
-        HIP_CHECK(hipMemcpy(keys_output.get(),
-                            device_keys_output.get(),
-                            size * sizeof(keys_output[0]),
-                            hipMemcpyDeviceToHost));
+        keys_output   = device_keys_output.load_to_unique_ptr();
         values_output = device_values_output.load();
 
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output.get(),

@@ -621,9 +621,6 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 // Generate data
                 const auto input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
 
-                // Output
-                auto selected_counts = std::array<unsigned int, 2>{};
-
                 test_utils::device_ptr<T>            d_input(input);
                 test_utils::device_ptr<U>            d_first_output(input.size());
                 test_utils::device_ptr<U>            d_second_output(input.size());
@@ -709,10 +706,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected_selected
-                HIP_CHECK(hipMemcpy(selected_counts.data(),
-                                    d_selected_counts.get(),
-                                    sizeof(selected_counts),
-                                    hipMemcpyDeviceToHost));
+                const auto selected_counts = d_selected_counts.load_to_array<2>();
                 ASSERT_EQ(selected_counts, expected_counts);
 
                 // Check if output values are as expected_selected

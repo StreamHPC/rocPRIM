@@ -206,7 +206,7 @@ TEST(RocprimZipIteratorTests, Transform)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
-        output = d_output.load(output.size());
+        output = d_output.load();
 
         // Check if output values are as expected
         // precision of tuple3_transform_op<T1, T2, T3> is precision<T1> * 2

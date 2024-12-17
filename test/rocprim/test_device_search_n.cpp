@@ -138,7 +138,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, RandomTest)
 
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -231,7 +231,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MaxCount)
             std::vector<input_type>             h_input(size, h_value);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -326,7 +326,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MinCount)
             std::vector<input_type>             h_input(size, h_value);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -418,7 +418,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, SmallCount)
             std::vector<input_type>             h_input(size, h_noise);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             if(size > 0 && size - 1 > 0)
@@ -518,7 +518,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromBegin)
             std::fill(h_input.begin() + count, h_input.end(), 0);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -612,7 +612,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromMiddle)
             std::fill(h_input.begin() + count, h_input.end(), h_value);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -706,7 +706,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromEnd)
             std::fill(h_input.begin() + (size - count), h_input.end(), h_value);
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -804,7 +804,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromEndButFail)
             }
             output_type                         h_output;
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -924,7 +924,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_1block)
             }
 
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -1044,7 +1044,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_2block)
             }
 
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -1164,7 +1164,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_3block)
             }
 
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -1286,7 +1286,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult1)
             }
 
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());
@@ -1402,7 +1402,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult2)
             }
 
             test_utils::device_ptr<input_type>  d_input(h_input);
-            test_utils::device_ptr<input_type>  d_value(&h_value, 1);
+            test_utils::device_ptr<input_type>  d_value(std::vector<input_type>({h_value}));
             test_utils::device_ptr<output_type> d_output(1);
 
             SCOPED_TRACE(testing::Message() << "with size = " << h_input.size());

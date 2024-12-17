@@ -21,7 +21,10 @@
 #ifndef ROCPRIM_TEST_UTILS_DEVICE_PTR_HPP
 #define ROCPRIM_TEST_UTILS_DEVICE_PTR_HPP
 
+#include <array>
 #include <cstddef>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "../common_test_header.hpp"
@@ -60,29 +63,91 @@ public:
     };
 
     /// \brief Construct by host vectors with the same sized value_type
-    template<typename InVecValueType, typename Allocator>
-    explicit device_ptr(std::vector<InVecValueType, Allocator> const& data)
+    template<typename InValueType, typename Allocator>
+    explicit device_ptr(std::vector<InValueType, Allocator> const& data)
         : device_raw_ptr_(nullptr), number_of_ele_(data.size())
     {
-        static_assert(
-            sizeof(InVecValueType) == sizeof(value_type),
-            "value_type of input vector must have the same size with device_ptr::value_type");
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
 
         size_type storage_size = number_of_ele_ * sizeof(value_type);
         HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
         HIP_CHECK(hipMemcpy(device_raw_ptr_, data.data(), storage_size, hipMemcpyHostToDevice));
     }
 
-    /// \brief Construct with a copy of this `host_buffer`
-    ///
-    /// \param _number_of_ele be aware, this is NOT the sizeof `host_buffer`, this is the `number of elements` in the `host_buffer`
-    device_ptr(const void* host_buffer, size_type _number_of_ele)
-        : device_raw_ptr_(nullptr), number_of_ele_(_number_of_ele)
+    template<typename InValueType>
+    explicit device_ptr(std::vector<InValueType> const& data, hipStream_t stream)
+        : device_raw_ptr_(nullptr), number_of_ele_(data.size())
     {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
         size_type storage_size = number_of_ele_ * sizeof(value_type);
         HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
-        HIP_CHECK(hipMemcpy(device_raw_ptr_, host_buffer, storage_size, hipMemcpyHostToDevice));
-    };
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 data.data(),
+                                 storage_size,
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
+
+    template<typename InValueType, size_type Size>
+    explicit device_ptr(std::array<InValueType, Size> const& data)
+        : device_raw_ptr_(nullptr), number_of_ele_(Size)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        size_type storage_size = Size * sizeof(value_type);
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
+        HIP_CHECK(hipMemcpy(device_raw_ptr_, data.data(), storage_size, hipMemcpyHostToDevice));
+    }
+
+    template<typename InValueType, size_type Size>
+    explicit device_ptr(std::array<InValueType, Size> const& data, hipStream_t stream)
+        : device_raw_ptr_(nullptr), number_of_ele_(Size)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        size_type storage_size = Size * sizeof(value_type);
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 data.data(),
+                                 storage_size,
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
+
+    template<typename InValueType, typename DeleterType>
+    explicit device_ptr(std::unique_ptr<InValueType[], DeleterType> const& uptr, size_type size)
+        : device_raw_ptr_(nullptr), number_of_ele_(size)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        size_type storage_size = size * sizeof(value_type);
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
+        HIP_CHECK(hipMemcpy(device_raw_ptr_, uptr.get(), storage_size, hipMemcpyHostToDevice));
+    }
+
+    template<typename InValueType, typename DeleterType>
+    explicit device_ptr(std::unique_ptr<InValueType[], DeleterType> const& uptr,
+                        size_type                                          size,
+                        hipStream_t                                        stream)
+        : device_raw_ptr_(nullptr), number_of_ele_(size)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        size_type storage_size = size * sizeof(value_type);
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_raw_ptr_, storage_size));
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 uptr.get(),
+                                 storage_size,
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
 
     ~device_ptr()
     {
@@ -110,6 +175,20 @@ public:
         HIP_CHECK(test_common_utils::hipMallocHelper(&ret.device_raw_ptr_, storage_size));
         HIP_CHECK(
             hipMemcpy(ret.device_raw_ptr_, device_raw_ptr_, storage_size, hipMemcpyDeviceToDevice));
+        return ret;
+    }
+
+    device_ptr duplicate_async(hipStream_t stream) const
+    {
+        device_ptr ret;
+        ret.number_of_ele_     = number_of_ele_;
+        size_type storage_size = number_of_ele_ * sizeof(value_type);
+        HIP_CHECK(test_common_utils::hipMallocHelper(&ret.device_raw_ptr_, storage_size));
+        HIP_CHECK(hipMemcpyAsync(ret.device_raw_ptr_,
+                                 device_raw_ptr_,
+                                 storage_size,
+                                 hipMemcpyDeviceToDevice,
+                                 stream));
         return ret;
     }
 
@@ -151,9 +230,9 @@ public:
         leak();
     }
 
-    void resize(size_type _new_number_of_ele)
+    void resize(size_type new_number_of_ele)
     {
-        if(_new_number_of_ele == 0)
+        if(new_number_of_ele == 0)
         {
             free_manually();
         }
@@ -161,15 +240,97 @@ public:
         {
             value_type* device_temp_ptr = nullptr;
             HIP_CHECK(test_common_utils::hipMallocHelper(&device_temp_ptr,
-                                                         _new_number_of_ele * sizeof(value_type)));
+                                                         new_number_of_ele * sizeof(value_type)));
             HIP_CHECK(hipMemcpy(device_temp_ptr,
                                 device_raw_ptr_,
-                                std::min(_new_number_of_ele, number_of_ele_) * sizeof(value_type),
+                                std::min(new_number_of_ele, number_of_ele_) * sizeof(value_type),
                                 hipMemcpyDeviceToDevice));
             free_manually();
             device_raw_ptr_ = device_temp_ptr;
-            number_of_ele_  = _new_number_of_ele;
+            number_of_ele_  = new_number_of_ele;
         }
+    }
+
+    void resize_async(size_type new_number_of_ele, hipStream_t stream)
+    {
+        if(new_number_of_ele == 0)
+        {
+            free_manually();
+        }
+        else
+        {
+            value_type* device_temp_ptr = nullptr;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&device_temp_ptr,
+                                                         new_number_of_ele * sizeof(value_type)));
+            HIP_CHECK(
+                hipMemcpyAsync(device_temp_ptr,
+                               device_raw_ptr_,
+                               std::min(new_number_of_ele, number_of_ele_) * sizeof(value_type),
+                               hipMemcpyDeviceToDevice,
+                               stream));
+            free_manually();
+            device_raw_ptr_ = device_temp_ptr;
+            number_of_ele_  = new_number_of_ele;
+        }
+    }
+
+    // if got error hipErrorOutOfMemory` return false, else return `true`
+    bool resize_with_memory_check(size_type new_number_of_ele)
+    {
+        if(new_number_of_ele == 0)
+        {
+            free_manually();
+        }
+        else
+        {
+            value_type* device_temp_ptr = nullptr;
+            const auto  err
+                = test_common_utils::hipMallocHelper(&device_temp_ptr,
+                                                     new_number_of_ele * sizeof(value_type));
+            if(err == hipErrorOutOfMemory)
+            {
+                return false;
+            }
+            HIP_CHECK(err);
+            HIP_CHECK(hipMemcpy(device_temp_ptr,
+                                device_raw_ptr_,
+                                std::min(new_number_of_ele, number_of_ele_) * sizeof(value_type),
+                                hipMemcpyDeviceToDevice));
+            free_manually();
+            device_raw_ptr_ = device_temp_ptr;
+            number_of_ele_  = new_number_of_ele;
+        }
+        return true;
+    }
+
+    bool resize_with_memory_check_async(size_type new_number_of_ele, hipStream_t stream)
+    {
+        if(new_number_of_ele == 0)
+        {
+            free_manually();
+        }
+        else
+        {
+            value_type* device_temp_ptr = nullptr;
+            const auto  err
+                = test_common_utils::hipMallocHelper(&device_temp_ptr,
+                                                     new_number_of_ele * sizeof(value_type));
+            if(err == hipErrorOutOfMemory)
+            {
+                return false;
+            }
+            HIP_CHECK(err);
+            HIP_CHECK(
+                hipMemcpyAsync(device_temp_ptr,
+                               device_raw_ptr_,
+                               std::min(new_number_of_ele, number_of_ele_) * sizeof(value_type),
+                               hipMemcpyDeviceToDevice,
+                               stream));
+            free_manually();
+            device_raw_ptr_ = device_temp_ptr;
+            number_of_ele_  = new_number_of_ele;
+        }
+        return true;
     }
 
     /// \brief Get the size of this memory space
@@ -185,12 +346,11 @@ public:
     }
 
     /// \brief Copy from host to device
-    template<typename InVecValueType, typename Allocator>
-    void store(std::vector<InVecValueType, Allocator> const& host_vec, size_type offset = 0)
+    template<typename InValueType, typename Allocator>
+    void store(std::vector<InValueType, Allocator> const& host_vec, size_type offset = 0)
     {
-        static_assert(
-            sizeof(InVecValueType) == sizeof(value_type),
-            "value_type of input vector must have the same size with device_ptr::value_type");
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
 
         if(host_vec.size() + offset > number_of_ele_)
         {
@@ -203,26 +363,170 @@ public:
                             hipMemcpyHostToDevice));
     }
 
+    template<typename InValueType, size_type Size>
+    void store(std::array<InValueType, Size> const& host_arr)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        if(Size > number_of_ele_)
+        {
+            resize(Size);
+        }
+
+        HIP_CHECK(hipMemcpy(device_raw_ptr_,
+                            host_arr.data(),
+                            Size * sizeof(value_type),
+                            hipMemcpyHostToDevice));
+    }
+
+    template<typename InValueType>
+    void
+        store(std::unique_ptr<InValueType[]> const& uptr, size_type offset, size_type number_of_ele)
+    {
+        static_assert(
+            sizeof(InValueType) == sizeof(value_type),
+            "value_type of input unique_ptr must have the same size with device_ptr::value_type");
+
+        if(offset + number_of_ele > number_of_ele_)
+        {
+            resize(offset + number_of_ele);
+        }
+        HIP_CHECK(hipMemcpy(device_raw_ptr_ + offset,
+                            uptr.get(),
+                            number_of_ele * sizeof(value_type),
+                            hipMemcpyHostToDevice));
+    }
+
+    template<typename InValueType>
+    void store_async(std::vector<InValueType> const& host_vec, hipStream_t stream)
+    {
+        static_assert(
+            sizeof(InValueType) == sizeof(value_type),
+            "value_type of input vector must have the same size with device_ptr::value_type");
+
+        if(host_vec.size() > number_of_ele_)
+        {
+            resize(host_vec.size());
+        }
+
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 host_vec.data(),
+                                 host_vec.size() * sizeof(value_type),
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
+
+    template<typename InValueType, size_type Size>
+    void store_async(std::array<InValueType, Size> const& host_arr, hipStream_t stream)
+    {
+        static_assert(sizeof(InValueType) == sizeof(value_type),
+                      "value_type of input must have the same size with device_ptr::value_type");
+
+        if(Size > number_of_ele_)
+        {
+            resize(Size);
+        }
+
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 host_arr.data(),
+                                 Size * sizeof(value_type),
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
+
+    template<typename InValueType>
+    void store_async(std::unique_ptr<InValueType[]> const& uptr,
+                     size_type                             offset,
+                     size_type                             number_of_ele,
+                     hipStream_t                           stream)
+    {
+        static_assert(
+            sizeof(InValueType) == sizeof(value_type),
+            "value_type of input unique_ptr must have the same size with device_ptr::value_type");
+
+        if(offset + number_of_ele > number_of_ele_)
+        {
+            resize(offset + number_of_ele);
+        }
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_ + offset,
+                                 uptr.get(),
+                                 number_of_ele * sizeof(value_type),
+                                 hipMemcpyHostToDevice,
+                                 stream));
+    }
+
+    // will not check the boundary
+    void store_value_at(size_type pos, value_type const& value)
+    {
+        HIP_CHECK(
+            hipMemcpy(device_raw_ptr_ + pos, &value, sizeof(value_type), hipMemcpyHostToDevice));
+    }
+
+    // will not check the boundary
+    void store_value_at_async(size_type pos, value_type const& value, hipStream_t stream)
+    {
+        HIP_CHECK(hipMemcpy(device_raw_ptr_ + pos,
+                            &value,
+                            sizeof(value_type),
+                            hipMemcpyHostToDevice,
+                            stream));
+    }
+
     /// \brief Copy from device to device
     template<typename InPtrValueType>
-    void replace(device_ptr<InPtrValueType> const& device_ptr, size_type offset = 0)
+    void replace(device_ptr<InPtrValueType> const& device_ptr)
     {
         static_assert(sizeof(InPtrValueType) == sizeof(value_type),
                       "sizeof(InPtrValueType) must equal to sizeof(value_type)");
 
-        if(device_ptr.number_of_ele_ + offset > number_of_ele_)
+        if(device_ptr.number_of_ele_ > number_of_ele_)
         {
-            resize(device_ptr.number_of_ele_ + offset);
+            resize(device_ptr.number_of_ele_);
         }
 
-        HIP_CHECK(hipMemcpy(device_raw_ptr_ + offset,
+        HIP_CHECK(hipMemcpy(device_raw_ptr_,
                             device_ptr.device_raw_ptr_,
                             device_ptr.number_of_ele_ * sizeof(value_type),
                             hipMemcpyDeviceToDevice));
     }
 
+    template<typename InPtrValueType>
+    void replace_async(device_ptr<InPtrValueType> const& device_ptr, hipStream_t stream)
+    {
+        static_assert(sizeof(InPtrValueType) == sizeof(value_type),
+                      "sizeof(InPtrValueType) must equal to sizeof(value_type)");
+
+        if(device_ptr.number_of_ele_ > number_of_ele_)
+        {
+            resize(device_ptr.number_of_ele_);
+        }
+
+        HIP_CHECK(hipMemcpyAsync(device_raw_ptr_,
+                                 device_ptr.device_raw_ptr_,
+                                 device_ptr.number_of_ele_ * sizeof(value_type),
+                                 hipMemcpyDeviceToDevice,
+                                 stream));
+    }
+
+    void memset(size_type offset, int value, size_type size_bytes)
+    {
+        HIP_CHECK(hipMemset(reinterpret_cast<char*>(device_raw_ptr_) + offset,
+                            value,
+                            static_cast<size_t>(size_bytes)));
+    }
+
+    void memset_async(size_type offset, int value, size_type size_bytes, hipStream_t stream)
+    {
+        HIP_CHECK(hipMemsetAsync(reinterpret_cast<char*>(device_raw_ptr_) + offset,
+                                 value,
+                                 static_cast<size_t>(size_bytes),
+                                 stream));
+    }
+
     /// \brief Copy from device to host
-    std::vector<value_type> load() const
+    /// This function will store loaded values into std::vector
+    auto load() const
     {
         std::vector<value_type> ret(number_of_ele_);
         HIP_CHECK(hipMemcpy(ret.data(),
@@ -231,14 +535,78 @@ public:
                             hipMemcpyDeviceToHost));
         return ret;
     }
-    /// \brief Copy from device to host
-    std::vector<value_type> load(size_type target_size, size_type offset = 0) const
+
+    auto load_async(hipStream_t stream) const
     {
-        std::vector<value_type> ret(target_size);
+        std::vector<value_type> ret(number_of_ele_);
+        HIP_CHECK(hipMemcpyAsync(ret.data(),
+                                 device_raw_ptr_,
+                                 number_of_ele_ * sizeof(value_type),
+                                 hipMemcpyDeviceToHost,
+                                 stream));
+        return ret;
+    }
+
+    template<size_type Size>
+    auto load_to_array() const
+    {
+        std::array<value_type, Size> ret;
         HIP_CHECK(hipMemcpy(ret.data(),
-                            device_raw_ptr_ + offset,
-                            target_size * sizeof(value_type),
+                            device_raw_ptr_,
+                            std::min<size_type>(number_of_ele_, Size) * sizeof(value_type),
                             hipMemcpyDeviceToHost));
+        return ret;
+    }
+
+    template<size_type Size>
+    auto load_to_array_async(hipStream_t stream) const
+    {
+        std::array<value_type, Size> ret;
+        HIP_CHECK(hipMemcpyAsync(ret.data(),
+                                 device_raw_ptr_,
+                                 std::min<size_type>(number_of_ele_, Size) * sizeof(value_type),
+                                 hipMemcpyDeviceToHost,
+                                 stream));
+        return ret;
+    }
+
+    auto load_to_unique_ptr() const
+    {
+        std::unique_ptr<value_type[]> ret(new value_type[number_of_ele_]);
+        HIP_CHECK(hipMemcpy(ret.get(),
+                            device_raw_ptr_,
+                            number_of_ele_ * sizeof(value_type),
+                            hipMemcpyDeviceToHost));
+        return ret;
+    }
+
+    auto load_to_unique_ptr_async(hipStream_t stream) const
+    {
+        std::unique_ptr<value_type[]> ret(new value_type[number_of_ele_]);
+        HIP_CHECK(hipMemcpyAsync(ret.get(),
+                                 device_raw_ptr_,
+                                 number_of_ele_ * sizeof(value_type),
+                                 hipMemcpyDeviceToHost,
+                                 stream));
+        return ret;
+    }
+
+    auto load_value_at(size_type pos) const
+    {
+        value_type ret;
+        HIP_CHECK(
+            hipMemcpy(&ret, device_raw_ptr_ + pos, sizeof(value_type), hipMemcpyDeviceToHost));
+        return ret;
+    }
+
+    auto load_value_at_async(size_type pos, hipStream_t stream) const
+    {
+        value_type ret;
+        HIP_CHECK(hipMemcpyAsync(&ret,
+                                 device_raw_ptr_ + pos,
+                                 sizeof(value_type),
+                                 hipMemcpyDeviceToHost,
+                                 stream));
         return ret;
     }
 

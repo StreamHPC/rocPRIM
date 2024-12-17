@@ -40,5 +40,5 @@ unsigned int get_rocprim_version_on_device()
     HIP_CHECK(hipGetLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
-    return d_version.load()[0];
+    return d_version.load_value_at(0);
 }
