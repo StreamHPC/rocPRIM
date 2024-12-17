@@ -351,7 +351,6 @@ autotune:build:
     - $GPU
   extends:
     - .cmake-minimum
-    - .rules:test
   needs:
     - job: build:cmake-minimum
       parallel:
@@ -381,10 +380,7 @@ test:any-gpu:
   extends:
     - .test:common
   rules:
-    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
-          $CI_MERGE_REQUEST_LABELS !~ /Arch::/
-      when: always
-    - when: never
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ && $CI_MERGE_REQUEST_LABELS !~ /Arch::/
 
 test:label-arch:
   extends:
@@ -393,13 +389,12 @@ test:label-arch:
     - .rules:arch-labels
 
 test:all-gpus:
+  variables:
+    SHOULD_BE_UNDRAFTED: "true"
   extends:
     - .gpus:rocm
     - .test:common
-  rules:
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
-      when: always
-    - when: never
+    - .rules:test
 
 .test-windows-base:
   stage: test
