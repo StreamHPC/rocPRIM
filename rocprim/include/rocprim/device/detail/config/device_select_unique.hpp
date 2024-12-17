@@ -379,7 +379,7 @@ struct default_select_unique_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     data_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 8)
-                      && (sizeof(data_type) > 4))>> : select_config<512, 7>
+                      && (sizeof(data_type) > 4))>> : select_config<256, 5>
 {};
 
 // Based on data_type = float
@@ -388,7 +388,7 @@ struct default_select_unique_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     data_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 4)
-                      && (sizeof(data_type) > 2))>> : select_config<512, 11>
+                      && (sizeof(data_type) > 2))>> : select_config<256, 10>
 {};
 
 // Based on data_type = rocprim::half
@@ -397,7 +397,7 @@ struct default_select_unique_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     data_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value)
-                      && (sizeof(data_type) <= 2))>> : select_config<256, 30>
+                      && (sizeof(data_type) <= 2))>> : select_config<256, 22>
 {};
 
 // Based on data_type = int64_t
@@ -407,7 +407,7 @@ struct default_select_unique_config<
     data_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
                       && (sizeof(data_type) <= 8) && (sizeof(data_type) > 4))>>
-    : select_config<512, 7>
+    : select_config<256, 5>
 {};
 
 // Based on data_type = int
@@ -417,7 +417,7 @@ struct default_select_unique_config<
     data_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
                       && (sizeof(data_type) <= 4) && (sizeof(data_type) > 2))>>
-    : select_config<512, 11>
+    : select_config<256, 10>
 {};
 
 // Based on data_type = short
@@ -427,7 +427,7 @@ struct default_select_unique_config<
     data_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
                       && (sizeof(data_type) <= 2) && (sizeof(data_type) > 1))>>
-    : select_config<256, 30>
+    : select_config<256, 22>
 {};
 
 // Based on data_type = int8_t
@@ -436,7 +436,73 @@ struct default_select_unique_config<
     static_cast<unsigned int>(target_arch::gfx90a),
     data_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
-                      && (sizeof(data_type) <= 1))>> : select_config<256, 28>
+                      && (sizeof(data_type) <= 1))>> : select_config<128, 32>
+{};
+
+// Based on data_type = double
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 8)
+                      && (sizeof(data_type) > 4))>> : select_config<512, 5>
+{};
+
+// Based on data_type = float
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value) && (sizeof(data_type) <= 4)
+                      && (sizeof(data_type) > 2))>> : select_config<512, 15>
+{};
+
+// Based on data_type = rocprim::half
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 2))>> : select_config<512, 30>
+{};
+
+// Based on data_type = int64_t
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 8) && (sizeof(data_type) > 4))>>
+    : select_config<512, 7>
+{};
+
+// Based on data_type = int
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 4) && (sizeof(data_type) > 2))>>
+    : select_config<512, 15>
+{};
+
+// Based on data_type = short
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 2) && (sizeof(data_type) > 1))>>
+    : select_config<512, 30>
+{};
+
+// Based on data_type = int8_t
+template<class data_type>
+struct default_select_unique_config<
+    static_cast<unsigned int>(target_arch::gfx942),
+    data_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<data_type>::value)
+                      && (sizeof(data_type) <= 1))>> : select_config<512, 32>
 {};
 
 } // end namespace detail
