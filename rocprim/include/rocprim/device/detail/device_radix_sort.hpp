@@ -831,7 +831,9 @@ struct onesweep_histograms_helper
         // Load using a striped arrangement, the order doesn't matter here.
         if ROCPRIM_IF_CONSTEXPR(IsFull)
         {
-            block_load_direct_striped<BlockSize>(flat_id, keys_input, keys);
+            block_load_direct_blocked_vectorized(flat_id, keys_input, keys);
+            // block_load_direct_striped<BlockSize>(flat_id, keys_input, keys);
+            // block_load_direct_unordered<BlockSize>(flat_id, keys_input, keys);
         }
         else
         {
@@ -867,24 +869,26 @@ struct onesweep_histograms_helper
 
         // Combine the local histograms into a global histogram.
 
-        unsigned int place = 0;
-        for(unsigned int bit = begin_bit; bit < end_bit; bit += RadixBits)
-        {
-            for(unsigned int digit = flat_id; digit < radix_size; digit += BlockSize)
-            {
-                counter_type total = 0;
+        asm volatile ("" :: "r"(global_digit_counts));
 
-                ROCPRIM_UNROLL
-                for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
-                {
-                    total += get_counter(stripe, place, digit, storage);
-                }
+        // unsigned int place = 0;
+        // for(unsigned int bit = begin_bit; bit < end_bit; bit += RadixBits)
+        // {
+        //     for(unsigned int digit = flat_id; digit < radix_size; digit += BlockSize)
+        //     {
+        //         counter_type total = 0;
 
-                ::rocprim::detail::atomic_add(&global_digit_counts[place * radix_size + digit],
-                                              total);
-            }
-            ++place;
-        }
+        //         ROCPRIM_UNROLL
+        //         for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
+        //         {
+        //             total += get_counter(stripe, place, digit, storage);
+        //         }
+
+        //         ::rocprim::detail::atomic_add(&global_digit_counts[place * radix_size + digit],
+        //                                       total);
+        //     }
+        //     ++place;
+        // }
     }
 };
 

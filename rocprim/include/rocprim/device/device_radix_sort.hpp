@@ -35,6 +35,7 @@
 #include "../functional.hpp"
 #include "../types.hpp"
 
+#include "../iterator/detail/const_iterator.hpp"
 #include "../type_traits.hpp"
 #include "detail/config/device_radix_sort_onesweep.hpp"
 #include "detail/device_radix_sort.hpp"
@@ -164,6 +165,8 @@ hipError_t radix_sort_onesweep_global_offsets(KeysInputIterator keys_input,
     {
         std::cout << "blocks " << blocks << '\n';
         std::cout << "full_blocks " << full_blocks << '\n';
+        std::cout << "block_size " << params.histogram.block_size << '\n';
+        std::cout << "items_per_thread " << params.histogram.items_per_thread << '\n';
         start = std::chrono::steady_clock::now();
     }
 
@@ -182,20 +185,20 @@ hipError_t radix_sort_onesweep_global_offsets(KeysInputIterator keys_input,
                        end_bit);
     ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("compute_global_digit_histograms", size, start);
 
-    // Scan each histogram separately to get the final offsets.
-    if(debug_synchronous)
-    {
-        start = std::chrono::steady_clock::now();
-    }
+    // // Scan each histogram separately to get the final offsets.
+    // if(debug_synchronous)
+    // {
+    //     start = std::chrono::steady_clock::now();
+    // }
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(onesweep_scan_histograms_kernel<config>),
-                       dim3(digit_places), // One block for every digit place.
-                       dim3(params.histogram.block_size),
-                       0,
-                       stream,
-                       global_digit_offsets);
+    // hipLaunchKernelGGL(HIP_KERNEL_NAME(onesweep_scan_histograms_kernel<config>),
+    //                    dim3(digit_places), // One block for every digit place.
+    //                    dim3(params.histogram.block_size),
+    //                    0,
+    //                    stream,
+    //                    global_digit_offsets);
 
-    ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("scan_global_digit_histograms", bins, start);
+    // ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("scan_global_digit_histograms", bins, start);
     return hipSuccess;
 }
 
@@ -337,9 +340,9 @@ hipError_t radix_sort_onesweep_iteration(
                                dim3(params.sort.block_size),
                                0,
                                stream,
-                               keys_input + offset,
+                               make_const_iterator(keys_input + offset),
                                keys_output,
-                               values_input + offset,
+                               make_const_iterator(values_input + offset),
                                values_output,
                                current_batch_size,
                                global_digit_offsets_in,
@@ -357,9 +360,9 @@ hipError_t radix_sort_onesweep_iteration(
                                dim3(params.sort.block_size),
                                0,
                                stream,
-                               keys_input + offset,
+                               make_const_iterator(keys_input + offset),
                                keys_tmp,
-                               values_input + offset,
+                               make_const_iterator(values_input + offset),
                                values_tmp,
                                current_batch_size,
                                global_digit_offsets_in,
@@ -377,9 +380,9 @@ hipError_t radix_sort_onesweep_iteration(
                                dim3(params.sort.block_size),
                                0,
                                stream,
-                               keys_tmp + offset,
+                               make_const_iterator(keys_tmp + offset),
                                keys_output,
-                               values_tmp + offset,
+                               make_const_iterator(values_tmp + offset),
                                values_output,
                                current_batch_size,
                                global_digit_offsets_in,
@@ -397,9 +400,9 @@ hipError_t radix_sort_onesweep_iteration(
                                dim3(params.sort.block_size),
                                0,
                                stream,
-                               keys_output + offset,
+                               make_const_iterator(keys_output + offset),
                                keys_tmp,
-                               values_output + offset,
+                               make_const_iterator(values_output + offset),
                                values_tmp,
                                current_batch_size,
                                global_digit_offsets_in,
@@ -572,35 +575,35 @@ hipError_t radix_sort_onesweep_impl(
         }
     }
 
-    // Sort each digit place iteratively.
-    for(unsigned bit = begin_bit, place = 0; bit < end_bit;
-        bit += params.radix_bits_per_place, ++place)
-    {
-        hipError_t error = radix_sort_onesweep_iteration<Config, Descending>(
-            keys_input,
-            keys_tmp,
-            keys_output,
-            values_input,
-            values_tmp,
-            values_output,
-            static_cast<offset_type>(size),
-            global_digit_offsets + place * radix_size_per_place,
-            global_digit_offsets_tmp,
-            lookback_states,
-            from_input,
-            to_output,
-            decomposer,
-            bit,
-            end_bit,
-            stream,
-            debug_synchronous);
-        if(error != hipSuccess)
-            return error;
+    // // Sort each digit place iteratively.
+    // for(unsigned bit = begin_bit, place = 0; bit < end_bit;
+    //     bit += params.radix_bits_per_place, ++place)
+    // {
+    //     hipError_t error = radix_sort_onesweep_iteration<Config, Descending>(
+    //         keys_input,
+    //         keys_tmp,
+    //         keys_output,
+    //         values_input,
+    //         values_tmp,
+    //         values_output,
+    //         static_cast<offset_type>(size),
+    //         global_digit_offsets + place * radix_size_per_place,
+    //         global_digit_offsets_tmp,
+    //         lookback_states,
+    //         from_input,
+    //         to_output,
+    //         decomposer,
+    //         bit,
+    //         end_bit,
+    //         stream,
+    //         debug_synchronous);
+    //     if(error != hipSuccess)
+    //         return error;
 
-        is_result_in_output = to_output;
-        from_input          = false;
-        to_output           = !to_output;
-    }
+    //     is_result_in_output = to_output;
+    //     from_input          = false;
+    //     to_output           = !to_output;
+    // }
 
     return hipSuccess;
 }

@@ -248,11 +248,10 @@ void block_load_direct_striped(unsigned int flat_id,
                                InputIterator block_input,
                                T (&items)[ItemsPerThread])
 {
-    InputIterator thread_iter = block_input + flat_id;
     ROCPRIM_UNROLL
     for (unsigned int item = 0; item < ItemsPerThread; item++)
     {
-        items[item] = thread_iter[item * BlockSize];
+        items[item] = block_input[item * BlockSize + flat_id];
     }
 }
 
@@ -503,6 +502,41 @@ void block_load_direct_warp_striped(unsigned int flat_id,
     }
 
     block_load_direct_warp_striped<WarpSize>(flat_id, block_input, items, valid);
+}
+
+/// \brief Loads data from continuous memory into items across
+/// the thread block, with unspecified ordering.
+///
+template<
+    unsigned int BlockSize,
+    typename InputIterator,
+    typename T,
+    unsigned int ItemsPerThread
+>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void block_load_direct_unordered(
+    unsigned int flat_id,
+    InputIterator block_input,
+    T (&items)[ItemsPerThread])
+{
+    using read_type = rocprim::uint128_t;
+
+    static_assert(ItemsPerThread * sizeof(T) / sizeof(read_type), "Thread input size must be divisible by read type");
+
+    constexpr size_t N = ItemsPerThread * sizeof(T) / sizeof(read_type);
+
+    block_load_direct_warp_striped(
+        flat_id,
+        reinterpret_cast<const read_type*>(block_input),
+        reinterpret_cast<read_type (&)[N]>(items));
+
+    // TODO: Make this work with iterators...
+    // auto thread_iter = reinterpret_cast<const read_type*>(block_input) + flat_id;
+
+    // ROCPRIM_UNROLL
+    // for (unsigned i = 0; i < ItemsPerThread * sizeof(T) / sizeof(read_type); ++i) {
+    //     reinterpret_cast<read_type*>(&items)[i] = thread_iter[i * BlockSize];
+    // }
 }
 
 END_ROCPRIM_NAMESPACE
