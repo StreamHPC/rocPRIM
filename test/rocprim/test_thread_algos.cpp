@@ -112,6 +112,51 @@ TYPED_TEST(RocprimThreadOperationTests, Load)
     }
 }
 
+template<uint32_t ItemsPerThread, class Type>
+__global__
+void thread_copy_unroll_kernel(Type* device_input, Type* device_output)
+{
+    size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * ItemsPerThread;
+    rocprim::unrolled_copy<ItemsPerThread>(device_input + index, device_output + index);
+}
+
+TYPED_TEST(RocprimThreadOperationTests, CopyUnroll)
+{
+    using T                                  = typename TestFixture::type;
+    static constexpr uint32_t block_size     = 256;
+    static constexpr uint32_t grid_size      = 128;
+    static constexpr uint32_t ItemsPerThread = 4;
+    static constexpr uint32_t size           = block_size * grid_size * ItemsPerThread;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output(size);
+
+        // Calculate expected results on host
+        std::vector<T> expected = input;
+
+        // Preparing device
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
+
+        thread_copy_unroll_kernel<ItemsPerThread, T>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        HIP_CHECK(hipGetLastError());
+
+        // Reading results back
+        output = device_output.load();
+
+        // Verifying results
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    }
+}
+
 template<class Type>
 __global__
 void thread_store_kernel(Type* const device_input, Type* device_output)
