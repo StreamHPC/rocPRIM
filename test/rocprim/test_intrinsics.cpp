@@ -316,7 +316,7 @@ void test_shuffle()
 
     test_utils::device_ptr<T> d_data(size);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -410,7 +410,7 @@ TYPED_TEST(RocprimIntrinsicsTests, ShuffleIndex)
     HIP_CHECK(::rocprim::host_warp_size(device_id, hardware_warp_size));
     const size_t size = hardware_warp_size;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -562,7 +562,7 @@ TEST(RocprimIntrinsicsTests, MaskedBitCount)
 
     std::vector<unsigned int> expected(out_size);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -677,7 +677,7 @@ void warp_any_all_test()
     test_utils::device_ptr<unsigned int> d_output(out_size);
 
     std::vector<unsigned int> expected(out_size);
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -823,7 +823,7 @@ TYPED_TEST(RocprimIntrinsicsTests, WarpPermute)
     std::vector<T>            expected(size);
     std::vector<unsigned int> indices(size);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -920,7 +920,7 @@ TEST(RocprimIntrinsicsTests, MatchAny)
 
     std::vector<max_lane_mask_type> expected(size);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1029,7 +1029,7 @@ TEST(RocprimIntrinsicsTests, Ballot)
 
     std::vector<max_lane_mask_type> expected(size);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1119,7 +1119,7 @@ TEST(RocprimIntrinsicsTests, GroupElect)
     std::vector<max_lane_mask_type> output;
     output.reserve(number_of_warps);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

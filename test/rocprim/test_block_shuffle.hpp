@@ -34,7 +34,7 @@ typed_test_def(suite_name, name_suffix, BlockOffset)
     static constexpr size_t block_size = TestFixture::block_size;
     static constexpr size_t size = block_size * 11;
     static constexpr size_t grid_size = size / block_size;
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         int distance = (rand()%std::min<size_t>(10,block_size/2))-std::min<size_t>(10,block_size/2);
@@ -88,7 +88,7 @@ typed_test_def(suite_name, name_suffix, BlockRotate)
     static constexpr size_t block_size = TestFixture::block_size;
     static constexpr size_t size = block_size * 11;
     static constexpr size_t grid_size = size / block_size;
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         int distance = (rand()%std::min<size_t>(5,block_size/2));
@@ -142,7 +142,7 @@ typed_test_def(suite_name, name_suffix, BlockUp)
     static constexpr size_t size = block_size * 11;
     static constexpr size_t grid_size = size / block_size;
     static constexpr unsigned int ItemsPerThread = 128;
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -200,7 +200,7 @@ typed_test_def(suite_name, name_suffix, BlockDown)
     static constexpr size_t size = block_size * 11;
     static constexpr size_t grid_size = size / block_size;
     static constexpr unsigned int ItemsPerThread = 128;
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);

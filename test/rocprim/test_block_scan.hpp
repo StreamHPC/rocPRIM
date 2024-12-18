@@ -49,7 +49,7 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScan)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -120,7 +120,7 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScanReduce)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -195,7 +195,7 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScanPrefixCallback)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -271,7 +271,7 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScan)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -343,7 +343,7 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScanReduce)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -429,7 +429,7 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScanPrefixCallback)
     const size_t size = block_size * 58;
     const size_t grid_size = size / block_size;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);

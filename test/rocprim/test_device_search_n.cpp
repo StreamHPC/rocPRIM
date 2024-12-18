@@ -20,6 +20,7 @@
 
 #include "../common_test_header.hpp"
 
+#include "test_seed.hpp"
 #include "test_utils_custom_test_types.hpp"
 #include "test_utils_device_ptr.hpp"
 #include "test_utils_types.hpp"
@@ -110,7 +111,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, RandomTest)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -214,7 +215,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MaxCount)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -309,7 +310,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MinCount)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -502,7 +503,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromBegin)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -596,7 +597,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromMiddle)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -690,7 +691,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromEnd)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -784,7 +785,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, StartFromEndButFail)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -882,7 +883,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_1block)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1002,7 +1003,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_2block)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1122,7 +1123,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, NoiseTest_3block)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1242,7 +1243,7 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult1)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1364,11 +1365,10 @@ TYPED_TEST(RocprimDeviceSearchNTests, MultiResult2)
     constexpr bool debug_synchronous = TestFixture::debug_synchronous;
     op_type        op{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-
         for(const auto size : test_utils::get_sizes(seed_value))
         {
             using wrapped_config = rocprim::detail::wrapped_search_n_config<config, input_type>;

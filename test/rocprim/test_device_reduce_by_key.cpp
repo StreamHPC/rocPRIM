@@ -172,7 +172,7 @@ TYPED_TEST(RocprimDeviceReduceByKey, ReduceByKey)
     const unsigned int seed = 123;
     std::default_random_engine gen(seed);
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -589,7 +589,7 @@ TEST(RocprimDeviceReduceByKey, ReduceByNonEqualKeys)
     ::rocprim::plus<value_type> reduce_op;
     auto                        key_compare_op = [](const auto&, const auto&) { return false; };
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

@@ -125,7 +125,7 @@ TYPED_TEST(RocprimDeviceAdjacentFindTests, AdjacentFind)
 
     op_type op{};
 
-    for(std::size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(std::size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         const unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

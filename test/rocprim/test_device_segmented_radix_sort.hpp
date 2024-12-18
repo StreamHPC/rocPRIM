@@ -129,7 +129,7 @@ inline void sort_keys()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -343,7 +343,7 @@ inline void sort_keys_large_segments()
     size_t size           = 1 << 20;
     size_t segments_count = 2;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -451,7 +451,7 @@ inline void sort_keys_unspecified_ranges()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -591,7 +591,7 @@ inline void sort_pairs()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -745,7 +745,7 @@ inline void sort_pairs_unspecified_ranges()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -911,7 +911,7 @@ inline void sort_keys_double_buffer()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -1039,7 +1039,7 @@ inline void sort_pairs_double_buffer()
         TestFixture::params::min_segment_length,
         TestFixture::params::max_segment_length);
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
