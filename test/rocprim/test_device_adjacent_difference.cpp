@@ -319,7 +319,7 @@ TYPED_TEST(RocprimDeviceAdjacentDifferenceTests, AdjacentDifference)
     SCOPED_TRACE(testing::Message()
                  << "left = " << left << ", api_variant = " << to_string(aliasing));
 
-    for(std::size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(std::size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         const unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -613,7 +613,7 @@ TYPED_TEST(RocprimDeviceAdjacentDifferenceLargeTests, LargeIndices)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for(std::size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(std::size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

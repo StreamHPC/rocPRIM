@@ -160,7 +160,7 @@ TYPED_TEST(HipcubBlockRunLengthDecodeTest, TestDecode)
     constexpr unsigned runs_per_thread          = TestFixture::params::runs_per_thread;
     constexpr unsigned decoded_items_per_thread = TestFixture::params::decoded_items_per_thread;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

@@ -133,7 +133,7 @@ TYPED_TEST(RocprimDeviceRunLengthEncode, Encode)
     std::default_random_engine gen(seed);
     std::vector<key_type> random_keys = test_utils::get_random_data<key_type>(64, -100, 100, seed);
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -263,7 +263,7 @@ TYPED_TEST(RocprimDeviceRunLengthEncode, NonTrivialRuns)
     std::default_random_engine gen(seed);
     std::vector<key_type> random_keys = test_utils::get_random_data<key_type>(64, -100, 100, seed);
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);

@@ -105,7 +105,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Flagged)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -330,7 +330,7 @@ TYPED_TEST(RocprimDevicePartitionTests, Predicate)
 
     auto select_op = select_op_t<T>{};
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
@@ -459,7 +459,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateTwoWay)
 
     auto select_op = select_op_t<T>{};
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -605,7 +605,7 @@ TYPED_TEST(RocprimDevicePartitionTests, PredicateThreeWay)
         { static_cast<T>(30), static_cast<T>(101) } // unselected is empty
     };
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         const unsigned int seed_value = seed_index < random_seeds_count
             ? static_cast<unsigned int>(rand()) : seeds[seed_index - random_seeds_count];
@@ -1395,7 +1395,7 @@ TEST(RocprimDevicePartitionBlockSizeTests, BlockSize)
     // Use some power of two and off-by-one-from-power-of-two data sizes.
     const std::vector<size_t> sizes = {256, 257, 511, 512, 1024, 1025};
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);

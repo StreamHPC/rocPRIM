@@ -44,6 +44,12 @@ stages:
 
 workflow:
   rules:
+    - if: $CI_MERGE_REQUEST_TITLE !~ /Draft:/
+      variables:
+        ROCPRIM_TEST_RUNS: 3
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/
+      variables:
+        ROCPRIM_TEST_RUNS: 1
     - if: $CI_MERGE_REQUEST_LABELS !~ /CI Skip/
 
 variables:

@@ -123,7 +123,7 @@ TYPED_TEST(RocprimDeviceTransformTests, Transform)
     static constexpr bool use_identity_iterator = TestFixture::use_identity_iterator;
     using Config                                = size_limit_config_t<TestFixture::size_limit>;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -213,7 +213,7 @@ TYPED_TEST(RocprimDeviceTransformTests, BinaryTransform)
     const bool            debug_synchronous     = TestFixture::debug_synchronous;
     using Config                                = size_limit_config_t<TestFixture::size_limit>;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -327,7 +327,7 @@ void testLargeIndices()
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];

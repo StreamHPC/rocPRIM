@@ -195,7 +195,7 @@ TYPED_TEST(RocprimDevicePartialSortTests, PartialSort)
     const bool            debug_synchronous     = TestFixture::debug_synchronous;
     constexpr bool        use_indirect_iterator = TestFixture::use_indirect_iterator;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
+    for(size_t seed_index = 0; seed_index < number_of_runs; ++seed_index)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
@@ -382,7 +382,7 @@ TYPED_TEST(RocprimDevicePartialSortTests, PartialSortCopy)
     constexpr bool        input_is_const        = std::is_const_v<typename TestFixture::key_type>;
     constexpr bool        use_indirect_iterator = TestFixture::use_indirect_iterator;
 
-    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
+    for(size_t seed_index = 0; seed_index < number_of_runs; ++seed_index)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
