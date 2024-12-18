@@ -33,6 +33,8 @@
 #include "../config.hpp"
 #include "../detail/various.hpp"
 
+#include <utility>
+
 BEGIN_ROCPRIM_NAMESPACE
 
 /// \defgroup thread_load Thread Load Functions
@@ -158,6 +160,32 @@ template<cache_load_modifier MODIFIER = load_default, typename T>
 [[deprecated("Use a dereference instead.")]] ROCPRIM_DEVICE ROCPRIM_INLINE T thread_load(T* ptr)
 {
     return detail::AsmThreadLoad<MODIFIER, T>(ptr);
+}
+
+namespace detail
+{
+
+template<typename T, typename InputIteratorT, int... Is>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void unrolled_copy_impl(InputIteratorT src, T* dst, std::integer_sequence<int, Is...>)
+{
+    int dummy[] = {(dst[Is] = src[Is], 0)...};
+    (void)dummy;
+}
+
+} // namespace detail
+
+/// \brief Copy Count number of items from src to dst.
+/// \tparam Count number of items to copy
+/// \tparam InputIteratorT the input iterator type
+/// \tparam T Type of Data to be copied to
+/// \param src [in] - Input iterator for data that will be copied
+/// \param dst [out] - The pointer the data will be copied to.
+template<int Count, typename InputIteratorT, typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void unrolled_copy(InputIteratorT src, T* dst)
+{
+    detail::unrolled_copy_impl(src, dst, std::make_integer_sequence<int, Count>{});
 }
 
 /// @}
