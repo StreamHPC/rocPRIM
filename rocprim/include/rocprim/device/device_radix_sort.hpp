@@ -538,42 +538,42 @@ hipError_t radix_sort_onesweep_impl(
         values_tmp = values_tmp_storage;
     }
 
-    // Copy input keys and values if necessary (in-place sorting: input and output iterators are equal).
-    bool to_output  = no_allocate_tmp_buffer || (places - 1) % 2 == 0;
-    bool from_input = true;
-    if(!no_allocate_tmp_buffer && to_output)
-    {
-        const bool keys_alias
-            = ::rocprim::detail::can_iterators_alias(keys_input, keys_output, size);
-        const bool values_alias
-            = with_values
-              && ::rocprim::detail::can_iterators_alias(values_input, values_output, size);
-        if(keys_alias || values_alias)
-        {
-            hipError_t error = ::rocprim::transform(keys_input,
-                                                    keys_tmp,
-                                                    size,
-                                                    ::rocprim::identity<key_type>(),
-                                                    stream,
-                                                    debug_synchronous);
-            if(error != hipSuccess)
-                return error;
+    // // Copy input keys and values if necessary (in-place sorting: input and output iterators are equal).
+    // bool to_output  = no_allocate_tmp_buffer || (places - 1) % 2 == 0;
+    // bool from_input = true;
+    // if(!no_allocate_tmp_buffer && to_output)
+    // {
+    //     const bool keys_alias
+    //         = ::rocprim::detail::can_iterators_alias(keys_input, keys_output, size);
+    //     const bool values_alias
+    //         = with_values
+    //           && ::rocprim::detail::can_iterators_alias(values_input, values_output, size);
+    //     if(keys_alias || values_alias)
+    //     {
+    //         hipError_t error = ::rocprim::transform(keys_input,
+    //                                                 keys_tmp,
+    //                                                 size,
+    //                                                 ::rocprim::identity<key_type>(),
+    //                                                 stream,
+    //                                                 debug_synchronous);
+    //         if(error != hipSuccess)
+    //             return error;
 
-            if(with_values)
-            {
-                hipError_t error = ::rocprim::transform(values_input,
-                                                        values_tmp,
-                                                        size,
-                                                        ::rocprim::identity<value_type>(),
-                                                        stream,
-                                                        debug_synchronous);
-                if(error != hipSuccess)
-                    return error;
-            }
+    //         if(with_values)
+    //         {
+    //             hipError_t error = ::rocprim::transform(values_input,
+    //                                                     values_tmp,
+    //                                                     size,
+    //                                                     ::rocprim::identity<value_type>(),
+    //                                                     stream,
+    //                                                     debug_synchronous);
+    //             if(error != hipSuccess)
+    //                 return error;
+    //         }
 
-            from_input = false;
-        }
-    }
+    //         from_input = false;
+    //     }
+    // }
 
     // // Sort each digit place iteratively.
     // for(unsigned bit = begin_bit, place = 0; bit < end_bit;
@@ -677,58 +677,58 @@ hipError_t
     }
     unsigned int single_sort_items_per_block
         = block_sort_config::block_size * block_sort_config::items_per_thread;
-    if(size <= single_sort_items_per_block)
-    {
-        if(temporary_storage == nullptr)
-        {
-            storage_size = ::rocprim::detail::align_size(1);
-            return hipSuccess;
-        }
+    // if(size <= single_sort_items_per_block)
+    // {
+    //     if(temporary_storage == nullptr)
+    //     {
+    //         storage_size = ::rocprim::detail::align_size(1);
+    //         return hipSuccess;
+    //     }
 
-        if(size == 0u)
-        {
-            is_result_in_output = true;
-            return hipSuccess;
-        }
-        is_result_in_output = true;
-        // block_sort_config is never default_config
-        return radix_sort_block_sort<block_sort_config, Descending>(keys_input,
-                                                                    keys_output,
-                                                                    values_input,
-                                                                    values_output,
-                                                                    static_cast<unsigned int>(size),
-                                                                    single_sort_items_per_block,
-                                                                    decomposer,
-                                                                    begin_bit,
-                                                                    end_bit,
-                                                                    stream,
-                                                                    debug_synchronous);
-    }
-    // For sizeof(key_type) <= 2, onesweep is 2x/3x faster (also with values) when
-    // input_size > 100K, so don't use radix_sort_merge_sort then.
-    else if(static_cast<size_t>(size) <= merge_sort_limit
-            && (sizeof(key_type) > 2 || size < 100000))
-    {
-        is_result_in_output = true;
-        // note: Config::merge_sort_config may be default_config
-        using merge_sort_config = typename Config::merge_sort_config;
-        return radix_sort_merge_impl<merge_sort_config, Descending>(temporary_storage,
-                                                                    storage_size,
-                                                                    keys_input,
-                                                                    keys_tmp,
-                                                                    keys_output,
-                                                                    values_input,
-                                                                    values_tmp,
-                                                                    values_output,
-                                                                    static_cast<unsigned int>(size),
-                                                                    decomposer,
-                                                                    begin_bit,
-                                                                    end_bit,
-                                                                    stream,
-                                                                    no_allocate_tmp_buffer,
-                                                                    debug_synchronous);
-    }
-    else
+    //     if(size == 0u)
+    //     {
+    //         is_result_in_output = true;
+    //         return hipSuccess;
+    //     }
+    //     is_result_in_output = true;
+    //     // block_sort_config is never default_config
+    //     return radix_sort_block_sort<block_sort_config, Descending>(keys_input,
+    //                                                                 keys_output,
+    //                                                                 values_input,
+    //                                                                 values_output,
+    //                                                                 static_cast<unsigned int>(size),
+    //                                                                 single_sort_items_per_block,
+    //                                                                 decomposer,
+    //                                                                 begin_bit,
+    //                                                                 end_bit,
+    //                                                                 stream,
+    //                                                                 debug_synchronous);
+    // }
+    // // For sizeof(key_type) <= 2, onesweep is 2x/3x faster (also with values) when
+    // // input_size > 100K, so don't use radix_sort_merge_sort then.
+    // else if(static_cast<size_t>(size) <= merge_sort_limit
+    //         && (sizeof(key_type) > 2 || size < 100000))
+    // {
+    //     is_result_in_output = true;
+    //     // note: Config::merge_sort_config may be default_config
+    //     using merge_sort_config = typename Config::merge_sort_config;
+    //     return radix_sort_merge_impl<merge_sort_config, Descending>(temporary_storage,
+    //                                                                 storage_size,
+    //                                                                 keys_input,
+    //                                                                 keys_tmp,
+    //                                                                 keys_output,
+    //                                                                 values_input,
+    //                                                                 values_tmp,
+    //                                                                 values_output,
+    //                                                                 static_cast<unsigned int>(size),
+    //                                                                 decomposer,
+    //                                                                 begin_bit,
+    //                                                                 end_bit,
+    //                                                                 stream,
+    //                                                                 no_allocate_tmp_buffer,
+    //                                                                 debug_synchronous);
+    // }
+    // else
     {
         // note: Config::onesweep_config may be default_config
         using onesweep_config = typename Config::onesweep_config;

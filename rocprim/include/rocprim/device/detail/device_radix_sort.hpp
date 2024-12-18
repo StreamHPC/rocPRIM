@@ -831,9 +831,9 @@ struct onesweep_histograms_helper
         // Load using a striped arrangement, the order doesn't matter here.
         if ROCPRIM_IF_CONSTEXPR(IsFull)
         {
-            block_load_direct_blocked_vectorized(flat_id, keys_input, keys);
+            // block_load_direct_blocked_vectorized(flat_id, keys_input, keys);
             // block_load_direct_striped<BlockSize>(flat_id, keys_input, keys);
-            // block_load_direct_unordered<BlockSize>(flat_id, keys_input, keys);
+            block_load_direct_unordered<BlockSize>(flat_id, keys_input, keys);
         }
         else
         {
@@ -852,43 +852,74 @@ struct onesweep_histograms_helper
             key_codec::encode_inplace(keys[i], decomposer);
         }
 
-        for(unsigned int bit = begin_bit, place = 0; bit < end_bit; bit += RadixBits, ++place)
-        {
-            count_digits_at_place<IsFull>(flat_id,
-                                          stripe,
-                                          keys,
-                                          place,
-                                          decomposer,
-                                          bit,
-                                          min(RadixBits, end_bit - bit),
-                                          valid_count,
-                                          storage);
+        // for(unsigned int bit = begin_bit, place = 0; bit < end_bit; bit += RadixBits, ++place)
+        // {
+        //     count_digits_at_place<IsFull>(flat_id,
+        //                                   stripe,
+        //                                   keys,
+        //                                   place,
+        //                                   decomposer,
+        //                                   bit,
+        //                                   min(RadixBits, end_bit - bit),
+        //                                   valid_count,
+        //                                   storage);
+        // }
+
+        if (begin_bit == 0 && end_bit == sizeof(KeyType) * 8) {
+            ROCPRIM_UNROLL
+            for(unsigned int i = 0; i < ItemsPerThread; ++i)
+            {
+                const unsigned int pos = i * BlockSize + flat_id;
+                if(!IsFull && pos >= valid_count)
+                    continue;
+
+                ROCPRIM_UNROLL
+                for(unsigned int bit = 0, place = 0; bit < sizeof(KeyType) * 8; bit += RadixBits, ++place)
+                {
+                    const unsigned int digit
+                        = key_codec::extract_digit(keys[i], bit, min(RadixBits, end_bit - bit), decomposer);
+                    atomic_add(&get_counter(stripe, place, digit, storage), 1);
+                }
+            }
+        } else {
+            ROCPRIM_UNROLL
+            for(unsigned int i = 0; i < ItemsPerThread; ++i)
+            {
+                const unsigned int pos = i * BlockSize + flat_id;
+                if(!IsFull && pos >= valid_count)
+                    continue;
+
+                for(unsigned int bit = begin_bit, place = 0; bit < end_bit; bit += RadixBits, ++place)
+                {
+                    const unsigned int digit
+                        = key_codec::extract_digit(keys[i], bit, min(RadixBits, end_bit - bit), decomposer);
+                    atomic_add(&get_counter(stripe, place, digit, storage), 1);
+                }
+            }
         }
 
         ::rocprim::syncthreads();
 
         // Combine the local histograms into a global histogram.
 
-        asm volatile ("" :: "r"(global_digit_counts));
+        unsigned int place = 0;
+        for(unsigned int bit = begin_bit; bit < end_bit; bit += RadixBits)
+        {
+            for(unsigned int digit = flat_id; digit < radix_size; digit += BlockSize)
+            {
+                counter_type total = 0;
 
-        // unsigned int place = 0;
-        // for(unsigned int bit = begin_bit; bit < end_bit; bit += RadixBits)
-        // {
-        //     for(unsigned int digit = flat_id; digit < radix_size; digit += BlockSize)
-        //     {
-        //         counter_type total = 0;
+                ROCPRIM_UNROLL
+                for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
+                {
+                    total += get_counter(stripe, place, digit, storage);
+                }
 
-        //         ROCPRIM_UNROLL
-        //         for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
-        //         {
-        //             total += get_counter(stripe, place, digit, storage);
-        //         }
-
-        //         ::rocprim::detail::atomic_add(&global_digit_counts[place * radix_size + digit],
-        //                                       total);
-        //     }
-        //     ++place;
-        // }
+                ::rocprim::detail::atomic_add(&global_digit_counts[place * radix_size + digit],
+                                              total);
+            }
+            ++place;
+        }
     }
 };
 

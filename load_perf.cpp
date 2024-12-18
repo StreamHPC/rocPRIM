@@ -58,9 +58,9 @@ hipError_t launch_load(T* input, size_t input_size) {
 
 int main() {
     constexpr int block_size = 1024;
-    constexpr int items_per_thread = 16;
+    constexpr int items_per_thread = 8;
 
-    using Key = uint16_t;
+    using Key = uint32_t;
     constexpr size_t size = 268'435'456;
 
     Key* d_input;

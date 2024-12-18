@@ -519,16 +519,16 @@ void block_load_direct_unordered(
     InputIterator block_input,
     T (&items)[ItemsPerThread])
 {
-    using read_type = rocprim::uint128_t;
+    using read_type = uint128_t;
 
     static_assert(ItemsPerThread * sizeof(T) / sizeof(read_type), "Thread input size must be divisible by read type");
 
     constexpr size_t N = ItemsPerThread * sizeof(T) / sizeof(read_type);
 
-    block_load_direct_warp_striped(
-        flat_id,
-        reinterpret_cast<const read_type*>(block_input),
-        reinterpret_cast<read_type (&)[N]>(items));
+    // block_load_direct_warp_striped(
+    //     flat_id,
+    //     reinterpret_cast<const read_type*>(block_input),
+    //     reinterpret_cast<read_type (&)[N]>(items));
 
     // TODO: Make this work with iterators...
     // auto thread_iter = reinterpret_cast<const read_type*>(block_input) + flat_id;
@@ -537,6 +537,63 @@ void block_load_direct_unordered(
     // for (unsigned i = 0; i < ItemsPerThread * sizeof(T) / sizeof(read_type); ++i) {
     //     reinterpret_cast<read_type*>(&items)[i] = thread_iter[i * BlockSize];
     // }
+
+    constexpr int warp_size = device_warp_size();
+
+    // unsigned int thread_id = detail::logical_lane_id<warp_size>();
+    unsigned int warp_offset = warp_id() * warp_size * N;
+
+    auto thread_iter = reinterpret_cast<const read_type*>(block_input) + lane_id() + warp_offset;
+
+    ROCPRIM_UNROLL
+    for (unsigned int item = 0; item < N; item++)
+    {
+        reinterpret_cast<read_type*>(&items[0])[item] = thread_iter[item * warpSize];
+    }
+}
+
+template<
+    typename InputIterator,
+    typename T,
+    unsigned int ItemsPerThread
+>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void warp_load_direct_unordered(
+    unsigned int lane_id,
+    InputIterator warp_input,
+    T (&items)[ItemsPerThread])
+{
+    using read_type = uint128_t;
+
+    static_assert(ItemsPerThread * sizeof(T) / sizeof(read_type), "Thread input size must be divisible by read type");
+
+    constexpr size_t N = ItemsPerThread * sizeof(T) / sizeof(read_type);
+
+    // block_load_direct_warp_striped(
+    //     flat_id,
+    //     reinterpret_cast<const read_type*>(block_input),
+    //     reinterpret_cast<read_type (&)[N]>(items));
+
+    // TODO: Make this work with iterators...
+    // auto thread_iter = reinterpret_cast<const read_type*>(block_input) + flat_id;
+
+    // ROCPRIM_UNROLL
+    // for (unsigned i = 0; i < ItemsPerThread * sizeof(T) / sizeof(read_type); ++i) {
+    //     reinterpret_cast<read_type*>(&items)[i] = thread_iter[i * BlockSize];
+    // }
+
+    constexpr int warp_size = device_warp_size();
+
+    // unsigned int thread_id = detail::logical_lane_id<warp_size>();
+    // unsigned int warp_offset = warp_id() * warp_size * N;
+
+    auto thread_iter = reinterpret_cast<const read_type*>(warp_input) + lane_id;
+
+    ROCPRIM_UNROLL
+    for (unsigned int item = 0; item < N; item++)
+    {
+        reinterpret_cast<read_type*>(&items[0])[item] = thread_iter[item * warp_size];
+    }
 }
 
 END_ROCPRIM_NAMESPACE
