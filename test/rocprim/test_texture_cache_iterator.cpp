@@ -45,15 +45,14 @@ public:
     const bool debug_synchronous = false;
 };
 
-typedef ::testing::Types<
-    RocprimTextureCacheIteratorParams<int>,
-    RocprimTextureCacheIteratorParams<unsigned int>,
-    RocprimTextureCacheIteratorParams<unsigned char>,
-    RocprimTextureCacheIteratorParams<float>,
-    RocprimTextureCacheIteratorParams<unsigned long long>,
-    RocprimTextureCacheIteratorParams<test_utils::custom_test_type<int>>,
-    RocprimTextureCacheIteratorParams<test_utils::custom_test_type<float>>
-> RocprimTextureCacheIteratorTestsParams;
+using RocprimTextureCacheIteratorTestsParams
+    = ::testing::Types<RocprimTextureCacheIteratorParams<int>,
+                       RocprimTextureCacheIteratorParams<unsigned int>,
+                       RocprimTextureCacheIteratorParams<unsigned char>,
+                       RocprimTextureCacheIteratorParams<float>,
+                       RocprimTextureCacheIteratorParams<unsigned long long>,
+                       RocprimTextureCacheIteratorParams<test_utils::custom_test_type<int>>,
+                       RocprimTextureCacheIteratorParams<test_utils::custom_test_type<float>>>;
 
 TYPED_TEST_SUITE(RocprimTextureCacheIteratorTests, RocprimTextureCacheIteratorTestsParams);
 

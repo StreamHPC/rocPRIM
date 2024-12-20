@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -155,7 +155,7 @@ block_store_direct_blocked_vectorized(unsigned int flat_id,
     static_assert(std::is_convertible<U, T>::value,
                   "The type U must be such that it can be implicitly converted to T.");
 
-    typedef typename detail::match_vector_type<T, ItemsPerThread>::type vector_type;
+    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
     constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
     vector_type *vectors_ptr = reinterpret_cast<vector_type*>(const_cast<T*>(block_output));
 

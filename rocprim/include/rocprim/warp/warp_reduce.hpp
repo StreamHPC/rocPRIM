@@ -45,12 +45,12 @@ namespace detail
 template<class T, unsigned int WarpSize, bool UseAllReduce>
 struct select_warp_reduce_impl
 {
-    typedef typename std::conditional<
+    using type = typename std::conditional<
         // can we use crosslane (DPP or shuffle-based) implementation?
         detail::is_warpsize_shuffleable<WarpSize>::value,
         detail::warp_reduce_crosslane<T, WarpSize, UseAllReduce>, // yes
         detail::warp_reduce_shared_mem<T, WarpSize, UseAllReduce> // no
-    >::type type;
+        >::type;
 };
 
 } // end namespace detail

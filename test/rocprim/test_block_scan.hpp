@@ -80,7 +80,7 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScan)
             expected,
             expected,
             device_output.get(),
-            NULL,
+            nullptr,
             T(0),
             grid_size);
 
@@ -90,7 +90,7 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScan)
             expected,
             expected,
             device_output.get(),
-            NULL,
+            nullptr,
             T(0),
             grid_size);
     }
@@ -304,7 +304,7 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScan)
             expected,
             expected,
             device_output.get(),
-            NULL,
+            nullptr,
             init,
             grid_size);
 
@@ -314,7 +314,7 @@ typed_test_def(suite_name_single, name_suffix, ExclusiveScan)
             expected,
             expected,
             device_output.get(),
-            NULL,
+            nullptr,
             init,
             grid_size);
     }

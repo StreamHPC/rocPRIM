@@ -68,7 +68,7 @@ using custom_double2 = test_utils::custom_test_type<double>;
 using half           = rocprim::half;
 using bfloat16       = rocprim::bfloat16;
 
-typedef ::testing::Types<
+using Params = ::testing::Types<
     params<unsigned char, unsigned int, rocprim::plus<unsigned int>>,
     params<int, int, rocprim::plus<int>, -100, 0, 10000>,
     params<int8_t, int8_t, rocprim::plus<int8_t>, -100, 0, 10000>,
@@ -81,8 +81,7 @@ typedef ::testing::Types<
     params<half, float, rocprim::plus<float>, 0, 10, 200, true>,
     params<half, half, rocprim::minimum<half>, 0, 1000, 30000>,
     params<unsigned char, long long, rocprim::plus<int>, 10, 3000, 4000>,
-    params<int, int, ::rocprim::plus<int>, 0, 0, 1000, false, true>>
-    Params;
+    params<int, int, ::rocprim::plus<int>, 0, 0, 1000, false, true>>;
 
 TYPED_TEST_SUITE(RocprimDeviceSegmentedScan, Params);
 

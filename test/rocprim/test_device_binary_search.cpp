@@ -58,7 +58,7 @@ using custom_double2 = test_utils::custom_test_type<double>;
 struct use_custom_config
 {};
 
-typedef ::testing::Types<
+using Params = ::testing::Types<
     params<int, int>,
     params<unsigned long long, unsigned long long, size_t, rocprim::greater<unsigned long long>>,
     params<float, double, unsigned int, rocprim::greater<double>>,
@@ -73,8 +73,7 @@ typedef ::testing::Types<
            use_custom_config>,
     params<custom_int2, custom_int2>,
     params<custom_double2, custom_double2, unsigned int, rocprim::greater<custom_double2>>,
-    params<int, int, size_t, rocprim::less<>, rocprim::default_config, true>>
-    Params;
+    params<int, int, size_t, rocprim::less<>, rocprim::default_config, true>>;
 
 TYPED_TEST_SUITE(RocprimDeviceBinarySearch, Params);
 

@@ -46,12 +46,11 @@ public:
     const bool debug_synchronous = false;
 };
 
-typedef ::testing::Types<
-    RocprimArgIndexIteratorParams<int>,
-    RocprimArgIndexIteratorParams<unsigned int>,
-    RocprimArgIndexIteratorParams<unsigned long>,
-    RocprimArgIndexIteratorParams<float>
-> RocprimArgIndexIteratorTestsParams;
+using RocprimArgIndexIteratorTestsParams
+    = ::testing::Types<RocprimArgIndexIteratorParams<int>,
+                       RocprimArgIndexIteratorParams<unsigned int>,
+                       RocprimArgIndexIteratorParams<unsigned long>,
+                       RocprimArgIndexIteratorParams<float>>;
 
 TYPED_TEST_SUITE(RocprimArgIndexIteratorTests, RocprimArgIndexIteratorTestsParams);
 

@@ -69,7 +69,7 @@ using config = rocprim::select_config<512,
                                       ::rocprim::block_load_method::block_load_transpose,
                                       ::rocprim::block_scan_algorithm::using_warp_scan>;
 
-typedef ::testing::Types<
+using RocprimDevicePartitionTestsParams = ::testing::Types<
     DevicePartitionParams<int, int, unsigned char, rocprim::default_config, true>,
     DevicePartitionParams<unsigned int, unsigned long>,
     DevicePartitionParams<unsigned char, float>,
@@ -80,8 +80,7 @@ typedef ::testing::Types<
     DevicePartitionParams<rocprim::half, rocprim::half>,
     DevicePartitionParams<rocprim::bfloat16, rocprim::bfloat16>,
     DevicePartitionParams<test_utils::custom_test_type<long long>>,
-    DevicePartitionParams<int, int, unsigned int, rocprim::default_config, false, true>>
-    RocprimDevicePartitionTestsParams;
+    DevicePartitionParams<int, int, unsigned int, rocprim::default_config, false, true>>;
 
 TYPED_TEST_SUITE(RocprimDevicePartitionTests, RocprimDevicePartitionTestsParams);
 

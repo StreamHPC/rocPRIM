@@ -45,12 +45,11 @@ public:
     const bool debug_synchronous = false;
 };
 
-typedef ::testing::Types<
-    RocprimCountingIteratorParams<int>,
-    RocprimCountingIteratorParams<unsigned int>,
-    RocprimCountingIteratorParams<unsigned long>,
-    RocprimCountingIteratorParams<size_t>
-> RocprimCountingIteratorTestsParams;
+using RocprimCountingIteratorTestsParams
+    = ::testing::Types<RocprimCountingIteratorParams<int>,
+                       RocprimCountingIteratorParams<unsigned int>,
+                       RocprimCountingIteratorParams<unsigned long>,
+                       RocprimCountingIteratorParams<size_t>>;
 
 TYPED_TEST_SUITE(RocprimCountingIteratorTests, RocprimCountingIteratorTestsParams);
 

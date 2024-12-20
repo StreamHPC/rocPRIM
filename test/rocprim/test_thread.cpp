@@ -46,28 +46,26 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<
-    params<32, 1, 1>,
-    params<64, 1, 1>,
-    params<128, 1, 1>,
-    params<256, 1, 1>,
-    params<512, 1, 1>,
-    params<1024, 1, 1>,
+using Params = ::testing::Types<params<32, 1, 1>,
+                                params<64, 1, 1>,
+                                params<128, 1, 1>,
+                                params<256, 1, 1>,
+                                params<512, 1, 1>,
+                                params<1024, 1, 1>,
 
-    params<16, 2, 1>,
-    params<32, 2, 1>,
-    params<64, 2, 1>,
-    params<128, 2, 1>,
-    params<256, 2, 1>,
-    params<512, 2, 1>,
+                                params<16, 2, 1>,
+                                params<32, 2, 1>,
+                                params<64, 2, 1>,
+                                params<128, 2, 1>,
+                                params<256, 2, 1>,
+                                params<512, 2, 1>,
 
-    params<8, 2, 2>,
-    params<16, 2, 2>,
-    params<32, 2, 2>,
-    params<64, 2, 2>,
-    params<128, 2, 2>,
-    params<256, 2, 2>
-> Params;
+                                params<8, 2, 2>,
+                                params<16, 2, 2>,
+                                params<32, 2, 2>,
+                                params<64, 2, 2>,
+                                params<128, 2, 2>,
+                                params<256, 2, 2>>;
 
 TYPED_TEST_SUITE(RocprimThreadTests, Params);
 

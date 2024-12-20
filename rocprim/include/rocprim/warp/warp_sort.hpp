@@ -107,7 +107,7 @@ template<
 >
 class warp_sort : detail::warp_sort_shuffle<Key, WarpSize, Value>
 {
-    typedef typename detail::warp_sort_shuffle<Key, WarpSize, Value> base_type;
+    using base_type = typename detail::warp_sort_shuffle<Key, WarpSize, Value>;
 
     // Check if WarpSize is valid for the targets
     static_assert(WarpSize <= ROCPRIM_MAX_WARP_SIZE,
@@ -122,7 +122,7 @@ public:
     /// using keywords \p __shared__. It can be aliased to
     /// an externally allocated memory, or be a part of a union with other storage types
     /// to increase shared memory reusability.
-    typedef typename base_type::storage_type storage_type;
+    using storage_type = typename base_type::storage_type;
 
     /// \brief Warp sort for any data type.
     ///

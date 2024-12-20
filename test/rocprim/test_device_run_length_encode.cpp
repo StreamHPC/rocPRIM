@@ -61,7 +61,7 @@ public:
 using custom_int2 = test_utils::custom_test_type<int>;
 using custom_double2 = test_utils::custom_test_type<double>;
 
-typedef ::testing::Types<
+using Params = ::testing::Types<
     // Tests with default configuration
     params<int8_t, int8_t, 100, 2000>,
     params<uint8_t, uint8_t, 100, 2000>,
@@ -98,8 +98,7 @@ typedef ::testing::Types<
            rocprim::run_length_encode_config<rocprim::reduce_by_key_config<256, 15>,
                                              rocprim::select_config<256, 13>>>,
     // Tests for when output's value_type is void
-    params<int, int, 1, 1, true>>
-    Params;
+    params<int, int, 1, 1, true>>;
 
 TYPED_TEST_SUITE(RocprimDeviceRunLengthEncode, Params);
 

@@ -102,7 +102,7 @@ using bfloat16       = rocprim::bfloat16;
 #define maximum rocprim::maximum
 #define minimum rocprim::minimum
 
-typedef ::testing::Types<
+using Params = ::testing::Types<
     // Integer types
     SegmentedReduceParamsList(int, int, plus<int>, -100, 0, 10000, false),
     SegmentedReduceParamsList(int8_t, int8_t, maximum<int8_t>, 0, 0, 2000, false),
@@ -138,8 +138,7 @@ typedef ::testing::Types<
                           false,
                           bra::default_algorithm,
                           false,
-                          true>>
-    Params;
+                          true>>;
 
 #undef plus
 #undef maximum

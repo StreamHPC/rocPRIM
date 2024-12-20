@@ -186,7 +186,7 @@ block_load_direct_blocked_vectorized(unsigned int flat_id,
                                      T* block_input,
                                      U (&items)[ItemsPerThread]) -> typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value>::type
 {
-    typedef typename detail::match_vector_type<T, ItemsPerThread>::type vector_type;
+    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
     constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
     vector_type vector_items[vectors_per_thread];
 
