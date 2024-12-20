@@ -32,6 +32,7 @@
 
 #include "../config.hpp"
 #include "../detail/various.hpp"
+#include "../type_traits.hpp"
 
 #include <utility>
 
@@ -186,6 +187,46 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 void unrolled_copy(InputIteratorT src, T* dst)
 {
     detail::unrolled_copy_impl(src, dst, std::make_integer_sequence<int, Count>{});
+}
+
+/// \brief Thread loads with volatile_pointer for fundamental types
+/// \tparam T Type of Data to be copied
+/// \param ptr [in] - Input pointer for data that will be copied
+/// \return returns loaded value
+template<typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+T thread_load_volatile(const T* ptr, Int2Type<true> /*is_fundamental*/)
+{
+    return *reinterpret_cast<const volatile T*>(ptr);
+}
+
+/// \brief Thread loads with volatile_pointer for non-fundamental types
+/// \tparam T Type of Data to be copied
+/// \param ptr [in] - Input pointer for data that will be copied
+/// \return returns loaded value
+template<typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+T thread_load_volatile(const T* ptr, Int2Type<false> /*is_fundamental*/)
+{
+    using device_word               = typename detail::word_type<T>::type;
+    constexpr int volatile_multiple = sizeof(T) / sizeof(device_word);
+
+    T            retval;
+    device_word* words = reinterpret_cast<device_word*>(&retval);
+    unrolled_copy<volatile_multiple>(reinterpret_cast<const volatile device_word*>(ptr), words);
+    return retval;
+}
+
+/// \brief Thread loads with volatile_pointer
+/// \tparam T Type of Data to be copied
+/// \param ptr [in] - Input pointer for data that will be copied
+/// \return returns loaded value
+template<typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+T thread_load_volatile(const T* ptr)
+{
+    static constexpr bool is_constructible = std::is_constructible<T, const volatile T&>::value;
+    return thread_load_volatile(ptr, Int2Type<is_constructible>());
 }
 
 /// @}

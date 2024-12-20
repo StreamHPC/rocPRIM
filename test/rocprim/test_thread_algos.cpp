@@ -63,7 +63,12 @@ using ThreadOperationTestParams = ::testing::Types<params<uint8_t>,
                                                    params<float>,
                                                    params<double>,
                                                    params<test_utils::custom_test_type<uint64_t>>,
-                                                   params<test_utils::custom_test_type<double>>>;
+                                                   params<test_utils::custom_test_type<double>>
+#if ROCPRIM_HAS_INT128_SUPPORT
+                                                   ,
+                                                   params<rocprim::uint128_t>
+#endif
+                                                   >;
 
 TYPED_TEST_SUITE(RocprimThreadOperationTests, ThreadOperationTestParams);
 
@@ -101,6 +106,50 @@ TYPED_TEST(RocprimThreadOperationTests, Load)
         test_utils::device_ptr<T> device_output(input.size());
 
         thread_load_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        HIP_CHECK(hipGetLastError());
+
+        // Reading results back
+        output = device_output.load();
+
+        // Verifying results
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    }
+}
+
+template<class Type>
+__global__
+void thread_volatile_load_kernel(Type* volatile const device_input, Type* device_output)
+{
+    size_t index         = blockIdx.x * blockDim.x + threadIdx.x;
+    device_output[index] = rocprim::thread_load_volatile(device_input + index);
+}
+
+TYPED_TEST(RocprimThreadOperationTests, VolatileLoad)
+{
+    using T                              = typename TestFixture::type;
+    static constexpr uint32_t block_size = 256;
+    static constexpr uint32_t grid_size  = 128;
+    static constexpr uint32_t size       = block_size * grid_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output(size);
+
+        // Calculate expected results on host
+        std::vector<T> expected = input;
+
+        // Preparing device
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
+
+        thread_volatile_load_kernel<T>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back
