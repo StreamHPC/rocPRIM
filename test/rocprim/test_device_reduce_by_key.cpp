@@ -92,7 +92,7 @@ using custom_int2 = test_utils::custom_test_type<int>;
 using custom_double2 = test_utils::custom_test_type<double>;
 
 // clang-format off
-typedef ::testing::Types<
+using Params = ::testing::Types<
     params<int, int, rocprim::plus<int>, 1, 1, int, rocprim::equal_to<int>, true>,
     params<double, int, rocprim::plus<int>, 3, 5, long long, custom_key_compare_op1<double>, false, false, true>,
     params<float, custom_double2, rocprim::minimum<custom_double2>, 1, 10000>,
@@ -120,7 +120,7 @@ typedef ::testing::Types<
     params<unsigned long long, unsigned long long, rocprim::plus<unsigned long long>, 100000, 100000>,
     params<test_utils::custom_test_array_type<double, 8>, unsigned long, rocprim::plus<>, 69, 420>,
     params<int, int, rocprim::plus<int>, 1, 10, int, ::rocprim::equal_to<int>, false, true>
-> Params;
+>;
 // clang-format on
 
 template<bool Deterministic, typename Config = rocprim::default_config, typename... Args>

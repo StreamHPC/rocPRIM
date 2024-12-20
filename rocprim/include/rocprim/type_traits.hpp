@@ -116,40 +116,39 @@ struct numeric_limits<rocprim::int128_t> : std::numeric_limits<int>
 template<typename T, int size = 0>
 struct get_unsigned_bits_type
 {
-  typedef typename get_unsigned_bits_type<T,sizeof(T)>::unsigned_type unsigned_type; ///< Typedefed to the unsigned type.
+    using unsigned_type = typename get_unsigned_bits_type<T, sizeof(T)>::
+        unsigned_type; ///< Typedefed to the unsigned type.
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // skip specialized versions
 template<typename T>
-struct get_unsigned_bits_type<T,1>
+struct get_unsigned_bits_type<T, 1>
 {
-  typedef uint8_t unsigned_type;
-};
-
-
-template<typename T>
-struct get_unsigned_bits_type<T,2>
-{
-  typedef uint16_t unsigned_type;
-};
-
-
-template<typename T>
-struct get_unsigned_bits_type<T,4>
-{
-  typedef uint32_t unsigned_type;
+    using unsigned_type = uint8_t;
 };
 
 template<typename T>
-struct get_unsigned_bits_type<T,8>
+struct get_unsigned_bits_type<T, 2>
 {
-  typedef uint64_t unsigned_type;
+    using unsigned_type = uint16_t;
+};
+
+template<typename T>
+struct get_unsigned_bits_type<T, 4>
+{
+    using unsigned_type = uint32_t;
+};
+
+template<typename T>
+struct get_unsigned_bits_type<T, 8>
+{
+    using unsigned_type = uint64_t;
 };
 
 template<typename T>
 struct get_unsigned_bits_type<T, 16>
 {
-    typedef ::rocprim::uint128_t unsigned_type;
+    using unsigned_type = ::rocprim::uint128_t;
 };
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 

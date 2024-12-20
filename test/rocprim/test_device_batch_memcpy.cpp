@@ -78,7 +78,7 @@ struct RocprimDeviceBatchMemcpyTests : public ::testing::Test
     static constexpr bool         use_indirect_iterator = Params::use_indirect_iterator;
 };
 
-typedef ::testing::Types<
+using RocprimDeviceBatchMemcpyTestsParams = ::testing::Types<
     // Ignore copy/move
     DeviceBatchMemcpyParams<test_utils::custom_non_copyable_type<uint8_t>,
                             unsigned int,
@@ -127,8 +127,7 @@ typedef ::testing::Types<
     DeviceBatchMemcpyParams<uint8_t, int64_t, true, true, 1024, 128 * 1024>,
 
     // Test iterator input for BatchCopy
-    DeviceBatchMemcpyParams<unsigned int, unsigned int, false, false, 1024, 1024 * 4, true>>
-    RocprimDeviceBatchMemcpyTestsParams;
+    DeviceBatchMemcpyParams<unsigned int, unsigned int, false, false, 1024, 1024 * 4, true>>;
 
 TYPED_TEST_SUITE(RocprimDeviceBatchMemcpyTests, RocprimDeviceBatchMemcpyTestsParams);
 

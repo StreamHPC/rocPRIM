@@ -195,13 +195,12 @@ public:
     using type = typename Params::type;
 };
 
-typedef ::testing::Types<params<int>,
-                         params<float>,
-                         params<double>,
-                         params<unsigned char>,
-                         params<custom_notaligned>,
-                         params<custom_16aligned>>
-    IntrinsicsTestParams;
+using IntrinsicsTestParams = ::testing::Types<params<int>,
+                                              params<float>,
+                                              params<double>,
+                                              params<unsigned char>,
+                                              params<custom_notaligned>,
+                                              params<custom_16aligned>>;
 
 TYPED_TEST_SUITE(RocprimIntrinsicsTests, IntrinsicsTestParams);
 

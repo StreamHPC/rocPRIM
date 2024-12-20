@@ -93,7 +93,7 @@ public:
 template<class Params>
 class RocprimDeviceReducePrecisionTests : public RocprimDeviceReduceTests<Params>{};
 
-typedef ::testing::Types<
+using RocprimDeviceReduceTestsParams = ::testing::Types<
     DeviceReduceParams<unsigned int>,
     DeviceReduceParams<long, long, true>,
     DeviceReduceParams<short, int>,
@@ -138,14 +138,13 @@ typedef ::testing::Types<
                        bra::default_algorithm,
                        false,
                        true>,
-    DeviceReduceParams<int, int, false, ROCPRIM_GRID_SIZE_LIMIT, bra::default_algorithm, true>>
-    RocprimDeviceReduceTestsParams;
+    DeviceReduceParams<int, int, false, ROCPRIM_GRID_SIZE_LIMIT, bra::default_algorithm, true>>;
 
-typedef ::testing::Types<DeviceReduceParams<double, double>,
-                         DeviceReduceParamsList(float, float, false, 2048),
-                         DeviceReduceParams<rocprim::half, rocprim::half>,
-                         DeviceReduceParams<rocprim::bfloat16, rocprim::bfloat16>>
-    RocprimDeviceReducePrecisionTestsParams;
+using RocprimDeviceReducePrecisionTestsParams
+    = ::testing::Types<DeviceReduceParams<double, double>,
+                       DeviceReduceParamsList(float, float, false, 2048),
+                       DeviceReduceParams<rocprim::half, rocprim::half>,
+                       DeviceReduceParams<rocprim::bfloat16, rocprim::bfloat16>>;
 
 TYPED_TEST_SUITE(RocprimDeviceReduceTests, RocprimDeviceReduceTestsParams);
 TYPED_TEST_SUITE(RocprimDeviceReducePrecisionTests, RocprimDeviceReducePrecisionTestsParams);

@@ -72,7 +72,7 @@ public:
 using custom_int2 = test_utils::custom_test_type<int>;
 using custom_double2 = test_utils::custom_test_type<double>;
 
-typedef ::testing::Types<
+using RocprimDeviceMergeTestsParams = ::testing::Types<
     DeviceMergeParams<int, double>,
     DeviceMergeParams<unsigned long, unsigned int, rocprim::greater<unsigned long>>,
     DeviceMergeParams<float, custom_double2>,
@@ -84,8 +84,7 @@ typedef ::testing::Types<
     DeviceMergeParams<rocprim::bfloat16, rocprim::bfloat16, rocprim::less<rocprim::bfloat16>>,
     DeviceMergeParams<custom_double2, custom_int2, rocprim::greater<custom_double2>>,
     DeviceMergeParams<custom_int2, char>,
-    DeviceMergeParams<int, int, ::rocprim::less<int>, true>>
-    RocprimDeviceMergeTestsParams;
+    DeviceMergeParams<int, int, ::rocprim::less<int>, true>>;
 
 // size1, size2
 std::vector<std::tuple<size_t, size_t>> get_sizes()

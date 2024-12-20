@@ -148,14 +148,11 @@ public:
     using self_type = texture_cache_iterator;
 #endif
 
-    ROCPRIM_HOST_DEVICE inline
-    ~texture_cache_iterator() = default;
+    ROCPRIM_HOST_DEVICE ROCPRIM_INLINE ~texture_cache_iterator() = default;
 
-    ROCPRIM_HOST_DEVICE inline
-    texture_cache_iterator()
-        : ptr(NULL), texture_offset(0), texture_object(0)
-    {
-    }
+    ROCPRIM_HOST_DEVICE ROCPRIM_INLINE texture_cache_iterator()
+        : ptr(nullptr), texture_offset(0), texture_object(0)
+    {}
 
     /// \brief Creates a \p hipTextureObject_t and binds this iterator to it.
     ///
@@ -185,7 +182,7 @@ public:
         resourse_desc.res.linear.sizeInBytes = bytes;
         texture_desc.readMode = hipReadModeElementType;
 
-        return hipCreateTextureObject(&texture_object, &resourse_desc, &texture_desc, NULL);
+        return hipCreateTextureObject(&texture_object, &resourse_desc, &texture_desc, nullptr);
     }
 
     /// \brief Destroys the texture object that this iterator points at.

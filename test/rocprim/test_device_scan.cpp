@@ -155,7 +155,7 @@ public:
     static constexpr bool deterministic                          = Params::deterministic;
 };
 
-typedef ::testing::Types<
+using RocprimDeviceScanTestsParams = ::testing::Types<
     // Small
     DeviceScanParams<char>,
     DeviceScanParams<unsigned short>,
@@ -222,8 +222,7 @@ typedef ::testing::Types<
     DeviceScanParams<test_utils::custom_test_array_type<long long, 5>>,
     DeviceScanParams<test_utils::custom_test_array_type<int, 10>>,
     // With graphs
-    DeviceScanParams<int, int, rocprim::plus<int>, false, default_config_helper, true>>
-    RocprimDeviceScanTestsParams;
+    DeviceScanParams<int, int, rocprim::plus<int>, false, default_config_helper, true>>;
 
 // use float for accumulation of bfloat16 and half inputs if operator is plus
 template <typename input_type, typename input_op_type> struct accum_type {

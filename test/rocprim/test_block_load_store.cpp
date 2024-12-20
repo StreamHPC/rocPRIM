@@ -53,11 +53,11 @@ TYPED_TEST(RocprimVectorizationTests, IsVectorizable)
 
 TYPED_TEST(RocprimVectorizationTests, MatchVectorType)
 {
-    using T = typename TestFixture::params::type;
-    using U = typename TestFixture::params::vector_type;
+    using T                           = typename TestFixture::params::type;
+    using U                           = typename TestFixture::params::vector_type;
     constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-    typedef typename rocprim::detail::match_vector_type<T, items_per_thread>::type Vector;
-    bool input = std::is_same<Vector, U>::value;
+    using Vector = typename rocprim::detail::match_vector_type<T, items_per_thread>::type;
+    bool input   = std::is_same<Vector, U>::value;
     ASSERT_TRUE(input);
 }
 

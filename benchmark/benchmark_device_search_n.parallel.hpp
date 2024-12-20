@@ -488,16 +488,15 @@ inline void add_benchmark_search_n(std::vector<benchmark::internal::Benchmark*>&
     add_one_benchmark_search_n<typename T::type>(benchmarks, _seed, _stream, _size_byte);
 }
 
-typedef type_arr<custom_int2,
-                 custom_longlong_double,
-                 int8_t,
-                 int16_t,
-                 int32_t,
-                 int64_t,
-                 rocprim::half,
-                 float,
-                 double>
-    benchmark_search_n_types;
+using benchmark_search_n_types = type_arr<custom_int2,
+                                          custom_longlong_double,
+                                          int8_t,
+                                          int16_t,
+                                          int32_t,
+                                          int64_t,
+                                          rocprim::half,
+                                          float,
+                                          double>;
 
 template<typename InputT, unsigned int BlockSize>
 struct device_search_n_benchmark_generator

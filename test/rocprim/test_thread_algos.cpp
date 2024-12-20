@@ -53,18 +53,17 @@ public:
     using type = typename Params::type;
 };
 
-typedef ::testing::Types<params<uint8_t>,
-                         params<uint16_t>,
-                         params<uint32_t>,
-                         params<uint64_t>,
-                         params<int>,
-                         params<rocprim::half>,
-                         params<rocprim::bfloat16>,
-                         params<float>,
-                         params<double>,
-                         params<test_utils::custom_test_type<uint64_t>>,
-                         params<test_utils::custom_test_type<double>>>
-    ThreadOperationTestParams;
+using ThreadOperationTestParams = ::testing::Types<params<uint8_t>,
+                                                   params<uint16_t>,
+                                                   params<uint32_t>,
+                                                   params<uint64_t>,
+                                                   params<int>,
+                                                   params<rocprim::half>,
+                                                   params<rocprim::bfloat16>,
+                                                   params<float>,
+                                                   params<double>,
+                                                   params<test_utils::custom_test_type<uint64_t>>,
+                                                   params<test_utils::custom_test_type<double>>>;
 
 TYPED_TEST_SUITE(RocprimThreadOperationTests, ThreadOperationTestParams);
 
