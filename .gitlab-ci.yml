@@ -207,7 +207,7 @@ build:cmake-minimum-apt:
       - $BUILD_DIR/test/rocprim/CTestTestfile.cmake
       - $BUILD_DIR/test/rocprim/test_*
       - $BUILD_DIR/test/test_*
-    expire_in: 2 weeks
+    expire_in: 1 day
 
 build:cmake-latest:
   stage: build
@@ -257,7 +257,7 @@ build:package:
     paths:
       - $PACKAGE_DIR/rocprim*.deb
       - $PACKAGE_DIR/rocprim*.zip
-    expire_in: 2 weeks
+    expire_in: 1 day
 
 build:windows:
   stage: build
@@ -293,7 +293,7 @@ build:windows:
       - $CI_PROJECT_DIR/build/CMakeCache.txt
       - $CI_PROJECT_DIR/build/.ninja_log
       - $CI_PROJECT_DIR/build/CTestTestfile.cmake
-    expire_in: 2 weeks
+    expire_in: 1 day
 
 autotune:build:
   stage: autotune
