@@ -127,10 +127,9 @@ struct radix_digit_count_helper
     };
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
-    unsigned int&
-        get_counter(const unsigned stripe, const unsigned int digit, storage_type& storage)
+    unsigned int get_counter(const unsigned stripe, const unsigned int digit)
     {
-        return storage.digit_counters[digit * atomic_stripes + stripe];
+        return digit * atomic_stripes + stripe;
     }
 
     template<
@@ -197,7 +196,7 @@ struct radix_digit_count_helper
 
                 if(IsFull || pos < valid_count)
                 {
-                    atomic_add(&get_counter(stripe, digit, storage), 1);
+                    atomic_add(&storage.digit_counters[get_counter(stripe, digit)], 1);
                 }
             }
         }
@@ -211,7 +210,7 @@ struct radix_digit_count_helper
             ROCPRIM_UNROLL
             for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
             {
-                digit_count += get_counter(stripe, flat_id, storage);
+                digit_count += storage.digit_counters[get_counter(stripe, flat_id)];
             }
         }
     }
@@ -774,12 +773,11 @@ struct onesweep_histograms_helper
         counter_type histogram[histogram_counters];
     };
 
-    ROCPRIM_DEVICE ROCPRIM_INLINE counter_type& get_counter(const unsigned     stripe_index,
-                                                            const unsigned int place,
-                                                            const unsigned int digit,
-                                                            storage_type&      storage)
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    unsigned int
+        get_counter(const unsigned stripe_index, const unsigned int place, const unsigned int digit)
     {
-        return storage.histogram[(place * radix_size + digit) * atomic_stripes + stripe_index];
+        return (place * radix_size + digit) * atomic_stripes + stripe_index;
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE void clear_histogram(const unsigned int flat_id,
@@ -810,7 +808,7 @@ struct onesweep_histograms_helper
             {
                 const unsigned int digit
                     = key_codec::extract_digit(keys[i], start_bit, current_radix_bits, decomposer);
-                ::rocprim::detail::atomic_add(&get_counter(stripe, place, digit, storage), 1);
+                atomic_add(&storage.histogram[get_counter(stripe, place, digit)], 1);
             }
         }
     }
@@ -877,7 +875,7 @@ struct onesweep_histograms_helper
                 ROCPRIM_UNROLL
                 for(unsigned int stripe = 0; stripe < atomic_stripes; ++stripe)
                 {
-                    total += get_counter(stripe, place, digit, storage);
+                    total += storage.histogram[get_counter(stripe, place, digit)];
                 }
 
                 ::rocprim::detail::atomic_add(&global_digit_counts[place * radix_size + digit],
