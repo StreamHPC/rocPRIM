@@ -156,6 +156,26 @@ namespace detail
         return __hip_atomic_load(address, __ATOMIC_RELAXED, __HIP_MEMORY_SCOPE_AGENT);
     }
 
+    ROCPRIM_DEVICE ROCPRIM_INLINE __uint128_t atomic_load(const __uint128_t* address)
+    {
+
+        __uint128_t result;
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+        asm volatile("flat_load_dwordx4 %0, %1 sc1\n"
+                     "s_waitcnt vmcnt(0)\n"
+                     : "=v"(result)
+                     : "v"(address)
+                     : "memory");
+#else
+        asm volatile("flat_load_dwordx4 %0, %1 glc\n"
+                     "s_waitcnt vmcnt(0)\n"
+                     : "=v"(result)
+                     : "v"(address)
+                     : "memory");
+#endif
+        return result;
+    }
+
     ROCPRIM_DEVICE ROCPRIM_INLINE
     void atomic_store(unsigned char* address, unsigned char value)
     {
@@ -181,6 +201,15 @@ namespace detail
                                                     unsigned long long  value)
     {
         __hip_atomic_store(address, value, __ATOMIC_RELAXED, __HIP_MEMORY_SCOPE_AGENT);
+    }
+
+    ROCPRIM_DEVICE ROCPRIM_INLINE void atomic_store(const __uint128_t* address, const __uint128_t value)
+    {
+#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
+        asm volatile("flat_store_dwordx4 %0, %1 sc1\n" : : "v"(address), "v"(value) : "memory");
+#else
+        asm volatile("flat_store_dwordx4 %0, %1\n" : : "v"(address), "v"(value) : "memory");
+#endif
     }
 
     /// \brief Wait for all vector memory operations to complete
