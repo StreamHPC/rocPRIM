@@ -447,13 +447,11 @@ TEST(RocprimDeviceReduceByKey, LargeIndicesReduceByKeySmallValueType)
 
 TEST(RocprimDeviceReduceByKey, LargeIndicesReduceByKeyLargeValueType)
 {
-    // large value type to test TilesPerBlock > 1
     large_indices_reduce_by_key<test_utils::custom_test_type<size_t>>();
 }
 
 TEST(RocprimDeviceReduceByKey, LargeIndicesReduceByKeyLargeValueTypeWithGraphs)
 {
-    // large value type to test TilesPerBlock > 1
     large_indices_reduce_by_key<test_utils::custom_test_type<size_t>, true>();
 }
 
@@ -560,7 +558,6 @@ TEST(RocprimDeviceReduceByKey, LargeSegmentCountReduceByKeySmallValueType)
 
 TEST(RocprimDeviceReduceByKey, LargeSegmentCountReduceByKeyLargeValueType)
 {
-    // large value type to test TilesPerBlock > 1
     large_segment_count_reduce_by_key<test_utils::custom_test_type<size_t>>();
 }
 

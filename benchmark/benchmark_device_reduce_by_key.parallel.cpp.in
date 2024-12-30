@@ -29,5 +29,5 @@
 
 namespace {
     auto benchmarks = config_autotune_register::create_bulk(
-        device_reduce_by_key_benchmark_generator<@KeyType@, @ValueType@, @BlockSize@, @TilesPerBlock@>::create);
+        device_reduce_by_key_benchmark_generator<@KeyType@, @ValueType@, @BlockSize@>::create);
 }

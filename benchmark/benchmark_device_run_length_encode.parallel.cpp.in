@@ -31,6 +31,5 @@ namespace {
     auto benchmarks = config_autotune_register::create_bulk(
         device_run_length_encode_benchmark_generator<
         @KeyType@,
-        @BlockSize@,
-        @TilesPerBlock@>::create);
+        @BlockSize@>::create);
 } // namespace

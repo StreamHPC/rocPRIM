@@ -972,7 +972,8 @@ struct reduce_by_key_config_params
  * \tparam LoadKeysMethod method of loading keys
  * \tparam LoadValuesMethod method of loading values
  * \tparam ScanAlgorithm block level scan algorithm to use
- * \tparam TilesPerBlock number of tiles (`BlockSize` * `ItemsPerThread` items) to process per block
+ * \tparam TilesPerBlock number of tiles (`BlockSize` * `ItemsPerThread` items) to process per block.
+ * This parameter is only here for legacy purposes. Its no longer used.
  * \tparam SizeLimit limit on the number of items for a single reduce_by_key kernel launch.
  */
 template<unsigned int         BlockSize,
@@ -988,6 +989,7 @@ struct reduce_by_key_config : public detail::reduce_by_key_config_params
     /// Number of threads in a block.
     static constexpr unsigned int block_size = BlockSize;
     /// Number of tiles (`BlockSize` * `ItemsPerThread` items) to process per block
+    /// This value is only here for legacy purposes and no longer used.
     static constexpr unsigned int tiles_per_block = TilesPerBlock;
     /// Number of items processed by each thread per tile.
     static constexpr unsigned int items_per_thread = ItemsPerThread;
