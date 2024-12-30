@@ -9,7 +9,7 @@ reduce_by_key_config<
     {{ measurement['cfg']['bs'] }},
     {{ measurement['cfg']['ipt'] }},
     block_load_method::block_load_transpose,
-    block_load_method::block_load_transpose,
+    block_load_method::block_load_direct,
     block_scan_algorithm::using_warp_scan> { };
 {%- endmacro %}
 

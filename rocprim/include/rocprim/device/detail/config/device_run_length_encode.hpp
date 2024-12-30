@@ -54,7 +54,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -69,7 +69,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -84,7 +84,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<384,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -99,7 +99,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -114,7 +114,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -129,7 +129,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<384,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -144,7 +144,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<384,
                            13,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -159,7 +159,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan,
                            2>
 {};
@@ -175,7 +175,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -190,7 +190,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -205,7 +205,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan,
                            2>
 {};
@@ -221,7 +221,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -236,7 +236,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -251,7 +251,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<384,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -266,7 +266,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -281,7 +281,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -296,7 +296,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -311,7 +311,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -326,7 +326,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -341,7 +341,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -356,7 +356,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<192,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -371,7 +371,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -386,7 +386,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -401,7 +401,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -416,7 +416,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -431,7 +431,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -446,7 +446,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -461,7 +461,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<192,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -476,7 +476,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -491,7 +491,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -506,7 +506,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -521,7 +521,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -536,7 +536,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -551,7 +551,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            10,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -566,7 +566,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<192,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -581,7 +581,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -596,7 +596,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -611,7 +611,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -626,7 +626,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -641,7 +641,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -656,7 +656,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<192,
                            14,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -671,7 +671,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<256,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -686,7 +686,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -701,7 +701,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -716,7 +716,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -731,7 +731,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -746,7 +746,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -761,7 +761,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 
@@ -776,7 +776,7 @@ struct default_trivial_runs_config<
     : reduce_by_key_config<512,
                            15,
                            block_load_method::block_load_transpose,
-                           block_load_method::block_load_transpose,
+                           block_load_method::block_load_direct,
                            block_scan_algorithm::using_warp_scan>
 {};
 

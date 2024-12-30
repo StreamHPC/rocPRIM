@@ -70,6 +70,13 @@ struct load_helper
     using block_load_keys = block_load<KeyType, BlockSize, ItemsPerThread, load_keys_method>;
     using block_load_values
         = block_load<AccumulatorType, BlockSize, ItemsPerThread, load_values_method>;
+
+    /// We only need to sync between loading keys & values if BOTH the key and value
+    /// loading method require shared memory.
+    constexpr static bool requires_inner_sync
+        = !std::is_same_v<typename block_load_keys::storage_type, detail::empty_storage_type>
+          && !std::is_same_v<typename block_load_values::storage_type, detail::empty_storage_type>;
+
     union storage_type
     {
         typename block_load_keys::storage_type   keys;
@@ -85,16 +92,23 @@ struct load_helper
                                          AccumulatorType (&values)[ItemsPerThread],
                                          storage_type& storage)
     {
+
         if(!is_global_last_tile)
         {
             block_load_keys{}.load(tile_keys, keys, storage.keys);
-            ::rocprim::syncthreads();
+            if ROCPRIM_IF_CONSTEXPR(requires_inner_sync)
+            {
+                ::rocprim::syncthreads();
+            }
             block_load_values{}.load(tile_values, values, storage.values);
         }
         else
         {
             block_load_keys{}.load(tile_keys, keys, valid_in_global_last_tile, storage.keys);
-            ::rocprim::syncthreads();
+            if ROCPRIM_IF_CONSTEXPR(requires_inner_sync)
+            {
+                ::rocprim::syncthreads();
+            }
             block_load_values{}.load(tile_values,
                                      values,
                                      valid_in_global_last_tile,
