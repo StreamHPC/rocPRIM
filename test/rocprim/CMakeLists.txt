@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,6 +61,13 @@ function(add_rocprim_test_internal TEST_NAME TEST_SOURCES TEST_TARGET)
         /bigobj # number of sections exceeded object file format limit: compile with /bigobj
       >
   )
+
+  if(WIN32)
+    # Usage of 128-bit integral types (__int128_t and __uint128_t, whose alignment is 16 bytes)
+    # requires an extended alignment support. Otherwise, a static assert will be triggered in
+    # functions like std::stable_sort. _ENABLE_EXTENDED_ALIGNED_STORAGE turns it on:
+    target_compile_definitions(${TEST_TARGET} PRIVATE _ENABLE_EXTENDED_ALIGNED_STORAGE)
+  endif()
 
   set_target_properties(${TEST_TARGET}
     PROPERTIES
