@@ -32,15 +32,18 @@
 #include <hip/hip_runtime.h>
 
 // rocPRIM
-#include <rocprim/detail/various.hpp>
+#include <rocprim/device/config_types.hpp>
 #include <rocprim/device/detail/device_config_helper.hpp>
 #include <rocprim/device/device_adjacent_find.hpp>
+#include <rocprim/functional.hpp>
 
 // C++ Standard Library
-#include <cstdlib>
+#include <algorithm>
+#include <cstddef>
 #include <memory>
 #include <numeric>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -157,7 +160,7 @@ struct device_adjacent_find_benchmark : public config_autotune_interface
         HIP_CHECK(hipMalloc(&d_tmp_storage, tmp_storage_size));
 
         // Warm-up
-        for(size_t i = 0; i < warmup_size; i++)
+        for(size_t i = 0; i < warmup_size; ++i)
         {
             launch_adjacent_find();
         }
@@ -174,7 +177,7 @@ struct device_adjacent_find_benchmark : public config_autotune_interface
             // Record start event
             HIP_CHECK(hipEventRecord(start, stream));
 
-            for(size_t i = 0; i < batch_size; i++)
+            for(size_t i = 0; i < batch_size; ++i)
             {
                 launch_adjacent_find();
             }

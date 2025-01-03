@@ -33,17 +33,20 @@
 #include <hip/hip_runtime.h>
 
 // rocPRIM
-#include <rocprim/detail/various.hpp>
+#include <rocprim/device/config_types.hpp>
 #include <rocprim/device/device_search_n.hpp>
+#include <rocprim/device/device_search_n_config.hpp>
+#include <rocprim/functional.hpp>
+#include <rocprim/types.hpp>
 
 // C++ Standard Library
 #include <algorithm>
-#include <cstdlib>
-#include <numeric>
-#include <random>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <stdint.h>
 #include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 using custom_int2            = custom_type<int>;
@@ -70,7 +73,7 @@ constexpr bool is_type_arr_end = true;
 template<typename T>
 constexpr bool is_type_arr_end<T, void_type<typename T::next>> = false;
 
-template<class Config, class InputType>
+template<typename Config, typename InputType>
 inline unsigned int search_n_get_item_per_block()
 {
     using input_type     = InputType;
@@ -105,7 +108,7 @@ inline std::string to_string(benchmark_search_n_mode e) noexcept
 
 } // namespace
 
-template<class InputType, class OutputType, benchmark_search_n_mode mode>
+template<typename InputType, typename OutputType, benchmark_search_n_mode mode>
 class benchmark_search_n
 {
 public:
@@ -229,7 +232,7 @@ private:
         self.launch_search_n();
         HIP_CHECK(hipMallocAsync(&self.d_temp_storage, self.temp_storage_size, self.stream));
         // Warm-up
-        for(size_t i = 0; i < self.warmup_size; i++)
+        for(size_t i = 0; i < self.warmup_size; ++i)
         {
             self.launch_search_n();
         }
@@ -241,7 +244,7 @@ private:
             // Record start event
             HIP_CHECK(hipEventRecord(self.start, self.stream));
 
-            for(size_t i = 0; i < self.batch_size; i++)
+            for(size_t i = 0; i < self.batch_size; ++i)
             {
                 self.launch_search_n();
             }
@@ -311,7 +314,7 @@ public:
     {
         return benchmark::RegisterBenchmark(
             bench_naming::format_name(
-                "{lvl:device,algo:search_n,input_type:" + std::string(typeid(InputType).name())
+                "{lvl:device,algo:search_n,input_type:" + std::string(Traits<InputType>::name())
                 + ",size:" + std::to_string(size) + ",count:" + std::to_string(count)
                 + ",mode:" + to_string(mode) + ",cfg:default_config}")
                 .c_str(),
@@ -332,7 +335,7 @@ static void clean_up_benchmarks_search_n()
     destructors = {};
 }
 
-template<class T>
+template<typename T>
 inline void add_one_benchmark_search_n(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                                        const managed_seed                            _seed,
                                        const hipStream_t                             _stream,
@@ -494,6 +497,8 @@ using benchmark_search_n_types = type_arr<custom_int2,
                                           int16_t,
                                           int32_t,
                                           int64_t,
+                                          rocprim::int128_t,
+                                          rocprim::uint128_t,
                                           rocprim::half,
                                           float,
                                           double>;
