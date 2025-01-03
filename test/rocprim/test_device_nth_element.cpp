@@ -63,7 +63,7 @@ struct DeviceNthelementParams
 template<class InputVector, class OutputVector, class CompareFunction>
 void inline compare_cpp_14(InputVector     input,
                            OutputVector    output,
-                           size_t          nth_element,
+                           unsigned int    nth_element,
                            CompareFunction compare_op)
 {
     using key_type = typename InputVector::value_type;
@@ -89,7 +89,7 @@ void inline compare_cpp_14(InputVector     input,
 template<class InputVector, class OutputVector, class CompareFunction>
 void inline compare_cpp_17(InputVector     input,
                            OutputVector    output,
-                           size_t          nth_element,
+                           unsigned int    nth_element,
                            CompareFunction compare_op)
 {
     using key_type = typename InputVector::value_type;
@@ -122,7 +122,7 @@ void inline compare_cpp_17(InputVector     input,
 template<class InputVector, class OutputVector, class CompareFunction>
 void inline compare(InputVector     input,
                     OutputVector    output,
-                    size_t          nth_element,
+                    unsigned int    nth_element,
                     CompareFunction compare_op)
 {
     compare_cpp_14(input, output, nth_element, compare_op);
@@ -192,13 +192,13 @@ TYPED_TEST(RocprimDeviceNthelementTests, NthelementKey)
     // The size loop alternates between in place and not in place
     bool in_place = false;
 
-    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    for(unsigned int seed_index = 0; seed_index < number_of_runs; seed_index++)
     {
         unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        for(size_t size : test_utils::get_sizes(seed_value))
+        for(unsigned int size : test_utils::get_sizes(seed_value))
         {
             hipStream_t stream = 0; // default
             if(TestFixture::use_graphs)
@@ -209,11 +209,11 @@ TYPED_TEST(RocprimDeviceNthelementTests, NthelementKey)
 
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
-            in_place           = !in_place;
-            size_t nth_element = 0;
+            in_place                 = !in_place;
+            unsigned int nth_element = 0;
             if(size > 0)
             {
-                nth_element = test_utils::get_random_value<size_t>(0, size - 1, seed_value);
+                nth_element = test_utils::get_random_value<unsigned int>(0, size - 1, seed_value);
             }
 
             SCOPED_TRACE(testing::Message() << "with nth_element = " << nth_element);
@@ -268,7 +268,8 @@ TYPED_TEST(RocprimDeviceNthelementTests, NthelementKey)
             // allocate temporary storage
             test_utils::device_ptr<void> d_temp_storage(temp_storage_size_bytes);
 
-            test_utils::GraphHelper gHelper;;
+            test_utils::GraphHelper gHelper;
+
             if(TestFixture::use_graphs)
             {
                 gHelper.startStreamCapture(stream);
@@ -338,7 +339,7 @@ TEST(RocprimNthelementKeySameTests, NthelementKeySame)
     const bool debug_synchronous = false;
 
     unsigned int seed_value = rand();
-    for(size_t size : test_utils::get_sizes(seed_value))
+    for(unsigned int size : test_utils::get_sizes(seed_value))
     {
         hipStream_t stream = 0; // default
         SCOPED_TRACE(testing::Message() << "with size = " << size);
