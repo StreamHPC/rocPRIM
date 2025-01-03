@@ -32,18 +32,23 @@
 #include <hip/hip_runtime_api.h>
 
 // rocPRIM
+#include <rocprim/detail/various.hpp>
+#include <rocprim/device/config_types.hpp>
+#include <rocprim/device/detail/device_config_helper.hpp>
 #include <rocprim/device/device_adjacent_difference.hpp>
-#include <rocprim/type_traits.hpp>
+#include <rocprim/functional.hpp>
 
 #include <array>
 #include <cstddef>
+#include <memory>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 template<typename Config>
 std::string config_name()
 {
-    //const rocprim::adjacent_difference_config = Config();
     auto config = Config();
     return "{bs:" + std::to_string(config.block_size)
            + ",ipt:" + std::to_string(config.items_per_thread) + "}";
@@ -189,7 +194,7 @@ struct device_adjacent_difference_benchmark : public config_autotune_interface
         HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size));
 
         // Warm-up
-        for(size_t i = 0; i < warmup_size; i++)
+        for(size_t i = 0; i < warmup_size; ++i)
         {
             HIP_CHECK(launch());
         }
@@ -206,7 +211,7 @@ struct device_adjacent_difference_benchmark : public config_autotune_interface
             // Record start event
             HIP_CHECK(hipEventRecord(start, stream));
 
-            for(size_t i = 0; i < batch_size; i++)
+            for(size_t i = 0; i < batch_size; ++i)
             {
                 HIP_CHECK(launch());
             }

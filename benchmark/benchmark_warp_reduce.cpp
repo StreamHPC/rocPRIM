@@ -31,23 +31,22 @@
 #include <hip/hip_runtime.h>
 
 // rocPRIM
+#include <rocprim/config.hpp>
+#include <rocprim/types.hpp>
 #include <rocprim/warp/warp_reduce.hpp>
 
-#include <iostream>
-#include <limits>
+#include <cstddef>
+#include <stdint.h>
 #include <string>
+#include <type_traits>
 #include <vector>
-
-#include <cstdio>
-#include <cstdlib>
 
 #ifndef DEFAULT_BYTES
 const size_t DEFAULT_BYTES = 1024 * 1024 * 32 * 4;
 #endif
 
-template<bool AllReduce, class T, unsigned int WarpSize, unsigned int Trials>
-__global__
-__launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
+template<bool AllReduce, typename T, unsigned int WarpSize, unsigned int Trials>
+__global__ __launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
 void warp_reduce_kernel(const T* d_input, T* d_output)
 {
     const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -57,7 +56,7 @@ void warp_reduce_kernel(const T* d_input, T* d_output)
     using wreduce_t = rocprim::warp_reduce<T, WarpSize, AllReduce>;
     __shared__ typename wreduce_t::storage_type storage;
     ROCPRIM_NO_UNROLL
-    for(unsigned int trial = 0; trial < Trials; trial++)
+    for(unsigned int trial = 0; trial < Trials; ++trial)
     {
         wreduce_t().reduce(value, value, storage);
     }
@@ -65,20 +64,19 @@ void warp_reduce_kernel(const T* d_input, T* d_output)
     d_output[i] = value;
 }
 
-template<class T, class Flag, unsigned int WarpSize, unsigned int Trials>
-__global__
-__launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
+template<typename T, typename Flag, unsigned int WarpSize, unsigned int Trials>
+__global__ __launch_bounds__(ROCPRIM_DEFAULT_MAX_BLOCK_SIZE)
 void segmented_warp_reduce_kernel(const T* d_input, Flag* d_flags, T* d_output)
 {
     const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
     auto value = d_input[i];
-    auto flag = d_flags[i];
+    auto flag  = d_flags[i];
 
     using wreduce_t = rocprim::warp_reduce<T, WarpSize>;
     __shared__ typename wreduce_t::storage_type storage;
     ROCPRIM_NO_UNROLL
-    for(unsigned int trial = 0; trial < Trials; trial++)
+    for(unsigned int trial = 0; trial < Trials; ++trial)
     {
         wreduce_t().head_segmented_reduce(value, value, flag, storage);
     }
@@ -91,17 +89,19 @@ template<bool         AllReduce,
          unsigned int WarpSize,
          unsigned int BlockSize,
          unsigned int Trials,
-         class T,
-         class Flag>
+         typename T,
+         typename Flag>
 inline auto execute_warp_reduce_kernel(
     T* input, T* output, Flag* /* flags */, size_t size, hipStream_t stream) ->
     typename std::enable_if<!Segmented>::type
 {
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(warp_reduce_kernel<AllReduce, T, WarpSize, Trials>),
-        dim3(size/BlockSize), dim3(BlockSize), 0, stream,
-        input, output
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(warp_reduce_kernel<AllReduce, T, WarpSize, Trials>),
+                       dim3(size / BlockSize),
+                       dim3(BlockSize),
+                       0,
+                       stream,
+                       input,
+                       output);
     HIP_CHECK(hipGetLastError());
 }
 
@@ -110,59 +110,53 @@ template<bool         AllReduce,
          unsigned int WarpSize,
          unsigned int BlockSize,
          unsigned int Trials,
-         class T,
-         class Flag>
+         typename T,
+         typename Flag>
 inline auto
     execute_warp_reduce_kernel(T* input, T* output, Flag* flags, size_t size, hipStream_t stream) ->
     typename std::enable_if<Segmented>::type
 {
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(segmented_warp_reduce_kernel<T, Flag, WarpSize, Trials>),
-        dim3(size/BlockSize), dim3(BlockSize), 0, stream,
-        input, flags, output
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(segmented_warp_reduce_kernel<T, Flag, WarpSize, Trials>),
+                       dim3(size / BlockSize),
+                       dim3(BlockSize),
+                       0,
+                       stream,
+                       input,
+                       flags,
+                       output);
     HIP_CHECK(hipGetLastError());
 }
 
 template<bool AllReduce,
          bool Segmented,
-         class T,
+         typename T,
          unsigned int WarpSize,
          unsigned int BlockSize,
          unsigned int Trials = 100>
-void run_benchmark(benchmark::State& state, size_t bytes, const managed_seed& seed, hipStream_t stream)
+void run_benchmark(benchmark::State&   state,
+                   size_t              bytes,
+                   const managed_seed& seed,
+                   hipStream_t         stream)
 {
     using flag_type = unsigned char;
 
-    // Calculate the number of elements 
+    // Calculate the number of elements
     size_t N = bytes / sizeof(T);
 
-    const auto size = BlockSize * ((N + BlockSize - 1)/BlockSize);
+    const auto size = BlockSize * ((N + BlockSize - 1) / BlockSize);
 
     const auto     random_range = limit_random_range<T>(0, 10);
     std::vector<T> input
         = get_random_data<T>(size, random_range.first, random_range.second, seed.get_0());
     std::vector<flag_type> flags = get_random_data<flag_type>(size, 0, 1, seed.get_1());
-    T * d_input;
-    flag_type * d_flags;
-    T * d_output;
+    T*                     d_input;
+    flag_type*             d_flags;
+    T*                     d_output;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_input), size * sizeof(T)));
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_flags), size * sizeof(flag_type)));
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_output), size * sizeof(T)));
-    HIP_CHECK(
-        hipMemcpy(
-            d_input, input.data(),
-            size * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
-    HIP_CHECK(
-        hipMemcpy(
-            d_flags, flags.data(),
-            size * sizeof(flag_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(d_input, input.data(), size * sizeof(T), hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(d_flags, flags.data(), size * sizeof(flag_type), hipMemcpyHostToDevice));
     HIP_CHECK(hipDeviceSynchronize());
 
     // HIP events creation
@@ -210,7 +204,7 @@ void run_benchmark(benchmark::State& state, size_t bytes, const managed_seed& se
                                   + ",ws:" #WS ",cfg:{bs:" #BS "}}")                          \
             .c_str(),                                                                         \
         run_benchmark<AllReduce, Segmented, T, WS, BS>,                                       \
-        bytes,                                                                                 \
+        bytes,                                                                                \
         seed,                                                                                 \
         stream)
 
@@ -229,12 +223,14 @@ void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                                                        BENCHMARK_TYPE(double),
                                                        BENCHMARK_TYPE(int8_t),
                                                        BENCHMARK_TYPE(uint8_t),
-                                                       BENCHMARK_TYPE(rocprim::half)};
+                                                       BENCHMARK_TYPE(rocprim::half),
+                                                       BENCHMARK_TYPE(rocprim::int128_t),
+                                                       BENCHMARK_TYPE(rocprim::uint128_t)};
 
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     cli::Parser parser(argc, argv);
     parser.set_optional<size_t>("size", "size", DEFAULT_BYTES, "number of bytes");
@@ -248,8 +244,8 @@ int main(int argc, char *argv[])
 
     // Parse argv
     benchmark::Initialize(&argc, argv);
-    const size_t bytes = parser.get<size_t>("size");
-    const int trials = parser.get<int>("trials");
+    const size_t bytes  = parser.get<size_t>("size");
+    const int    trials = parser.get<int>("trials");
     bench_naming::set_format(parser.get<std::string>("name_format"));
     const std::string  seed_type = parser.get<std::string>("seed");
     const managed_seed seed(seed_type);

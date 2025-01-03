@@ -21,7 +21,9 @@
 #ifndef ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_MERGE_HPP_
 #define ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_MERGE_HPP_
 
-#include "../../../type_traits.hpp"
+#include "../../../config.hpp"
+#include "../../../type_traits_interface.hpp"
+#include "../../config_types.hpp"
 #include "../device_config_helper.hpp"
 
 #include <type_traits>
@@ -88,6 +90,17 @@ struct default_merge_config<
     : merge_config<1024, 4>
 {};
 
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 4>
+{};
+
 // Based on key_type = double, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -143,6 +156,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<1024, 4>
+{};
+
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = float, value_type = empty_type
@@ -202,6 +226,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 1>
+{};
+
 // Based on key_type = rocprim::half, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -256,6 +291,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<1024, 4>
+{};
+
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 4>
 {};
 
 // Based on key_type = int64_t, value_type = empty_type
@@ -315,6 +361,17 @@ struct default_merge_config<
     : merge_config<1024, 4>
 {};
 
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = int, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -370,6 +427,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<1024, 8>
+{};
+
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = short, value_type = empty_type
@@ -429,6 +497,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 1>
+{};
+
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -438,6 +517,74 @@ struct default_merge_config<
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 11>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int64_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<256, 8>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
+                      && (sizeof(value_type) > 2))>> : merge_config<1024, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = short
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<1024, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int8_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
+                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<1024, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1030),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
+                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<256, 8>
 {};
 
 // Based on key_type = double, value_type = int64_t
@@ -483,6 +630,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<1024, 4>
+{};
+
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 4>
 {};
 
 // Based on key_type = double, value_type = empty_type
@@ -542,6 +700,17 @@ struct default_merge_config<
     : merge_config<1024, 8>
 {};
 
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = float, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -562,7 +731,7 @@ struct default_merge_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : merge_config<512, 8>
+    : merge_config<1024, 4>
 {};
 
 // Based on key_type = rocprim::half, value_type = int
@@ -584,7 +753,7 @@ struct default_merge_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : merge_config<1024, 8>
+    : merge_config<256, 10>
 {};
 
 // Based on key_type = rocprim::half, value_type = int8_t
@@ -596,7 +765,18 @@ struct default_merge_config<
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<1024, 8>
+    : merge_config<256, 10>
+{};
+
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = rocprim::half, value_type = empty_type
@@ -655,6 +835,17 @@ struct default_merge_config<
     : merge_config<1024, 4>
 {};
 
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 4>
+{};
+
 // Based on key_type = int64_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -710,6 +901,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<1024, 8>
+{};
+
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = int, value_type = empty_type
@@ -769,6 +971,17 @@ struct default_merge_config<
     : merge_config<512, 16>
 {};
 
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 4>
+{};
+
 // Based on key_type = short, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -826,6 +1039,17 @@ struct default_merge_config<
     : merge_config<512, 8>
 {};
 
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
+{};
+
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -837,6 +1061,74 @@ struct default_merge_config<
     : merge_config<512, 16>
 {};
 
+// Based on key_type = rocprim::int128_t, value_type = int64_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<256, 8>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
+                      && (sizeof(value_type) > 2))>> : merge_config<256, 8>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = short
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<1024, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int8_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
+                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<1024, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx1100),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
+                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<1024, 2>
+{};
+
 // Based on key_type = double, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -880,6 +1172,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 5>
+{};
+
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = double, value_type = empty_type
@@ -939,6 +1242,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = float, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -993,7 +1307,18 @@ struct default_merge_config<
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 10>
+    : merge_config<512, 4>
+{};
+
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = rocprim::half, value_type = empty_type
@@ -1052,6 +1377,17 @@ struct default_merge_config<
     : merge_config<256, 5>
 {};
 
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
 // Based on key_type = int64_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1107,6 +1443,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<512, 4>
+{};
+
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = int, value_type = empty_type
@@ -1166,6 +1513,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = short, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1223,6 +1581,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
+{};
+
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1234,6 +1603,74 @@ struct default_merge_config<
     : merge_config<256, 11>
 {};
 
+// Based on key_type = rocprim::int128_t, value_type = int64_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = short
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int8_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
+                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx906),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
+                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
+{};
+
 // Based on key_type = double, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1277,6 +1714,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 5>
+{};
+
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = double, value_type = empty_type
@@ -1336,6 +1784,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = float, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1393,6 +1852,17 @@ struct default_merge_config<
     : merge_config<256, 4>
 {};
 
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
+{};
+
 // Based on key_type = rocprim::half, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1447,6 +1917,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 5>
+{};
+
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = int64_t, value_type = empty_type
@@ -1506,6 +1987,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = int, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1561,6 +2053,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<512, 4>
+{};
+
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = short, value_type = empty_type
@@ -1620,6 +2123,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
+{};
+
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -1631,401 +2145,72 @@ struct default_merge_config<
     : merge_config<512, 8>
 {};
 
-// Based on key_type = double, value_type = int64_t
+// Based on key_type = rocprim::int128_t, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
+    static_cast<unsigned int>(target_arch::gfx908),
     key_type,
     value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<512, 2>
 {};
 
-// Based on key_type = double, value_type = int
+// Based on key_type = rocprim::int128_t, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
+    static_cast<unsigned int>(target_arch::gfx908),
     key_type,
     value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 4)
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
                       && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
-// Based on key_type = double, value_type = short
+// Based on key_type = rocprim::int128_t, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
+    static_cast<unsigned int>(target_arch::gfx908),
     key_type,
     value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<256, 5>
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 2>
 {};
 
-// Based on key_type = double, value_type = int8_t
+// Based on key_type = rocprim::int128_t, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
+    static_cast<unsigned int>(target_arch::gfx908),
     key_type,
     value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 5>
+    : merge_config<512, 2>
 {};
 
-// Based on key_type = double, value_type = empty_type
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
+    static_cast<unsigned int>(target_arch::gfx908),
     key_type,
     value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4)
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx908),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 7>
-{};
-
-// Based on key_type = float, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
-{};
-
-// Based on key_type = float, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
-{};
-
-// Based on key_type = float, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
-{};
-
-// Based on key_type = float, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = float, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = rocprim::half, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : merge_config<1024, 2>
-{};
-
-// Based on key_type = rocprim::half, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : merge_config<1024, 2>
-{};
-
-// Based on key_type = rocprim::half, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : merge_config<256, 4>
-{};
-
-// Based on key_type = rocprim::half, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 4>
-{};
-
-// Based on key_type = rocprim::half, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 8>
-{};
-
-// Based on key_type = int64_t, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
-{};
-
-// Based on key_type = int64_t, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
-{};
-
-// Based on key_type = int64_t, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<256, 5>
-{};
-
-// Based on key_type = int64_t, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 5>
-{};
-
-// Based on key_type = int64_t, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
-                      && (sizeof(key_type) > 4)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 7>
-{};
-
-// Based on key_type = int, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
-{};
-
-// Based on key_type = int, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
-{};
-
-// Based on key_type = int, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
-{};
-
-// Based on key_type = int, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = int, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
-                      && (sizeof(key_type) > 2)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 10>
-{};
-
-// Based on key_type = short, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
-{};
-
-// Based on key_type = short, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
-{};
-
-// Based on key_type = short, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
-{};
-
-// Based on key_type = short, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = short, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
-                      && (sizeof(key_type) > 1)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 8>
-{};
-
-// Based on key_type = int8_t, value_type = int64_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
-                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : merge_config<1024, 2>
-{};
-
-// Based on key_type = int8_t, value_type = int
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
-                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : merge_config<1024, 2>
-{};
-
-// Based on key_type = int8_t, value_type = short
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
-                      && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = int8_t, value_type = int8_t
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
-                      && (sizeof(value_type) <= 1)
-                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 4>
-{};
-
-// Based on key_type = int8_t, value_type = empty_type
-template<class key_type, class value_type>
-struct default_merge_config<
-    static_cast<unsigned int>(target_arch::unknown),
-    key_type,
-    value_type,
-    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
-                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 8>
+    : merge_config<512, 2>
 {};
 
 // Based on key_type = double, value_type = int64_t
@@ -2071,6 +2256,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 5>
+{};
+
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = double, value_type = empty_type
@@ -2130,6 +2326,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
 // Based on key_type = float, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -2187,6 +2394,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 1>
+{};
+
 // Based on key_type = rocprim::half, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -2241,6 +2459,17 @@ struct default_merge_config<
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
     : merge_config<256, 5>
+{};
+
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
 {};
 
 // Based on key_type = int64_t, value_type = empty_type
@@ -2300,6 +2529,17 @@ struct default_merge_config<
     : merge_config<512, 4>
 {};
 
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
 // Based on key_type = int, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -2357,6 +2597,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
+{};
+
 // Based on key_type = short, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -2414,6 +2665,17 @@ struct default_merge_config<
     : merge_config<256, 10>
 {};
 
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 1>
+{};
+
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
@@ -2425,32 +2687,100 @@ struct default_merge_config<
     : merge_config<256, 16>
 {};
 
+// Based on key_type = rocprim::int128_t, value_type = int64_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = short
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int8_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
+                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 1>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::gfx90a),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
+                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
+{};
+
 // Based on key_type = double, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = double, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
 // Based on key_type = double, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2461,7 +2791,7 @@ struct default_merge_config<
 // Based on key_type = double, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2470,10 +2800,21 @@ struct default_merge_config<
     : merge_config<256, 5>
 {};
 
+// Based on key_type = double, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
 // Based on key_type = double, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2485,142 +2826,164 @@ struct default_merge_config<
 // Based on key_type = float, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = float, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 4>
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
 // Based on key_type = float, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<256, 8>
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
 {};
 
 // Based on key_type = float, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 8>
+    : merge_config<512, 4>
+{};
+
+// Based on key_type = float, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = float, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 10>
+    : merge_config<512, 4>
 {};
 
 // Based on key_type = rocprim::half, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : merge_config<512, 2>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = rocprim::half, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : merge_config<512, 4>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = rocprim::half, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : merge_config<512, 4>
+    : merge_config<256, 4>
 {};
 
 // Based on key_type = rocprim::half, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 10>
+    : merge_config<256, 4>
+{};
+
+// Based on key_type = rocprim::half, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = rocprim::half, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 16>
+    : merge_config<256, 8>
 {};
 
 // Based on key_type = int64_t, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = int64_t, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
                       && (sizeof(key_type) > 4) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
 // Based on key_type = int64_t, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2631,7 +2994,7 @@ struct default_merge_config<
 // Based on key_type = int64_t, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2640,10 +3003,21 @@ struct default_merge_config<
     : merge_config<256, 5>
 {};
 
+// Based on key_type = int64_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
+                      && (sizeof(key_type) > 4) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 1>
+{};
+
 // Based on key_type = int64_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 8)
@@ -2655,52 +3029,63 @@ struct default_merge_config<
 // Based on key_type = int, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = int, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 4>
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
 // Based on key_type = int, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<256, 8>
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
 {};
 
 // Based on key_type = int, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
                       && (sizeof(key_type) > 2) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 8>
+    : merge_config<512, 4>
+{};
+
+// Based on key_type = int, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
+                      && (sizeof(key_type) > 2) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = int, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 4)
@@ -2712,64 +3097,75 @@ struct default_merge_config<
 // Based on key_type = short, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 8)
-                      && (sizeof(value_type) > 4))>> : merge_config<256, 4>
+                      && (sizeof(value_type) > 4))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = short, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 4)
-                      && (sizeof(value_type) > 2))>> : merge_config<512, 4>
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
 {};
 
 // Based on key_type = short, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 2)
-                      && (sizeof(value_type) > 1))>> : merge_config<256, 10>
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 4>
 {};
 
 // Based on key_type = short, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1) && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 10>
+    : merge_config<512, 4>
+{};
+
+// Based on key_type = short, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
+                      && (sizeof(key_type) > 1) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<1024, 2>
 {};
 
 // Based on key_type = short, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 2)
                       && (sizeof(key_type) > 1)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<256, 16>
+    : merge_config<512, 8>
 {};
 
 // Based on key_type = int8_t, value_type = int64_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
@@ -2780,18 +3176,18 @@ struct default_merge_config<
 // Based on key_type = int8_t, value_type = int
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : merge_config<512, 4>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = int8_t, value_type = short
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
@@ -2802,24 +3198,103 @@ struct default_merge_config<
 // Based on key_type = int8_t, value_type = int8_t
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
                       && (sizeof(value_type) <= 1)
                       && (!std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 8>
+    : merge_config<512, 4>
+{};
+
+// Based on key_type = int8_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
+                      && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
+    : merge_config<1024, 2>
 {};
 
 // Based on key_type = int8_t, value_type = empty_type
 template<class key_type, class value_type>
 struct default_merge_config<
-    static_cast<unsigned int>(target_arch::gfx942),
+    static_cast<unsigned int>(target_arch::unknown),
     key_type,
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 1)
                       && (std::is_same<value_type, rocprim::empty_type>::value))>>
-    : merge_config<512, 16>
+    : merge_config<512, 8>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int64_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 8)
+                      && (sizeof(value_type) > 4))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 4)
+                      && (sizeof(value_type) > 2))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = short
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 2)
+                      && (sizeof(value_type) > 1))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = int8_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 1)
+                      && (!std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = rocprim::int128_t
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8) && (sizeof(value_type) <= 16)
+                      && (sizeof(value_type) > 8))>> : merge_config<512, 2>
+{};
+
+// Based on key_type = rocprim::int128_t, value_type = empty_type
+template<class key_type, class value_type>
+struct default_merge_config<
+    static_cast<unsigned int>(target_arch::unknown),
+    key_type,
+    value_type,
+    std::enable_if_t<(!bool(rocprim::is_floating_point<key_type>::value) && (sizeof(key_type) <= 16)
+                      && (sizeof(key_type) > 8)
+                      && (std::is_same<value_type, rocprim::empty_type>::value))>>
+    : merge_config<512, 2>
 {};
 
 } // end namespace detail

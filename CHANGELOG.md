@@ -9,6 +9,8 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * Added missing operator `rocprim::key_value_pair::operator==`.
 * Added `rocprim::unrolled_copy` thread function to copy multiple items inside the thread.
 * Added `rocprim::thread_load_volatile_pointer` thread function to load volatile.
+* Added `rocprim::int128_t` and `rocprim::uint128_t` to benchmarks for improved performance evaluation on 128-bit integers.
+* Added `rocprim::int128_t` to autotuning supported types to improve performance for 128-bit integers.
 
 ### Resolved issues
 

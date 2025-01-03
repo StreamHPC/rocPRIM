@@ -32,10 +32,14 @@
 
 // rocPRIM
 #include <rocprim/device/device_segmented_reduce.hpp>
+#include <rocprim/functional.hpp>
+#include <rocprim/types.hpp>
 
-#include <iostream>
-#include <limits>
-#include <locale>
+#include <cmath>
+#include <cstddef>
+#include <numeric>
+#include <random>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -43,12 +47,10 @@
 const size_t DEFAULT_BYTES = 1024 * 1024 * 32 * 4;
 #endif
 
-namespace rp = rocprim;
-
-const unsigned int batch_size = 10;
+const unsigned int batch_size  = 10;
 const unsigned int warmup_size = 5;
 
-template<class T>
+template<typename T>
 void run_benchmark(benchmark::State&   state,
                    size_t              desired_segments,
                    size_t              bytes,
@@ -56,9 +58,9 @@ void run_benchmark(benchmark::State&   state,
                    hipStream_t         stream)
 {
     using offset_type = int;
-    using value_type = T;
+    using value_type  = T;
 
-    // Calculate the number of elements 
+    // Calculate the number of elements
     size_t size = bytes / sizeof(T);
 
     // Generate data
@@ -68,13 +70,13 @@ void run_benchmark(benchmark::State&   state,
     std::uniform_real_distribution<double> segment_length_dis(0, avg_segment_length * 2);
 
     std::vector<offset_type> offsets;
-    unsigned int segments_count = 0;
-    size_t offset = 0;
+    unsigned int             segments_count = 0;
+    size_t                   offset         = 0;
     while(offset < size)
     {
         const size_t segment_length = std::round(segment_length_dis(gen));
         offsets.push_back(offset);
-        segments_count++;
+        ++segments_count;
         offset += segment_length;
     }
     offsets.push_back(size);
@@ -82,62 +84,58 @@ void run_benchmark(benchmark::State&   state,
     std::vector<value_type> values_input(size);
     std::iota(values_input.begin(), values_input.end(), 0);
 
-    offset_type * d_offsets;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_offsets), (segments_count + 1) * sizeof(offset_type)));
-    HIP_CHECK(
-        hipMemcpy(
-            d_offsets, offsets.data(),
-            (segments_count + 1) * sizeof(offset_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    offset_type* d_offsets;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_offsets),
+                        (segments_count + 1) * sizeof(offset_type)));
+    HIP_CHECK(hipMemcpy(d_offsets,
+                        offsets.data(),
+                        (segments_count + 1) * sizeof(offset_type),
+                        hipMemcpyHostToDevice));
 
-    value_type * d_values_input;
+    value_type* d_values_input;
     HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_values_input), size * sizeof(value_type)));
-    HIP_CHECK(
-        hipMemcpy(
-            d_values_input, values_input.data(),
-            size * sizeof(value_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(d_values_input,
+                        values_input.data(),
+                        size * sizeof(value_type),
+                        hipMemcpyHostToDevice));
 
-    value_type * d_aggregates_output;
-    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_aggregates_output), segments_count * sizeof(value_type)));
+    value_type* d_aggregates_output;
+    HIP_CHECK(hipMalloc(reinterpret_cast<void**>(&d_aggregates_output),
+                        segments_count * sizeof(value_type)));
 
     rocprim::plus<value_type> reduce_op;
-    value_type init(0);
+    value_type                init(0);
 
-    void * d_temporary_storage = nullptr;
+    void*  d_temporary_storage     = nullptr;
     size_t temporary_storage_bytes = 0;
 
-    HIP_CHECK(
-        rp::segmented_reduce(
-            d_temporary_storage, temporary_storage_bytes,
-            d_values_input, d_aggregates_output,
-            segments_count,
-            d_offsets, d_offsets + 1,
-            reduce_op, init,
-            stream
-        )
-    );
+    HIP_CHECK(rocprim::segmented_reduce(d_temporary_storage,
+                                        temporary_storage_bytes,
+                                        d_values_input,
+                                        d_aggregates_output,
+                                        segments_count,
+                                        d_offsets,
+                                        d_offsets + 1,
+                                        reduce_op,
+                                        init,
+                                        stream));
 
     HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
     HIP_CHECK(hipDeviceSynchronize());
 
     // Warm-up
-    for(size_t i = 0; i < warmup_size; i++)
+    for(size_t i = 0; i < warmup_size; ++i)
     {
-        HIP_CHECK(
-            rp::segmented_reduce(
-                d_temporary_storage, temporary_storage_bytes,
-                d_values_input, d_aggregates_output,
-                segments_count,
-                d_offsets, d_offsets + 1,
-                reduce_op, init,
-                stream
-            )
-        );
+        HIP_CHECK(rocprim::segmented_reduce(d_temporary_storage,
+                                            temporary_storage_bytes,
+                                            d_values_input,
+                                            d_aggregates_output,
+                                            segments_count,
+                                            d_offsets,
+                                            d_offsets + 1,
+                                            reduce_op,
+                                            init,
+                                            stream));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -146,23 +144,23 @@ void run_benchmark(benchmark::State&   state,
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop));
 
-    for (auto _ : state)
+    for(auto _ : state)
     {
         // Record start event
         HIP_CHECK(hipEventRecord(start, stream));
 
-        for(size_t i = 0; i < batch_size; i++)
+        for(size_t i = 0; i < batch_size; ++i)
         {
-            HIP_CHECK(
-                rp::segmented_reduce(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    reduce_op, init,
-                    stream
-                )
-            );
+            HIP_CHECK(rocprim::segmented_reduce(d_temporary_storage,
+                                                temporary_storage_bytes,
+                                                d_values_input,
+                                                d_aggregates_output,
+                                                segments_count,
+                                                d_offsets,
+                                                d_offsets + 1,
+                                                reduce_op,
+                                                init,
+                                                stream));
         }
 
         // Record stop event and wait until it completes
@@ -195,41 +193,37 @@ void run_benchmark(benchmark::State&   state,
             .c_str(),                                                                  \
         run_benchmark<T>,                                                              \
         SEGMENTS,                                                                      \
-        bytes,                                                                          \
+        bytes,                                                                         \
         seed,                                                                          \
         stream)
 
-#define BENCHMARK_TYPE(type) \
-    CREATE_BENCHMARK(type, 1), \
-    CREATE_BENCHMARK(type, 10), \
-    CREATE_BENCHMARK(type, 100), \
-    CREATE_BENCHMARK(type, 1000), \
-    CREATE_BENCHMARK(type, 10000)
+#define BENCHMARK_TYPE(type)                                                            \
+    CREATE_BENCHMARK(type, 1), CREATE_BENCHMARK(type, 10), CREATE_BENCHMARK(type, 100), \
+        CREATE_BENCHMARK(type, 1000), CREATE_BENCHMARK(type, 10000)
 
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     size_t                                        bytes,
                     const managed_seed&                           seed,
                     hipStream_t                                   stream)
 {
-    using custom_float2 = custom_type<float, float>;
+    using custom_float2  = custom_type<float, float>;
     using custom_double2 = custom_type<double, double>;
 
-    std::vector<benchmark::internal::Benchmark*> bs =
-    {
-        BENCHMARK_TYPE(float),
-        BENCHMARK_TYPE(double),
-        BENCHMARK_TYPE(int8_t),
-        BENCHMARK_TYPE(uint8_t),
-        BENCHMARK_TYPE(rocprim::half),
-        BENCHMARK_TYPE(int),
-        BENCHMARK_TYPE(custom_float2),
-        BENCHMARK_TYPE(custom_double2),
-    };
+    std::vector<benchmark::internal::Benchmark*> bs = {BENCHMARK_TYPE(float),
+                                                       BENCHMARK_TYPE(double),
+                                                       BENCHMARK_TYPE(int8_t),
+                                                       BENCHMARK_TYPE(uint8_t),
+                                                       BENCHMARK_TYPE(rocprim::half),
+                                                       BENCHMARK_TYPE(int),
+                                                       BENCHMARK_TYPE(custom_float2),
+                                                       BENCHMARK_TYPE(custom_double2),
+                                                       BENCHMARK_TYPE(rocprim::int128_t),
+                                                       BENCHMARK_TYPE(rocprim::uint128_t)};
 
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     cli::Parser parser(argc, argv);
     parser.set_optional<size_t>("size", "size", DEFAULT_BYTES, "number of bytes");
@@ -244,8 +238,8 @@ int main(int argc, char *argv[])
 
     // Parse argv
     benchmark::Initialize(&argc, argv);
-    const size_t bytes = parser.get<size_t>("size");
-    const int trials = parser.get<int>("trials");
+    const size_t bytes  = parser.get<size_t>("size");
+    const int    trials = parser.get<int>("trials");
     bench_naming::set_format(parser.get<std::string>("name_format"));
     const std::string  seed_type = parser.get<std::string>("seed");
     const managed_seed seed(seed_type);
