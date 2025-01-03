@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2020-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,12 @@
 
 #include <random>
 
+#include "../common_test_header.hpp"
+
 using engine_type = std::default_random_engine;
 using seed_type   = typename engine_type::result_type;
 
-static const char* env_p = std::getenv("ROCPRIM_TEST_RUNS");
+static const char* env_p = test_common_utils::__get_env("ROCPRIM_TEST_RUNS");
 // "env_var" determines the number of iterations.
 // If undefined or incorrectly defined, it defaults to 0.
 static const size_t env_var = (env_p == nullptr) ? 0ul : std::atoi(env_p);
