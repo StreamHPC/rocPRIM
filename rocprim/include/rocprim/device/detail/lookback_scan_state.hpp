@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -201,29 +201,32 @@ public:
     static constexpr bool use_sleep = UseSleep;
 
     // temp_storage must point to allocation of get_storage_size(number_of_blocks) bytes
-    ROCPRIM_HOST static inline hipError_t create(lookback_scan_state& state,
-                                                 void*                temp_storage,
-                                                 const unsigned int   number_of_blocks,
-                                                 const hipStream_t /*stream*/)
+    ROCPRIM_HOST_DEVICE
+    static inline hipError_t create(lookback_scan_state& state,
+                                    void*                temp_storage,
+                                    const unsigned int   number_of_blocks,
+                                    const hipStream_t /*stream*/)
     {
         (void)number_of_blocks;
         state.prefixes = reinterpret_cast<prefix_underlying_type*>(temp_storage);
         return hipSuccess;
     }
 
-    [[deprecated(
-        "Please use the overload returns an error code, this function assumes the default"
-        " stream and silently ignores errors.")]] ROCPRIM_HOST static inline lookback_scan_state
-        create(void* temp_storage, const unsigned int number_of_blocks)
+    [[deprecated("Please use the overload returns an error code, this function assumes the default"
+                 " stream and silently ignores errors.")]]
+    ROCPRIM_HOST_DEVICE
+    static inline lookback_scan_state create(void*              temp_storage,
+                                             const unsigned int number_of_blocks)
     {
         lookback_scan_state result;
         (void)create(result, temp_storage, number_of_blocks, /*default stream*/ 0);
         return result;
     }
 
-    ROCPRIM_HOST static inline hipError_t get_storage_size(const unsigned int number_of_blocks,
-                                                           const hipStream_t  stream,
-                                                           size_t&            storage_size)
+    ROCPRIM_HOST_DEVICE
+    static inline hipError_t get_storage_size(const unsigned int number_of_blocks,
+                                              const hipStream_t  stream,
+                                              size_t&            storage_size)
     {
         unsigned int warp_size;
         hipError_t   error = ::rocprim::host_warp_size(stream, warp_size);
@@ -234,8 +237,9 @@ public:
     }
 
     [[deprecated("Please use the overload returns an error code, this function assumes the default"
-                 " stream and silently ignores errors.")]] ROCPRIM_HOST static inline size_t
-        get_storage_size(const unsigned int number_of_blocks)
+                 " stream and silently ignores errors.")]]
+    ROCPRIM_HOST_DEVICE
+    static inline size_t get_storage_size(const unsigned int number_of_blocks)
     {
         size_t result;
         (void)get_storage_size(number_of_blocks, /*default stream*/ 0, result);
