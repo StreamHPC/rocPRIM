@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include "test_utils_custom_float_type.hpp"
 #include "test_utils_custom_test_types.hpp"
 #include "test_utils_device_ptr.hpp"
+#include "test_utils_sort_checker.hpp"
 #include "test_utils_sort_comparator.hpp"
 #include "test_utils_types.hpp"
 
@@ -280,13 +281,6 @@ void sort_keys()
                 = in_place ? d_keys_input : d_keys_output_alloc;
             d_keys_output_alloc.resize(in_place ? 0 : size);
 
-            // Calculate expected results on host
-            std::vector<key_type> expected(keys_input.get(), keys_input.get() + size);
-            std::stable_sort(
-                expected.begin(),
-                expected.end(),
-                test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
-
             // Use arbitrary custom config to increase test coverage without making more test cases
             using config = rocprim::radix_sort_config<rocprim::default_config,
                                                       rocprim::default_config,
@@ -327,17 +321,55 @@ void sort_keys()
                 gHelper.createAndLaunchGraph(stream);
             }
 
-            const auto keys_output = d_keys_output.load_to_unique_ptr();
-
             if(TestFixture::params::use_graphs)
             {
                 gHelper.cleanupGraphHelper();
             }
 
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output.get(),
-                                                              keys_output.get() + size,
-                                                              expected.begin(),
-                                                              expected.end()));
+            if(size > 4096)
+            {
+                bool is_sorted = test_utils::device_sort_check(
+                    d_keys_output.get(),
+                    size,
+                    test_utils::key_comparator<key_type, descending, start_bit, end_bit>{},
+                    stream,
+                    debug_synchronous);
+                if(!is_sorted)
+                {
+                    // Load output to host
+                    const auto keys_output = d_keys_output.load_to_unique_ptr();
+
+                    // Calculate expected results on host
+                    std::vector<key_type> expected(keys_input.get(), keys_input.get() + size);
+                    std::stable_sort(
+                        expected.begin(),
+                        expected.end(),
+                        test_utils::key_comparator<key_type, descending, start_bit, end_bit>{});
+
+                    ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output.get(),
+                                                                      keys_output.get() + size,
+                                                                      expected.begin(),
+                                                                      expected.end()));
+                    FAIL();
+                }
+            }
+            else
+            {
+                // Load output to host
+                const auto keys_output = d_keys_output.load_to_unique_ptr();
+
+                // Calculate expected results on host
+                std::vector<key_type> expected(keys_input.get(), keys_input.get() + size);
+                std::stable_sort(
+                    expected.begin(),
+                    expected.end(),
+                    test_utils::key_comparator<key_type, descending, start_bit, end_bit>{});
+
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output.get(),
+                                                                  keys_output.get() + size,
+                                                                  expected.begin(),
+                                                                  expected.end()));
+            }
         }
     }
 
