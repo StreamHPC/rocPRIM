@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -145,17 +145,17 @@ struct device_adjacent_find_benchmark : public config_autotune_interface
         void*       d_tmp_storage        = nullptr;
         auto        launch_adjacent_find = [&]()
         {
-            HIP_CHECK(::rocprim::adjacent_find(d_tmp_storage,
-                                               tmp_storage_size,
-                                               d_input,
-                                               d_output,
-                                               size,
-                                               rocprim::equal_to<input_type>{},
-                                               stream,
-                                               false));
+            HIP_CHECK(::rocprim::adjacent_find<Config>(d_tmp_storage,
+                                                       tmp_storage_size,
+                                                       d_input,
+                                                       d_output,
+                                                       size,
+                                                       rocprim::equal_to<input_type>{},
+                                                       stream,
+                                                       false));
         };
 
-        // Get size of tmporary storage
+        // Get size of temporary storage
         launch_adjacent_find();
         HIP_CHECK(hipMalloc(&d_tmp_storage, tmp_storage_size));
 
