@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -158,22 +158,53 @@ namespace detail
 
     ROCPRIM_DEVICE ROCPRIM_INLINE __uint128_t atomic_load(const __uint128_t* address)
     {
-
         __uint128_t result;
+
+#define ROCPRIM_ATOMIC_LOAD(inst, mod, wait) \
+    asm volatile(inst " %0, %1 " mod "\n" wait "\n" : "=v"(result) : "v"(address))
+
 #if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-        asm volatile("flat_load_dwordx4 %0, %1 sc1\n"
-                     "s_waitcnt vmcnt(0)\n"
-                     : "=v"(result)
-                     : "v"(address)
-                     : "memory");
+    #define ROCPRIM_ATOMIC_LOAD_FLAT \
+        ROCPRIM_ATOMIC_LOAD("flat_load_dwordx4", "sc1", "s_waitcnt vmcnt(0)")
+    #define ROCPRIM_ATOMIC_LOAD_SHARED \
+        ROCPRIM_ATOMIC_LOAD("ds_read_b128", "", "s_waitcnt lgkmcnt(0)")
+    #define ROCPRIM_ATOMIC_LOAD_GLOBAL \
+        ROCPRIM_ATOMIC_LOAD("global_load_dwordx4", "off sc1", "s_waitcnt vmcnt(0)")
 #else
-        asm volatile("flat_load_dwordx4 %0, %1 glc\n"
-                     "s_waitcnt vmcnt(0)\n"
-                     : "=v"(result)
-                     : "v"(address)
-                     : "memory");
+    #define ROCPRIM_ATOMIC_LOAD_FLAT \
+        ROCPRIM_ATOMIC_LOAD("flat_load_dwordx4", "glc", "s_waitcnt vmcnt(0)")
+    #define ROCPRIM_ATOMIC_LOAD_SHARED \
+        ROCPRIM_ATOMIC_LOAD("ds_read_b128", "", "s_waitcnt lgkmcnt(0)")
+    #define ROCPRIM_ATOMIC_LOAD_GLOBAL \
+        ROCPRIM_ATOMIC_LOAD("global_load_dwordx4", "off glc", "s_waitcnt vmcnt(0)")
 #endif
+
+#if defined(__has_builtin) && __has_builtin(__builtin_amdgcn_is_shared) \
+    && __has_builtin(__builtin_amdgcn_is_private)
+
+        auto* ptr = (const __attribute__((address_space(0))) __uint128_t*)address;
+        if(__builtin_amdgcn_is_shared(ptr))
+        {
+            ROCPRIM_ATOMIC_LOAD_SHARED;
+        }
+        else if(__builtin_amdgcn_is_private(ptr))
+        {
+            ROCPRIM_ATOMIC_LOAD_FLAT;
+        }
+        else
+        {
+            ROCPRIM_ATOMIC_LOAD_GLOBAL;
+        }
+#else
+        ROCPRIM_ATOMIC_LOAD_FLAT;
+#endif
+
         return result;
+
+#undef ROCPRIM_ATOMIC_LOAD
+#undef ROCPRIM_ATOMIC_LOAD_FLAT
+#undef ROCPRIM_ATOMIC_LOAD_SHARED
+#undef ROCPRIM_ATOMIC_LOAD_GLOBAL
     }
 
     ROCPRIM_DEVICE ROCPRIM_INLINE
@@ -203,13 +234,54 @@ namespace detail
         __hip_atomic_store(address, value, __ATOMIC_RELAXED, __HIP_MEMORY_SCOPE_AGENT);
     }
 
-    ROCPRIM_DEVICE ROCPRIM_INLINE void atomic_store(const __uint128_t* address, const __uint128_t value)
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    void atomic_store(__uint128_t* address, const __uint128_t value)
     {
+        __uint128_t result;
+
+#define ROCPRIM_ATOMIC_STORE(inst, mod, wait) \
+    asm volatile(inst " %0, %1 " mod "\n" wait "\n" : : "v"(address), "v"(value))
+
 #if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-        asm volatile("flat_store_dwordx4 %0, %1 sc1\n" : : "v"(address), "v"(value) : "memory");
+    #define ROCPRIM_ATOMIC_STORE_FLAT \
+        ROCPRIM_ATOMIC_STORE("flat_store_dwordx4", "sc1", "s_waitcnt vmcnt(0)")
+    #define ROCPRIM_ATOMIC_STORE_SHARED \
+        ROCPRIM_ATOMIC_STORE("ds_write_b128", "", "s_waitcnt lgkmcnt(0)")
+    #define ROCPRIM_ATOMIC_STORE_GLOBAL \
+        ROCPRIM_ATOMIC_STORE("global_store_dwordx4", "off sc1", "s_waitcnt vmcnt(0)")
 #else
-        asm volatile("flat_store_dwordx4 %0, %1\n" : : "v"(address), "v"(value) : "memory");
+    #define ROCPRIM_ATOMIC_STORE_FLAT \
+        ROCPRIM_ATOMIC_STORE("flat_store_dwordx4", "", "s_waitcnt vmcnt(0)")
+    #define ROCPRIM_ATOMIC_STORE_SHARED \
+        ROCPRIM_ATOMIC_STORE("ds_write_b128", "", "s_waitcnt lgkmcnt(0)")
+    #define ROCPRIM_ATOMIC_STORE_GLOBAL \
+        ROCPRIM_ATOMIC_STORE("global_store_dwordx4", "off", "s_waitcnt vmcnt(0)")
 #endif
+
+#if defined(__has_builtin) && __has_builtin(__builtin_amdgcn_is_shared) \
+    && __has_builtin(__builtin_amdgcn_is_private)
+
+        auto* ptr = (__attribute__((address_space(0))) __uint128_t*)address;
+        if(__builtin_amdgcn_is_shared(ptr))
+        {
+            ROCPRIM_ATOMIC_STORE_SHARED;
+        }
+        else if(__builtin_amdgcn_is_private(ptr))
+        {
+            ROCPRIM_ATOMIC_STORE_FLAT;
+        }
+        else
+        {
+            ROCPRIM_ATOMIC_STORE_GLOBAL;
+        }
+#else
+        ROCPRIM_ATOMIC_STORE_FLAT;
+#endif
+
+#undef ROCPRIM_ATOMIC_STORE
+#undef ROCPRIM_ATOMIC_STORE_FLAT
+#undef ROCPRIM_ATOMIC_STORE_SHARED
+#undef ROCPRIM_ATOMIC_STORE_GLOBAL
     }
 
     /// \brief Wait for all vector memory operations to complete
