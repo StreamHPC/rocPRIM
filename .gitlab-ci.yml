@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -120,7 +120,7 @@ copyright-date:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D BUILD_BENCHMARK=ON
-      -D GPU_TARGETS=$GPU_TARGETS
+      -D AMDGPU_TARGETS=$GPU_TARGETS
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
       -D CMAKE_CXX_STANDARD=14
@@ -190,7 +190,7 @@ build:cmake-minimum-apt:
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
       -D BUILD_EXAMPLE=ON
-      -D GPU_TARGETS=$GPU_TARGETS
+      -D AMDGPU_TARGETS=$GPU_TARGETS
       -D CMAKE_CXX_STANDARD="$BUILD_VERSION"
       -S $CI_PROJECT_DIR
       -B $BUILD_DIR
@@ -277,7 +277,7 @@ build:windows:
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build
       -D BUILD_$BUILD_TARGET=ON
-      -D GPU_TARGETS=$GPU_TARGET
+      -D AMDGPU_TARGETS=$GPU_TARGET
       -D CMAKE_CXX_COMPILER:PATH="${env:HIP_PATH}\bin\clang++.exe"
       -D CMAKE_PREFIX_PATH:PATH="${env:HIP_PATH}"
       -D CMAKE_BUILD_TYPE="$BUILD_TYPE"
@@ -325,7 +325,7 @@ autotune:build:
       -D BUILD_EXAMPLE=OFF
       -D BUILD_BENCHMARK=ON
       -D BENCHMARK_CONFIG_TUNING=ON
-      -D GPU_TARGETS=$GPU_TARGETS
+      -D AMDGPU_TARGETS=$GPU_TARGETS
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
       -D CMAKE_CXX_STANDARD=14
@@ -433,7 +433,7 @@ test-windows-release:
       -G Ninja
       -D CMAKE_CXX_COMPILER="$AMDCLANG"
       -D CMAKE_BUILD_TYPE=Release
-      -D GPU_TARGETS=$GPU_TARGETS
+      -D AMDGPU_TARGETS=$GPU_TARGETS
       -D CMAKE_CXX_STANDARD=14
       -S "$CI_PROJECT_DIR/test/extra"
       -B "$CI_PROJECT_DIR/package_test"
