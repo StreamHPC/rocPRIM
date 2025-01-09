@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,6 +68,7 @@
 #include "device/device_histogram.hpp"
 #include "device/device_memcpy.hpp"
 #include "device/device_merge.hpp"
+#include "device/device_merge_inplace.hpp"
 #include "device/device_merge_sort.hpp"
 #include "device/device_nth_element.hpp"
 #include "device/device_partial_sort.hpp"
