@@ -170,6 +170,12 @@ namespace detail
         ROCPRIM_ATOMIC_LOAD("ds_read_b128", "", "s_waitcnt lgkmcnt(0)")
     #define ROCPRIM_ATOMIC_LOAD_GLOBAL \
         ROCPRIM_ATOMIC_LOAD("global_load_dwordx4", "off sc1", "s_waitcnt vmcnt(0)")
+#elif defined(__gfx1200__) || defined(__gfx1201__)
+    #define ROCPRIM_ATOMIC_LOAD_FLAT \
+        ROCPRIM_ATOMIC_LOAD("flat_load_b128", "scope:SCOPE_DEV", "s_wait_loadcnt_dscnt 0x0")
+    #define ROCPRIM_ATOMIC_LOAD_SHARED ROCPRIM_ATOMIC_LOAD("ds_load_b128", "", "s_wait_dscnt 0x0")
+    #define ROCPRIM_ATOMIC_LOAD_GLOBAL \
+        ROCPRIM_ATOMIC_LOAD("global_load_b128", "off scope:SCOPE_DEV", "s_wait_loadcnt 0x0")
 #else
     #define ROCPRIM_ATOMIC_LOAD_FLAT \
         ROCPRIM_ATOMIC_LOAD("flat_load_dwordx4", "glc", "s_waitcnt vmcnt(0)")
@@ -249,6 +255,13 @@ namespace detail
         ROCPRIM_ATOMIC_STORE("ds_write_b128", "", "s_waitcnt lgkmcnt(0)")
     #define ROCPRIM_ATOMIC_STORE_GLOBAL \
         ROCPRIM_ATOMIC_STORE("global_store_dwordx4", "off sc1", "s_waitcnt vmcnt(0)")
+#elif defined(__gfx1200__) || defined(__gfx1201__)
+    #define ROCPRIM_ATOMIC_STORE_FLAT \
+        ROCPRIM_ATOMIC_STORE("flat_store_b128", "scope:SCOPE_DEV", "s_wait_loadcnt_dscnt 0x0")
+    #define ROCPRIM_ATOMIC_STORE_SHARED \
+        ROCPRIM_ATOMIC_STORE("ds_store_b128", "", "s_wait_dscnt 0x0")
+    #define ROCPRIM_ATOMIC_STORE_GLOBAL \
+        ROCPRIM_ATOMIC_STORE("global_store_b128", "off scope:SCOPE_DEV", "s_wait_loadcnt 0x0")
 #else
     #define ROCPRIM_ATOMIC_STORE_FLAT \
         ROCPRIM_ATOMIC_STORE("flat_store_dwordx4", "", "s_waitcnt vmcnt(0)")
