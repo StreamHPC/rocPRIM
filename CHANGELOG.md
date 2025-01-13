@@ -12,6 +12,7 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * Added `rocprim::int128_t` and `rocprim::uint128_t` to benchmarks for improved performance evaluation on 128-bit integers.
 * Added `rocprim::int128_t` to autotuning supported types to improve performance for 128-bit integers.
 * Added `rocprim::merge_inplace` function that allows merging in-place.
+* Added initial value support for warp- and block-level inclusive scan.
 
 ### Resolved issues
 

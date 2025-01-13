@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -172,6 +172,46 @@ void scan_kernel(T* device_output, T* device_output_b, T init)
     if(threadIdx.x == 0)
     {
         device_output_b[blockIdx.x] = prefix_value;
+    }
+}
+
+template<int                           Method,
+         unsigned int                  BlockSize,
+         rocprim::block_scan_algorithm Algorithm,
+         class T,
+         typename std::enable_if<Method == 6>::type* = nullptr>
+__global__
+__launch_bounds__(BlockSize)
+void scan_kernel(T* device_output, T* device_output_b, T init)
+{
+    (void)device_output_b;
+    const unsigned int                           index    = (blockIdx.x * BlockSize) + threadIdx.x;
+    T                                            input[1] = {device_output[index]};
+    T                                            output[1];
+    rocprim::block_scan<T, BlockSize, Algorithm> bscan;
+    bscan.inclusive_scan(input, init, output);
+    device_output[index] = output[0];
+}
+
+template<int                           Method,
+         unsigned int                  BlockSize,
+         rocprim::block_scan_algorithm Algorithm,
+         class T,
+         typename std::enable_if<Method == 7>::type* = nullptr>
+__global__
+__launch_bounds__(BlockSize)
+void scan_kernel(T* device_output, T* device_output_b, T init)
+{
+    const unsigned int                           index    = (blockIdx.x * BlockSize) + threadIdx.x;
+    T                                            input[1] = {device_output[index]};
+    T                                            output[1];
+    T                                            reduction;
+    rocprim::block_scan<T, BlockSize, Algorithm> bscan;
+    bscan.inclusive_scan(input, init, output, reduction);
+    device_output[index] = output[0];
+    if(threadIdx.x == 0)
+    {
+        device_output_b[blockIdx.x] = reduction;
     }
 }
 

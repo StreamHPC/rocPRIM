@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +94,79 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScan)
             T(0),
             grid_size);
     }
+}
 
+typed_test_def(suite_name_single, name_suffix, InclusiveScanInitialValue)
+{
+    using T = typename TestFixture::input_type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
+
+    constexpr size_t block_size = TestFixture::block_size;
+
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size      = block_size * 58;
+    const size_t grid_size = size / block_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> output        = test_utils::get_random_data<T>(size, 2, 50, seed_value);
+        std::vector<T> output2       = output;
+        T              initial_value = test_utils::get_random_value<T>(2, 200, seed_value);
+        SCOPED_TRACE(testing::Message() << "with initial_value = " << initial_value);
+
+        // Calculate expected results on host
+        std::vector<T> expected(output.size(), T(0));
+        for(size_t i = 0; i < output.size() / block_size; i++)
+        {
+            acc_type accumulator(initial_value);
+            for(size_t j = 0; j < block_size; j++)
+            {
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<T>(accumulator);
+            }
+        }
+
+        // Writing to device memory
+        test_utils::device_ptr<T> device_output(output.size());
+
+        static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 6>::run(
+            output,
+            output,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            initial_value,
+            grid_size);
+
+        static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 6>::run(
+            output2,
+            output2,
+            expected,
+            expected,
+            device_output.get(),
+            NULL,
+            initial_value,
+            grid_size);
+    }
 }
 
 typed_test_def(suite_name_single, name_suffix, InclusiveScanReduce)
@@ -170,6 +242,83 @@ typed_test_def(suite_name_single, name_suffix, InclusiveScanReduce)
             grid_size);
     }
 
+}
+
+typed_test_def(suite_name_single, name_suffix, InclusiveScanReduceInitialValue)
+{
+    using T = typename TestFixture::input_type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
+
+    constexpr size_t block_size = TestFixture::block_size;
+
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size      = block_size * 58;
+    const size_t grid_size = size / block_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> output  = test_utils::get_random_data<T>(size, 2, 50, seed_value);
+        std::vector<T> output2 = output;
+        std::vector<T> output_reductions(size / block_size);
+        T              initial_value = test_utils::get_random_value<T>(2, 200, seed_value);
+        SCOPED_TRACE(testing::Message() << "with initial_value = " << initial_value);
+
+        // Calculate expected results on host
+        std::vector<T> expected(output.size(), T(0));
+        std::vector<T> expected_reductions(output_reductions.size(), T(0));
+        for(size_t i = 0; i < output.size() / block_size; i++)
+        {
+            acc_type accumulator(initial_value);
+            for(size_t j = 0; j < block_size; j++)
+            {
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<T>(accumulator);
+            }
+            expected_reductions[i] = expected[(i + 1) * block_size - 1];
+        }
+
+        // Writing to device memory
+        test_utils::device_ptr<T> device_output(output.size());
+        test_utils::device_ptr<T> device_output_reductions(output_reductions.size());
+
+        static_run_algo<T, block_size, rocprim::block_scan_algorithm::using_warp_scan, 7>::run(
+            output,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            initial_value,
+            grid_size);
+
+        static_run_algo<T, block_size, rocprim::block_scan_algorithm::reduce_then_scan, 7>::run(
+            output2,
+            output_reductions,
+            expected,
+            expected_reductions,
+            device_output.get(),
+            device_output_reductions.get(),
+            initial_value,
+            grid_size);
+    }
 }
 
 typed_test_def(suite_name_single, name_suffix, InclusiveScanPrefixCallback)
