@@ -1,4 +1,4 @@
-// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -61,10 +61,6 @@ struct [[deprecated]] float_bit_mask;
 
 namespace traits
 {
-/// \defgroup type_traits_interfaces Interfaces for defining and obtaining the traits
-/// \addtogroup type_traits_interfaces
-/// @{
-
 /// \par Overview
 /// This template struct provides an interface for downstream libraries to implement type traits for
 /// their custom types. Users can utilize this template struct to define traits for these types. Users
@@ -106,16 +102,6 @@ namespace traits
 template<class T>
 struct define
 {};
-
-/// @}
-
-/// predef
-template<class T>
-struct get;
-
-/// \defgroup available_traits Traits that can be used
-/// \addtogroup available_traits
-/// @{
 
 /// \par Definability
 /// * **Undefinable**: For types with `predefined traits`.
@@ -517,11 +503,6 @@ struct is_fundamental
 #endif
 };
 
-/// @}
-
-/// \addtogroup type_traits_interfaces
-/// @{
-
 /// \par Overview
 /// This template struct is designed to allow rocPRIM algorithms to retrieve trait information from C++
 /// build-in arithmetic types, rocPRIM types, and custom types. This API is not static because of ODR.
@@ -626,8 +607,6 @@ struct get
         return rocprim::traits::float_bit_mask{}.get<T>();
     };
 };
-
-/// @}
 
 } // namespace traits
 
@@ -735,10 +714,6 @@ struct traits::define<rocprim::uint128_t>
 
 /// @}
 
-/// \defgroup rocprim_type_traits_wrapper Handy wrappers for obtaining type traits
-/// \addtogroup rocprim_type_traits_wrapper
-/// @{
-
 /// \brief An extension of `std::is_floating_point` that supports additional arithmetic types,
 /// including `rocprim::half`, `rocprim::bfloat16`, and any types with trait
 /// `rocprim::traits::number_format::values<number_format::kind::floating_point_type>` implemented.
@@ -790,8 +765,6 @@ struct is_scalar : std::integral_constant<bool, ::rocprim::traits::get<T>().is_s
 template<class T>
 struct is_compound : std::integral_constant<bool, ::rocprim::traits::get<T>().is_compound()>
 {};
-
-/// @}
 
 END_ROCPRIM_NAMESPACE
 

@@ -17,35 +17,67 @@ Custom types that implement arithmetic operators can behave like built-in arithm
 
 This interface is strict but flexible, similar to operator overloading. Users should only implement traits as required by specific algorithms, and some traits cannot be defined if they can be inferred from others. Adhering to these rules is crucial for successful compilation. Fortunately, the interface provides clear error messages to guide users when issues arise.
 
-
 Interface
 =========
 
-.. doxygengroup::  type_traits_interfaces
-  :content-only:
-  :members:
+.. doxygenstruct:: rocprim::traits::define
 
+.. doxygenstruct:: rocprim::traits::get
+  :members:
 
 Available traits
 ================
 
-.. doxygengroup::  available_traits
-  :content-only:
+.. doxygenstruct:: rocprim::traits::is_arithmetic
+  :members:
+
+.. doxygenstruct:: rocprim::traits::is_scalar
+  :members:
+
+.. doxygenstruct:: rocprim::traits::number_format
+  :members:
+
+.. doxygenstruct:: rocprim::traits::integral_sign
+  :members:
+
+.. doxygenstruct:: rocprim::traits::float_bit_mask
+  :members:
+
+.. doxygenstruct:: rocprim::traits::is_fundamental
   :members:
 
 Type traits wrappers
 ====================
-.. doxygengroup::  rocprim_type_traits_wrapper
-  :content-only:
+
+.. doxygenstruct:: rocprim::is_floating_point
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_integral
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_arithmetic
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_fundamental
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_unsigned
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_signed
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_scalar
+  :no-link:
+
+.. doxygenstruct:: rocprim::is_compound
   :no-link:
 
 Types with predefined traits
 ============================
 
-.. doxygengroup::  rocprim_pre_defined_traits
+.. doxygengroup:: rocprim_pre_defined_traits
   :content-only:
   :members:
   :outline:
   :no-link:
-  
-  
