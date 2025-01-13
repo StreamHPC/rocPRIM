@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -202,6 +202,82 @@ public:
         return;
     }
 
+    /// \brief Performs seeded inclusive scan across threads in a logical warp.
+    ///
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - thread input value.
+    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
+    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    ///
+    /// \par Storage reusage
+    /// Synchronization barrier should be placed before \p storage is reused
+    /// or repurposed: \p __syncthreads() or \p rocprim::syncthreads().
+    ///
+    /// \par Examples
+    /// \parblock
+    /// The examples present seeded inclusive min scan operations performed on groups of 32 threads,
+    /// each provides one \p float value, result is returned using the same variable as for input.
+    /// Hardware warp size is 64. Block (tile) size is 256.
+    ///
+    /// \code{.cpp}
+    /// __global__ void example_kernel(...) // blockDim.x = 256
+    /// {
+    ///     // specialize warp_scan for float and logical warp of 32 threads
+    ///     using warp_scan_f = rocprim::warp_scan<float, 32>;
+    ///     // allocate storage in shared memory
+    ///     __shared__ warp_scan_float::storage_type temp[8]; // 256/32 = 8
+    ///
+    ///     int logical_warp_id = threadIdx.x/32;
+    ///     float value = ...;
+    ///     float init  = ...;
+    ///     // execute inclusive min scan
+    ///     warp_scan_float().inclusive_scan(
+    ///         value, // input
+    ///         value, // output
+    ///         temp[logical_warp_id],
+    ///         init,
+    ///         rocprim::minimum<float>()
+    ///     );
+    ///     ...
+    /// }
+    /// \endcode
+    ///
+    /// If the input values across threads in a block/tile are <tt>{1, -2, 3, -4, ..., 255, -256}</tt>
+    /// and the value for seeding the scan is -1, then output values in the first logical warp will be
+    /// <tt>{-1, -2, -2, -4, ..., -32},</tt>, in the second: <tt>{-1, -34, -34, -36, ..., -64}</tt>, etc.
+    /// \endparblock
+    template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    auto inclusive_scan(T              input,
+                        T&             output,
+                        storage_type&  storage,
+                        T              init,
+                        BinaryFunction scan_op = BinaryFunction()) ->
+        typename std::enable_if<(FunctionWarpSize <= device_warp_size()), void>::type
+    {
+        base_type::inclusive_scan(input, output, storage, scan_op, init);
+    }
+
+    /// \brief Performs seeded inclusive scan across threads in a logical warp.
+    /// Invalid Warp Size
+    template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    auto inclusive_scan(T, T&, storage_type&, T, BinaryFunction scan_op = BinaryFunction()) ->
+        typename std::enable_if<(FunctionWarpSize > device_warp_size()), void>::type
+    {
+        (void)scan_op;
+        ROCPRIM_PRINT_ERROR_ONCE("Specified warp size exceeds current hardware supported warp size "
+                                 ". Aborting warp sort.");
+        return;
+    }
+
     /// \brief Performs inclusive scan and reduction across threads in a logical warp.
     ///
     /// \tparam BinaryFunction - type of binary function used for scan. Default type
@@ -268,6 +344,85 @@ public:
     template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
     ROCPRIM_DEVICE ROCPRIM_INLINE
     auto inclusive_scan(T, T&, T&, storage_type&, BinaryFunction scan_op = BinaryFunction()) ->
+        typename std::enable_if<(FunctionWarpSize > device_warp_size()), void>::type
+    {
+        (void)scan_op;
+        ROCPRIM_PRINT_ERROR_ONCE("Specified warp size exceeds current hardware supported warp size "
+                                 ". Aborting warp sort.");
+        return;
+    }
+
+    /// \brief Performs seeded inclusive scan and reduction across threads in a logical warp.
+    ///
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - thread input value.
+    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
+    /// \param [out] reduction - result of reducing of all \p input values in logical warp.
+    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    ///
+    /// \par Storage reusage
+    /// Synchronization barrier should be placed before \p storage is reused
+    /// or repurposed: \p __syncthreads() or \p rocprim::syncthreads().
+    ///
+    /// \par Examples
+    /// \parblock
+    /// The examples present seeded inclusive prefix sum operations performed on groups of 64 threads,
+    /// each thread provides one \p int value. Hardware warp size is 64. Block (tile) size is 256.
+    ///
+    /// \code{.cpp}
+    /// __global__ void example_kernel(...) // blockDim.x = 256
+    /// {
+    ///     // specialize warp_scan for int and logical warp of 64 threads
+    ///     using warp_scan_int = rocprim::warp_scan<int, 64>;
+    ///     // allocate storage in shared memory
+    ///     __shared__ warp_scan_int::storage_type temp[4]; // 256/64 = 4
+    ///
+    ///     int logical_warp_id = threadIdx.x/64;
+    ///     int input = ...;
+    ///     int init  = ...;
+    ///     int output, reduction;
+    ///     // inclusive prefix sum
+    ///     warp_scan_int().inclusive_scan(
+    ///         input,
+    ///         output,
+    ///         reduction,
+    ///         temp[logical_warp_id],
+    ///         init
+    ///     );
+    ///     ...
+    /// }
+    /// \endcode
+    ///
+    /// If the \p input values across threads in a block/tile are <tt>{1, 1, 1, 1, ..., 1, 1}</tt>
+    /// and the value for seeding the scan is 1, then
+    /// \p output values in the every logical warp will be <tt>{2, 3, 4, 5, ..., 65}</tt>.
+    /// The \p reduction will be equal \p 65.
+    /// \endparblock
+    template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    auto inclusive_scan(T              input,
+                        T&             output,
+                        T&             reduction,
+                        storage_type&  storage,
+                        T              init,
+                        BinaryFunction scan_op = BinaryFunction()) ->
+        typename std::enable_if<(FunctionWarpSize <= device_warp_size()), void>::type
+    {
+        base_type::inclusive_scan(input, output, reduction, storage, scan_op, init);
+    }
+
+    /// \brief Performs seeded inclusive scan and reduction across threads in a logical warp.
+    /// Invalid Warp Size
+    template<class BinaryFunction = ::rocprim::plus<T>, unsigned int FunctionWarpSize = WarpSize>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    auto inclusive_scan(T, T&, T&, storage_type&, T, BinaryFunction scan_op = BinaryFunction()) ->
         typename std::enable_if<(FunctionWarpSize > device_warp_size()), void>::type
     {
         (void)scan_op;

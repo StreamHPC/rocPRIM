@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -507,6 +507,97 @@ public:
         }
     }
 
+    /// \brief Performs seeded inclusive scan across threads in a block.
+    ///
+    /// \tparam ItemsPerThread - number of items in the \p input array.
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - reference to an array containing thread input values.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [out] output - reference to a thread output array. May be aliased with \p input.
+    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    ///
+    /// \par Storage reusage
+    /// Synchronization barrier should be placed before \p storage is reused
+    /// or repurposed: \p __syncthreads() or \p rocprim::syncthreads().
+    ///
+    /// \par Examples
+    /// \parblock
+    /// The examples present seeded inclusive maximum scan operations performed on a block of 128 threads,
+    /// each provides two \p long value.
+    ///
+    /// \code{.cpp}
+    /// __global__ void example_kernel(...) // blockDim.x = 128
+    /// {
+    ///     // specialize block_scan for long and block of 128 threads
+    ///     using block_scan_f = rocprim::block_scan<long, 128>;
+    ///     // allocate storage in shared memory for the block
+    ///     __shared__ block_scan_long::storage_type storage;
+    ///
+    ///     long input[2] = ...;
+    ///     long init     = ...;
+    ///     long output[2];
+    ///     // execute inclusive min scan
+    ///     block_scan_long().inclusive_scan(
+    ///         input,
+    ///         init,
+    ///         output,
+    ///         storage,
+    ///         rocprim::maximum<long>()
+    ///     );
+    ///     ...
+    /// }
+    /// \endcode
+    /// If the \p input values across threads in a block are <tt>{-1, 2, -3, 4, ..., -255, 256}</tt>
+    /// and the value for seeding the scan is 1, then the \p output values will be
+    /// <tt>{1, 2, 2, 4, ..., 254, 256}</tt>.
+    /// \endparblock
+    template<unsigned int ItemsPerThread, class BinaryFunction = ::rocprim::plus<T>>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    void inclusive_scan(T (&input)[ItemsPerThread],
+                        T init,
+                        T (&output)[ItemsPerThread],
+                        storage_type&  storage,
+                        BinaryFunction scan_op = BinaryFunction())
+    {
+        base_type::inclusive_scan(input, init, output, storage, scan_op);
+    }
+
+    /// \overload
+    /// \brief Performs seeded inclusive scan across threads in a block.
+    ///
+    /// * This overload does not accept storage argument. Required shared memory is
+    /// allocated by the method itself.
+    ///
+    /// \tparam ItemsPerThread - number of items in the \p input array.
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - reference to an array containing thread input values.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [out] output - reference to a thread output array. May be aliased with \p input.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    template<
+        unsigned int ItemsPerThread,
+        class BinaryFunction = ::rocprim::plus<T>
+    >
+    ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE
+    void inclusive_scan(T (&input)[ItemsPerThread],
+                        T init,
+                        T (&output)[ItemsPerThread],
+                        BinaryFunction scan_op = BinaryFunction())
+    {
+        base_type::inclusive_scan(input, init, output, scan_op);
+    }
+
     /// \brief Performs inclusive scan and reduction across threads in a block.
     ///
     /// \tparam ItemsPerThread - number of items in the \p input array.
@@ -613,6 +704,104 @@ public:
         {
             base_type::inclusive_scan(input, output, reduction, scan_op);
         }
+    }
+
+    /// \brief Performs seeded inclusive scan and reduction across threads in a block.
+    ///
+    /// \tparam ItemsPerThread - number of items in the \p input array.
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - reference to an array containing thread input values.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [out] output - reference to a thread output array. May be aliased with \p input.
+    /// \param [out] reduction - result of reducing of all \p input values in a block.
+    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    ///
+    /// \par Storage reusage
+    /// Synchronization barrier should be placed before \p storage is reused
+    /// or repurposed: \p __syncthreads() or \p rocprim::syncthreads().
+    ///
+    /// \par Examples
+    /// \parblock
+    /// The examples present seeded inclusive maximum scan operations performed on a block of 128 threads,
+    /// each provides two \p long value.
+    ///
+    /// \code{.cpp}
+    /// __global__ void example_kernel(...) // blockDim.x = 128
+    /// {
+    ///     // specialize block_scan for long and block of 128 threads
+    ///     using block_scan_f = rocprim::block_scan<long, 128>;
+    ///     // allocate storage in shared memory for the block
+    ///     __shared__ block_scan_long::storage_type storage;
+    ///
+    ///     long input[2] = ...;
+    ///     long init     = ...;
+    ///     long output[2];
+    ///     long reduction;
+    ///     // execute inclusive min scan
+    ///     block_scan_long().inclusive_scan(
+    ///         input,
+    ///         init,
+    ///         output,
+    ///         reduction,
+    ///         storage,
+    ///         rocprim::maximum<long>()
+    ///     );
+    ///     ...
+    /// }
+    /// \endcode
+    ///
+    /// If the \p input values across threads in a block are <tt>{-1, 2, -3, 4, ..., -255, 256}</tt>
+    /// and the value for seeding the scan is 1, then the \p output values will be
+    /// <tt>{1, 2, 2, 4, ..., 254, 256}</tt> and the \p reduction will be \p 256.
+    /// \endparblock
+    template<unsigned int ItemsPerThread, class BinaryFunction = ::rocprim::plus<T>>
+    ROCPRIM_DEVICE ROCPRIM_INLINE
+    void inclusive_scan(T (&input)[ItemsPerThread],
+                        T init,
+                        T (&output)[ItemsPerThread],
+                        T&             reduction,
+                        storage_type&  storage,
+                        BinaryFunction scan_op = BinaryFunction())
+    {
+        base_type::inclusive_scan(input, init, output, reduction, storage, scan_op);
+    }
+
+    /// \overload
+    /// \brief Performs seeded inclusive scan and reduction across threads in a block.
+    ///
+    /// * This overload does not accept storage argument. Required shared memory is
+    /// allocated by the method itself.
+    ///
+    /// \tparam ItemsPerThread - number of items in the \p input array.
+    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// is rocprim::plus<T>.
+    ///
+    /// \param [in] input - reference to an array containing thread input values.
+    /// \param [in] init - initial value to seed the inclusive scan.
+    /// \param [out] output - reference to a thread output array. May be aliased with \p input.
+    /// \param [out] reduction - result of reducing of all \p input values in a block.
+    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// The signature of the function should be equivalent to the following:
+    /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
+    /// <tt>const &</tt>, but function object must not modify the objects passed to it.
+    template<
+        unsigned int ItemsPerThread,
+        class BinaryFunction = ::rocprim::plus<T>
+    >
+    ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE
+    void inclusive_scan(T (&input)[ItemsPerThread],
+                        T init,
+                        T (&output)[ItemsPerThread],
+                        T& reduction,
+                        BinaryFunction scan_op = BinaryFunction())
+    {
+        base_type::inclusive_scan(input, init, output, reduction, scan_op);
     }
 
     /// \brief Performs inclusive scan across threads in a block, and uses
