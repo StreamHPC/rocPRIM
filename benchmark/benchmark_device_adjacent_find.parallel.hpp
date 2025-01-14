@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -145,17 +145,17 @@ struct device_adjacent_find_benchmark : public config_autotune_interface
         void*       d_tmp_storage        = nullptr;
         auto        launch_adjacent_find = [&]()
         {
-            HIP_CHECK(::rocprim::adjacent_find(d_tmp_storage,
-                                               tmp_storage_size,
-                                               d_input,
-                                               d_output,
-                                               size,
-                                               rocprim::equal_to<input_type>{},
-                                               stream,
-                                               false));
+            HIP_CHECK(::rocprim::adjacent_find<Config>(d_tmp_storage,
+                                                       tmp_storage_size,
+                                                       d_input,
+                                                       d_output,
+                                                       size,
+                                                       rocprim::equal_to<input_type>{},
+                                                       stream,
+                                                       false));
         };
 
-        // Get size of tmporary storage
+        // Get size of temporary storage
         launch_adjacent_find();
         HIP_CHECK(hipMalloc(&d_tmp_storage, tmp_storage_size));
 
@@ -211,9 +211,8 @@ struct device_adjacent_find_benchmark : public config_autotune_interface
 template<typename InputT, unsigned int BlockSize>
 struct device_adjacent_find_benchmark_generator
 {
-    static constexpr unsigned int min_items_per_thread = 1;
-    static constexpr unsigned int max_items_per_thread_arg
-        = TUNING_SHARED_MEMORY_MAX / (BlockSize * sizeof(InputT) * 2);
+    static constexpr unsigned int min_items_per_thread          = 1;
+    static constexpr unsigned int max_items_per_thread_exponent = rocprim::Log2<32>::VALUE;
 
     template<unsigned int FirstAdjPosDecimal>
     struct create_pos
@@ -234,8 +233,6 @@ struct device_adjacent_find_benchmark_generator
         };
         void operator()(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
         {
-            static constexpr unsigned int max_items_per_thread_exponent
-                = rocprim::Log2<max_items_per_thread_arg>::VALUE - 1;
             static_for_each<
                 make_index_range<unsigned int, min_items_per_thread, max_items_per_thread_exponent>,
                 create_ipt>(storage);
