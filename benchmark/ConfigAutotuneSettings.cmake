@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,12 @@ KeyType;ValueType;LongBits;BlockSize;ItemsPerThread;WarpSmallLWS;WarpSmallIPT;Wa
     set(list_across "${TUNING_TYPES};${LIMITED_TUNING_TYPES};8;256;4 8 16;8;4;256;64;16;8;256" PARENT_SCOPE)
     set(output_pattern_suffix "\
 @KeyType@_@ValueType@_@LongBits@_@BlockSize@_@ItemsPerThread@_@WarpSmallLWS@_@WarpSmallIPT@_@WarpSmallBS@_@WarpPartition@_@WarpMediumLWS@_@WarpMediumIPT@_@WarpMediumBS@" PARENT_SCOPE)
-  elseif(file STREQUAL "benchmark_device_transform")
+elseif(file STREQUAL "benchmark_device_segmented_reduce")
+    set(list_across_names "DataType;BlockSize;ItemsPerThread" PARENT_SCOPE)
+    set(list_across "\
+${TUNING_TYPES};64 128 256;1 2 4 8 16" PARENT_SCOPE)
+    set(output_pattern_suffix "@DataType@_@BlockSize@_@ItemsPerThread@" PARENT_SCOPE)
+elseif(file STREQUAL "benchmark_device_transform")
     set(list_across_names "\
 DataType;BlockSize;" PARENT_SCOPE)
     set(list_across "${TUNING_TYPES};64 128 256 512 1024" PARENT_SCOPE)
