@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2017-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -160,6 +160,50 @@ TYPED_TEST(RocprimThreadOperationTests, VolatileLoad)
     }
 }
 
+template<class Type>
+__global__
+void thread_load_nt_kernel(Type* volatile const device_input, Type* device_output)
+{
+    size_t index         = blockIdx.x * blockDim.x + threadIdx.x;
+    device_output[index] = rocprim::thread_load_nontemporal(device_input + index);
+}
+
+TYPED_TEST(RocprimThreadOperationTests, LoadNontemporal)
+{
+    using T                              = typename TestFixture::type;
+    static constexpr uint32_t block_size = 256;
+    static constexpr uint32_t grid_size  = 128;
+    static constexpr uint32_t size       = block_size * grid_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output(size);
+
+        // Calculate expected results on host
+        std::vector<T> expected = input;
+
+        // Preparing device
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
+
+        thread_load_nt_kernel<T>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        HIP_CHECK(hipGetLastError());
+
+        // Reading results back
+        output = device_output.load();
+
+        // Verifying results
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    }
+}
+
 template<uint32_t ItemsPerThread, class Type>
 __global__
 void thread_copy_unroll_kernel(Type* device_input, Type* device_output)
@@ -239,6 +283,94 @@ TYPED_TEST(RocprimThreadOperationTests, Store)
         test_utils::device_ptr<T> device_output(input.size());
 
         thread_store_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        HIP_CHECK(hipGetLastError());
+
+        // Reading results back
+        output = device_output.load();
+
+        // Verifying results
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    }
+}
+
+template<class Type>
+__global__
+void thread_store_volatile_kernel(Type* const device_input, Type* device_output)
+{
+    size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    rocprim::thread_store_volatile(device_output + index, device_input[index]);
+}
+
+TYPED_TEST(RocprimThreadOperationTests, StoreVolatile)
+{
+    using T                              = typename TestFixture::type;
+    static constexpr uint32_t block_size = 256;
+    static constexpr uint32_t grid_size  = 128;
+    static constexpr uint32_t size       = block_size * grid_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output(size);
+
+        // Calculate expected results on host
+        std::vector<T> expected = input;
+
+        // Preparing device
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
+
+        thread_store_volatile_kernel<T>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        HIP_CHECK(hipGetLastError());
+
+        // Reading results back
+        output = device_output.load();
+
+        // Verifying results
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    }
+}
+
+template<class Type>
+__global__
+void thread_store_nt_kernel(Type* const device_input, Type* device_output)
+{
+    size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    rocprim::thread_store_nontemporal(device_output + index, device_input[index]);
+}
+
+TYPED_TEST(RocprimThreadOperationTests, StoreNontemporal)
+{
+    using T                              = typename TestFixture::type;
+    static constexpr uint32_t block_size = 256;
+    static constexpr uint32_t grid_size  = 128;
+    static constexpr uint32_t size       = block_size * grid_size;
+
+    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        // Generate data
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output(size);
+
+        // Calculate expected results on host
+        std::vector<T> expected = input;
+
+        // Preparing device
+        test_utils::device_ptr<T> device_input(input);
+        test_utils::device_ptr<T> device_output(input.size());
+
+        thread_store_nt_kernel<T>
+            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back

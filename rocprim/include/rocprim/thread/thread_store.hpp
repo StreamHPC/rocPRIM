@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2021-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2021-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,9 +30,9 @@
 #ifndef ROCPRIM_THREAD_THREAD_STORE_HPP_
 #define ROCPRIM_THREAD_THREAD_STORE_HPP_
 
-
 #include "../config.hpp"
 #include "../detail/various.hpp"
+#include "thread_copy.hpp"
 
 BEGIN_ROCPRIM_NAMESPACE
 
@@ -157,6 +157,47 @@ template<cache_store_modifier MODIFIER = store_default, typename T>
                                                                                              T  val)
 {
     detail::AsmThreadStore<MODIFIER, T>(ptr, val);
+}
+
+/// \brief Volatile thread store.
+///
+/// \tparam T - Type of data to be stored.
+/// \param ptr [in] - Pointer to place where to store data.
+/// \param data [in] - Data to be stored.
+template<typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void thread_store_volatile(T* ptr, const T& data)
+{
+    detail::thread_fused_copy(ptr,
+                              &data,
+                              [](auto& dst, const auto& src)
+                              {
+                                  using U = std::remove_reference_t<decltype(dst)>;
+                                  *static_cast<volatile U*>(&dst) = src;
+                              });
+}
+
+/// \brief Store with non-temporal hint.
+///
+/// Non-temporal stores help the compiler and hardware to optimize storing
+/// data which not expected to be re-used, for example by bypassing the
+/// data cache.
+///
+/// \tparam T - Type of data to be stored.
+/// \param ptr [in] - Pointer to place where to store data.
+/// \param data [in] - Data to be stored.
+template<typename T>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+void thread_store_nontemporal(T* ptr, const T& data)
+{
+#if __has_builtin(__builtin_nontemporal_store)
+    detail::thread_fused_copy(ptr,
+                              &data,
+                              [](auto& dst, const auto& src)
+                              { __builtin_nontemporal_store(src, &dst); });
+#else
+    *ptr = data;
+#endif
 }
 
 /// @}

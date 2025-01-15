@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2021-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2021-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@
 #include "../config.hpp"
 #include "../detail/various.hpp"
 #include "../type_traits.hpp"
+#include "thread_copy.hpp"
 
 #include <utility>
 
@@ -163,61 +164,8 @@ template<cache_load_modifier MODIFIER = load_default, typename T>
     return detail::AsmThreadLoad<MODIFIER, T>(ptr);
 }
 
-namespace detail
-{
-
-template<typename T, typename InputIteratorT, int... Is>
-ROCPRIM_DEVICE ROCPRIM_INLINE
-void unrolled_copy_impl(InputIteratorT src, T* dst, std::integer_sequence<int, Is...>)
-{
-    int dummy[] = {(dst[Is] = src[Is], 0)...};
-    (void)dummy;
-}
-
-} // namespace detail
-
-/// \brief Copy Count number of items from src to dst.
-/// \tparam Count number of items to copy
-/// \tparam InputIteratorT the input iterator type
-/// \tparam T Type of Data to be copied to
-/// \param src [in] - Input iterator for data that will be copied
-/// \param dst [out] - The pointer the data will be copied to.
-template<int Count, typename InputIteratorT, typename T>
-ROCPRIM_DEVICE ROCPRIM_INLINE
-void unrolled_copy(InputIteratorT src, T* dst)
-{
-    detail::unrolled_copy_impl(src, dst, std::make_integer_sequence<int, Count>{});
-}
-
-/// \brief Thread loads with volatile_pointer for fundamental types
-/// \tparam T Type of Data to be copied
-/// \param ptr [in] - Input pointer for data that will be copied
-/// \return returns loaded value
-template<typename T>
-ROCPRIM_DEVICE ROCPRIM_INLINE
-T thread_load_volatile(const T* ptr, Int2Type<true> /*is_fundamental*/)
-{
-    return *reinterpret_cast<const volatile T*>(ptr);
-}
-
-/// \brief Thread loads with volatile_pointer for non-fundamental types
-/// \tparam T Type of Data to be copied
-/// \param ptr [in] - Input pointer for data that will be copied
-/// \return returns loaded value
-template<typename T>
-ROCPRIM_DEVICE ROCPRIM_INLINE
-T thread_load_volatile(const T* ptr, Int2Type<false> /*is_fundamental*/)
-{
-    using device_word               = typename detail::word_type<T>::type;
-    constexpr int volatile_multiple = sizeof(T) / sizeof(device_word);
-
-    T            retval;
-    device_word* words = reinterpret_cast<device_word*>(&retval);
-    unrolled_copy<volatile_multiple>(reinterpret_cast<const volatile device_word*>(ptr), words);
-    return retval;
-}
-
-/// \brief Thread loads with volatile_pointer
+/// \brief Volatile thread load.
+///
 /// \tparam T Type of Data to be copied
 /// \param ptr [in] - Input pointer for data that will be copied
 /// \return returns loaded value
@@ -225,8 +173,41 @@ template<typename T>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 T thread_load_volatile(const T* ptr)
 {
-    static constexpr bool is_constructible = std::is_constructible<T, const volatile T&>::value;
-    return thread_load_volatile(ptr, Int2Type<is_constructible>());
+    T result;
+    detail::thread_fused_copy(&result,
+                              ptr,
+                              [](auto& dst, const auto& src)
+                              {
+                                  using U = std::remove_reference_t<decltype(src)>;
+                                  dst     = *static_cast<const volatile U*>(&src);
+                              });
+    return result;
+}
+
+/// \brief Load with non-temporal hint.
+///
+/// Non-temporal loads help the compiler and hardware to optimize loading
+/// data which is not expected to be re-used, for example by bypassing
+/// the data cache.
+///
+/// \tparam T - Type of data to be loaded.
+/// \tparam Alignment - Explicit alignment of the source data.
+/// \param ptr [in] - Pointer to data to be loaded.
+/// \return Returns loaded value.
+template<typename T, size_t Alignment = alignof(T)>
+ROCPRIM_DEVICE ROCPRIM_INLINE
+T thread_load_nontemporal(const T* ptr)
+{
+#if __has_builtin(__builtin_nontemporal_load)
+    alignas(Alignment) T result;
+    detail::thread_fused_copy<T, T, Alignment>(&result,
+                                               ptr,
+                                               [](auto& dst, const auto& src)
+                                               { dst = __builtin_nontemporal_load(&src); });
+    return result;
+#else
+    return *ptr;
+#endif
 }
 
 /// @}
