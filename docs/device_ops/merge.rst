@@ -14,12 +14,7 @@ Configuring the kernel
 Merge
 -----
 
-.. doxygentypedef:: rocprim::merge_config
-
-Merge inplace
--------------
-
-.. doxygenstruct:: rocprim::merge_inplace_config
+.. doxygenstruct:: rocprim::merge_config
 
 Merge
 =====
