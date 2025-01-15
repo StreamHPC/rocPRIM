@@ -57,7 +57,7 @@ BEGIN_ROCPRIM_NAMESPACE
 /// null pointer.
 /// * Accepts a custom `compare_function`.
 ///
-/// \tparam Config Configuration of the primitive, must be `default_config` or `merge_inplace_config`.
+/// \tparam Config Configuration of the primitive, must be `default_config`.
 /// \tparam Iterator Random access iterator type for the input and output range. Must meet the
 /// requirements of `std::random_access_iterator`.
 /// \tparam BinaryFunction Binary function type that is used for the comparison.
