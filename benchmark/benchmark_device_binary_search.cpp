@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2019-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2019-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -240,9 +240,6 @@ int main(int argc, char* argv[])
     benchmark::AddCustomContext("bytes", std::to_string(bytes));
     benchmark::AddCustomContext("seed", seed_type);
 
-    using custom_float2  = custom_type<float, float>;
-    using custom_double2 = custom_type<double, double>;
-
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks;
 #ifdef BENCHMARK_CONFIG_TUNING
@@ -255,6 +252,9 @@ int main(int argc, char* argv[])
                                                         seed,
                                                         stream);
 #else // BENCHMARK_CONFIG_TUNING
+    using custom_float2  = custom_type<float, float>;
+    using custom_double2 = custom_type<double, double>;
+
     benchmarks = {BENCHMARK_TYPE(float),
                   BENCHMARK_TYPE(double),
                   BENCHMARK_TYPE(int8_t),
