@@ -485,6 +485,10 @@ test:docs:
   extends:
     - .rules:test
     - .build:docs
+  artifacts:
+    paths:
+      - $DOCS_DIR/_build/html/
+    expire_in: 2 weeks
 
 .benchmark-base:
   stage: benchmark
