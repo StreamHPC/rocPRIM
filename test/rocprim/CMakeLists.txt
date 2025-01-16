@@ -299,6 +299,7 @@ add_rocprim_cpp_standard_test(20 OFF "_cpp20" "rocprim.type_traits_interface" te
 add_rocprim_cpp_standard_test(20 ON "_gnupp20" "rocprim.type_traits_interface" test_type_traits_interface.cpp)
 add_rocprim_test("rocprim.no_half_operators" test_no_half_operators.cpp)
 add_rocprim_test("rocprim.intrinsics" test_intrinsics.cpp)
+add_rocprim_test("rocprim.intrinsics_atomic" test_intrinsics_atomic.cpp)
 add_rocprim_test("rocprim.invoke_result" test_invoke_result.cpp)
 add_rocprim_test("rocprim.warp_exchange" test_warp_exchange.cpp)
 add_rocprim_test("rocprim.warp_load" test_warp_load.cpp)

@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,7 @@ std::string config_name()
 {
     const rocprim::detail::reduce_by_key_config_params params = Config();
     return "{bs:" + std::to_string(params.kernel_config.block_size)
-           + ",ipt:" + std::to_string(params.kernel_config.items_per_thread)
-           + ",tpb:" + std::to_string(params.tiles_per_block) + "}";
+           + ",ipt:" + std::to_string(params.kernel_config.items_per_thread) + "}";
 }
 
 template<>
@@ -238,7 +237,7 @@ struct device_reduce_by_key_benchmark : public config_autotune_interface
 
 #ifdef BENCHMARK_CONFIG_TUNING
 
-template<typename KeyType, typename ValueType, unsigned int BlockSize, unsigned int TilesPerBlock>
+template<typename KeyType, typename ValueType, unsigned int BlockSize>
 struct device_reduce_by_key_benchmark_generator
 {
     template<unsigned int ItemsPerThread>
@@ -251,8 +250,7 @@ struct device_reduce_by_key_benchmark_generator
                                                 ItemsPerThread,
                                                 rocprim::block_load_method::block_load_transpose,
                                                 rocprim::block_load_method::block_load_transpose,
-                                                rocprim::block_scan_algorithm::using_warp_scan,
-                                                TilesPerBlock>;
+                                                rocprim::block_scan_algorithm::using_warp_scan>;
             // max segment length argument is irrelevant, tuning overrides segment length
             storage.emplace_back(
                 std::make_unique<
