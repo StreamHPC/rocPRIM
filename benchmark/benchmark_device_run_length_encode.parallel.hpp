@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,8 +48,7 @@ std::string run_length_encode_config_name()
 {
     const rocprim::detail::reduce_by_key_config_params config = Config();
     return "{bs:" + std::to_string(config.kernel_config.block_size)
-           + ",ipt:" + std::to_string(config.kernel_config.items_per_thread)
-           + ",tpb:" + std::to_string(config.tiles_per_block) + "}";
+           + ",ipt:" + std::to_string(config.kernel_config.items_per_thread) + "}";
 }
 
 template<>
@@ -195,7 +194,7 @@ struct device_run_length_encode_benchmark : public config_autotune_interface
 
 #ifdef BENCHMARK_CONFIG_TUNING
 
-template<typename T, unsigned int BlockSize, unsigned int TilesPerBlock>
+template<typename T, unsigned int BlockSize>
 struct device_run_length_encode_benchmark_generator
 {
     template<unsigned int ItemsPerThread>
@@ -208,8 +207,8 @@ struct device_run_length_encode_benchmark_generator
                                                 ItemsPerThread,
                                                 rocprim::block_load_method::block_load_transpose,
                                                 rocprim::block_load_method::block_load_transpose,
-                                                rocprim::block_scan_algorithm::using_warp_scan,
-                                                TilesPerBlock>;
+                                                rocprim::block_scan_algorithm::using_warp_scan>;
+
             storage.emplace_back(
                 std::make_unique<device_run_length_encode_benchmark<T, 10, config>>());
             storage.emplace_back(

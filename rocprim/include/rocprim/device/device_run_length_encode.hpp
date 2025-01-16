@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2018-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -51,8 +51,7 @@ namespace detail
 namespace run_length_encode
 {
 
-template<lookback_scan_determinism Determinism,
-         typename Config,
+template<typename Config,
          typename KeysInputIterator,
          typename ValuesInputIterator,
          typename UniqueOutputIterator,
@@ -79,7 +78,7 @@ hipError_t run_length_encode_impl(void*                     temporary_storage,
     using config = wrapped_trivial_runs_config<Config, key_type, accumulator_type, BinaryFunction>;
 
     return detail::reduce_by_key_impl_wrapped_config<
-        detail::lookback_scan_determinism::default_determinism,
+        detail::lookback_scan_determinism::nondeterministic,
         config>(temporary_storage,
                 storage_size,
                 keys_input,
@@ -360,20 +359,19 @@ inline hipError_t run_length_encode(void*                   temporary_storage,
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using count_type = unsigned int;
 
-    return detail::run_length_encode::
-        run_length_encode_impl<detail::lookback_scan_determinism::default_determinism, Config>(
-            temporary_storage,
-            storage_size,
-            input,
-            make_constant_iterator<count_type>(1),
-            size,
-            unique_output,
-            counts_output,
-            runs_count_output,
-            ::rocprim::plus<count_type>(),
-            ::rocprim::equal_to<input_type>(),
-            stream,
-            debug_synchronous);
+    return detail::run_length_encode::run_length_encode_impl<Config>(
+        temporary_storage,
+        storage_size,
+        input,
+        make_constant_iterator<count_type>(1),
+        size,
+        unique_output,
+        counts_output,
+        runs_count_output,
+        ::rocprim::plus<count_type>(),
+        ::rocprim::equal_to<input_type>(),
+        stream,
+        debug_synchronous);
 }
 
 /// \brief Parallel run-length encoding of non-trivial runs for device level.

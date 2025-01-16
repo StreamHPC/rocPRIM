@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 
 #include "device_config_helper.hpp"
 #include "lookback_scan_state.hpp"
-#include "ordered_block_id.hpp"
 
 #include "../../block/block_discontinuity.hpp"
 #include "../../block/block_load.hpp"
@@ -71,6 +70,14 @@ struct load_helper
     using block_load_keys = block_load<KeyType, BlockSize, ItemsPerThread, load_keys_method>;
     using block_load_values
         = block_load<AccumulatorType, BlockSize, ItemsPerThread, load_values_method>;
+
+    /// We only need to sync between loading keys & values if BOTH the key and value
+    /// loading method require shared memory.
+    constexpr static bool requires_inner_sync
+        = !std::is_same<typename block_load_keys::storage_type, detail::empty_storage_type>::value
+          && !std::is_same<typename block_load_values::storage_type,
+                           detail::empty_storage_type>::value;
+
     union storage_type
     {
         typename block_load_keys::storage_type   keys;
@@ -86,16 +93,23 @@ struct load_helper
                                          AccumulatorType (&values)[ItemsPerThread],
                                          storage_type& storage)
     {
+
         if(!is_global_last_tile)
         {
             block_load_keys{}.load(tile_keys, keys, storage.keys);
-            ::rocprim::syncthreads();
+            if ROCPRIM_IF_CONSTEXPR(requires_inner_sync)
+            {
+                ::rocprim::syncthreads();
+            }
             block_load_values{}.load(tile_values, values, storage.values);
         }
         else
         {
             block_load_keys{}.load(tile_keys, keys, valid_in_global_last_tile, storage.keys);
-            ::rocprim::syncthreads();
+            if ROCPRIM_IF_CONSTEXPR(requires_inner_sync)
+            {
+                ::rocprim::syncthreads();
+            }
             block_load_values{}.load(tile_values,
                                      values,
                                      valid_in_global_last_tile,
@@ -464,13 +478,11 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto kernel_impl(KeyIterator,
                                                      const BinaryOp,
                                                      const CompareFunction,
                                                      const LookbackScanState,
-                                                     ordered_block_id<unsigned int>,
                                                      const std::size_t,
                                                      const std::size_t,
                                                      const std::size_t,
                                                      const std::size_t* const,
-                                                     const AccumulatorType* const,
-                                                     const std::size_t)
+                                                     const AccumulatorType* const)
     -> std::enable_if_t<!is_lookback_kernel_runnable<LookbackScanState>()>
 {
     // No need to build the kernel with sleep on a device that does not require it
@@ -496,24 +508,21 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
                 const BinaryOp                 reduce_op,
                 const CompareFunction          compare,
                 const LookbackScanState        scan_state,
-                ordered_block_id<unsigned int> ordered_tile_id,
-                const std::size_t              starting_tile,
-                const std::size_t              total_number_of_tiles,
+                const std::size_t              starting_block,
+                const std::size_t              total_number_of_blocks,
                 const std::size_t              size,
                 const std::size_t* const       global_head_count,
-                const AccumulatorType* const   previous_accumulated,
-                const std::size_t              number_of_tiles_launch)
+                const AccumulatorType* const   previous_accumulated)
         -> std::enable_if_t<is_lookback_kernel_runnable<LookbackScanState>()>
 {
     static constexpr reduce_by_key_config_params params = device_params<Config>();
 
     static constexpr unsigned int         block_size       = params.kernel_config.block_size;
     static constexpr unsigned int         items_per_thread = params.kernel_config.items_per_thread;
-    static constexpr unsigned int         tiles_per_block  = params.tiles_per_block;
     static constexpr block_load_method    load_keys_method = params.load_keys_method;
     static constexpr block_load_method    load_values_method = params.load_values_method;
     static constexpr block_scan_algorithm scan_algorithm     = params.scan_algorithm;
-    static constexpr unsigned int         items_per_tile     = block_size * items_per_thread;
+    static constexpr unsigned int         items_per_block    = block_size * items_per_thread;
 
     using key_type = ::rocprim::detail::value_type_t<KeyIterator>;
 
@@ -528,40 +537,29 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE auto
 
     ROCPRIM_SHARED_MEMORY union
     {
-        typename decltype(ordered_tile_id)::storage_type tile_id;
-        typename tile_processor::storage_type            tile;
+        typename tile_processor::storage_type tile;
     } storage;
 
-    for(unsigned int i = 0; i < tiles_per_block; ++i)
-    {
-        rocprim::syncthreads();
-        const std::size_t tile_id = ordered_tile_id.get(threadIdx.x, storage.tile_id);
-        if(tile_id >= number_of_tiles_launch)
-        {
-            return;
-        }
+    const unsigned int  block_id     = rocprim::flat_block_id<block_size, 1, 1>();
+    const unsigned int  block_offset = block_id * items_per_block;
+    const KeyIterator   block_keys   = keys_input + block_offset;
+    const ValueIterator block_values = values_input + block_offset;
 
-        const std::size_t   tile_offset = tile_id * items_per_tile;
-        const KeyIterator   tile_keys   = keys_input + tile_offset;
-        const ValueIterator tile_values = values_input + tile_offset;
-
-        rocprim::syncthreads();
-        tile_processor{}.process_tile(tile_keys,
-                                      tile_values,
-                                      unique_keys,
-                                      reductions,
-                                      unique_count,
-                                      reduce_op,
-                                      compare,
-                                      scan_state,
-                                      tile_id,
-                                      starting_tile,
-                                      total_number_of_tiles,
-                                      size,
-                                      storage.tile,
-                                      global_head_count,
-                                      previous_accumulated);
-    }
+    tile_processor{}.process_tile(block_keys,
+                                  block_values,
+                                  unique_keys,
+                                  reductions,
+                                  unique_count,
+                                  reduce_op,
+                                  compare,
+                                  scan_state,
+                                  block_id,
+                                  starting_block,
+                                  total_number_of_blocks,
+                                  size,
+                                  storage.tile,
+                                  global_head_count,
+                                  previous_accumulated);
 }
 
 } // namespace reduce_by_key
