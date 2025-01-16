@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -307,7 +307,7 @@ struct device_segmented_radix_sort_benchmark_generator
                                      UnpartitionWarpAllowed>>>());
     }
     template<size_t key_size = sizeof(Key)>
-    static auto __create(std::vector<std::unique_ptr<config_autotune_interface>>& storage) ->
+    static auto __create(std::vector<std::unique_ptr<config_autotune_interface>>&) ->
         typename std::enable_if<!(key_size * BlockSize * ItemsPerThread < TUNING_SHARED_MEMORY_MAX),
                                 void>::type
     {}

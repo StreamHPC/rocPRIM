@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -203,9 +203,9 @@ struct device_histogram_benchmark : public config_autotune_interface
         {
             unsigned int bins;
             int          entropy_reduction;
-            level_type   lower_level[ActiveChannels];
-            level_type   upper_level[ActiveChannels];
-            unsigned int num_levels[ActiveChannels];
+            level_type   lower_level[ActiveChannels]{};
+            level_type   upper_level[ActiveChannels]{};
+            unsigned int num_levels[ActiveChannels]{};
             T*           get_d_input(size_t full_size)
             {
                 return input_cache::instance().get_or_generate<T>(
@@ -228,7 +228,7 @@ struct device_histogram_benchmark : public config_autotune_interface
         {
             for(int entropy_reduction : {0, 2, 4, 6})
             {
-                case_data data = {.bins = bins, .entropy_reduction = entropy_reduction};
+                case_data data = {bins, entropy_reduction};
 
                 // Reuse inputs for the same sample type. This autotune uses multipe inputs for all
                 // combinations of bins and entropy, but the inputs do not depend on autotuned
