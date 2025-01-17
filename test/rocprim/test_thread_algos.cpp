@@ -77,9 +77,40 @@ __global__
 void thread_load_kernel(Type* volatile const device_input, Type* device_output)
 {
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    ROCPRIM_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations");
-    device_output[index] = rocprim::thread_load<rocprim::load_cg>(device_input + index);
-    ROCPRIM_CLANG_SUPPRESS_WARNING_POP
+
+    if(index % 8 == 0)
+    {
+        device_output[index] = rocprim::thread_load(device_input + index);
+    }
+    else if(index % 8 == 1)
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_ca>(device_input + index);
+    }
+    else if(index % 8 == 2)
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_cg>(device_input + index);
+    }
+    else if(index % 8 == 3)
+    {
+        device_output[index]
+            = rocprim::thread_load<rocprim::load_nontemporal>(device_input + index);
+    }
+    else if(index % 8 == 4)
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_cv>(device_input + index);
+    }
+    else if(index % 8 == 5)
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_ldg>(device_input + index);
+    }
+    else if(index % 8 == 6)
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_volatile>(device_input + index);
+    }
+    else // index % 8 == 7
+    {
+        device_output[index] = rocprim::thread_load<rocprim::load_cs>(device_input + index);
+    }
 }
 
 TYPED_TEST(RocprimThreadOperationTests, Load)
@@ -116,100 +147,22 @@ TYPED_TEST(RocprimThreadOperationTests, Load)
     }
 }
 
-template<class Type>
-__global__
-void thread_volatile_load_kernel(Type* volatile const device_input, Type* device_output)
-{
-    size_t index         = blockIdx.x * blockDim.x + threadIdx.x;
-    device_output[index] = rocprim::thread_load_volatile(device_input + index);
-}
-
-TYPED_TEST(RocprimThreadOperationTests, VolatileLoad)
-{
-    using T                              = typename TestFixture::type;
-    static constexpr uint32_t block_size = 256;
-    static constexpr uint32_t grid_size  = 128;
-    static constexpr uint32_t size       = block_size * grid_size;
-
-    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
-    {
-        unsigned int seed_value
-            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-
-        // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
-        std::vector<T> output(size);
-
-        // Calculate expected results on host
-        std::vector<T> expected = input;
-
-        // Preparing device
-        test_utils::device_ptr<T> device_input(input);
-        test_utils::device_ptr<T> device_output(input.size());
-
-        thread_volatile_load_kernel<T>
-            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
-        HIP_CHECK(hipGetLastError());
-
-        // Reading results back
-        output = device_output.load();
-
-        // Verifying results
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
-    }
-}
-
-template<class Type>
-__global__
-void thread_load_nt_kernel(Type* volatile const device_input, Type* device_output)
-{
-    size_t index         = blockIdx.x * blockDim.x + threadIdx.x;
-    device_output[index] = rocprim::thread_load_nontemporal(device_input + index);
-}
-
-TYPED_TEST(RocprimThreadOperationTests, LoadNontemporal)
-{
-    using T                              = typename TestFixture::type;
-    static constexpr uint32_t block_size = 256;
-    static constexpr uint32_t grid_size  = 128;
-    static constexpr uint32_t size       = block_size * grid_size;
-
-    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
-    {
-        unsigned int seed_value
-            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-
-        // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
-        std::vector<T> output(size);
-
-        // Calculate expected results on host
-        std::vector<T> expected = input;
-
-        // Preparing device
-        test_utils::device_ptr<T> device_input(input);
-        test_utils::device_ptr<T> device_output(input.size());
-
-        thread_load_nt_kernel<T>
-            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
-        HIP_CHECK(hipGetLastError());
-
-        // Reading results back
-        output = device_output.load();
-
-        // Verifying results
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
-    }
-}
-
 template<uint32_t ItemsPerThread, class Type>
 __global__
 void thread_copy_unroll_kernel(Type* device_input, Type* device_output)
 {
-    size_t index = (blockIdx.x * blockDim.x + threadIdx.x) * ItemsPerThread;
-    rocprim::unrolled_copy<ItemsPerThread>(device_input + index, device_output + index);
+    size_t thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    size_t index     = thread_id * ItemsPerThread;
+
+    if(thread_id % 2 == 0)
+    {
+        rocprim::unrolled_copy<ItemsPerThread>(device_input + index, device_output + index);
+    }
+    else
+    {
+        rocprim::unrolled_thread_load<ItemsPerThread, rocprim::load_default>(device_input + index,
+                                                                             device_output + index);
+    }
 }
 
 TYPED_TEST(RocprimThreadOperationTests, CopyUnroll)
@@ -254,95 +207,36 @@ __global__
 void thread_store_kernel(Type* const device_input, Type* device_output)
 {
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    ROCPRIM_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
-    rocprim::thread_store<rocprim::store_wb>(device_output + index, device_input[index]);
-    ROCPRIM_CLANG_SUPPRESS_WARNING_POP
-}
 
-TYPED_TEST(RocprimThreadOperationTests, Store)
-{
-    using T = typename TestFixture::type;
-    static constexpr uint32_t block_size = 256;
-    static constexpr uint32_t grid_size = 128;
-    static constexpr uint32_t size = block_size * grid_size;
-
-    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    if(index % 7 == 0)
     {
-        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-
-        // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
-        std::vector<T> output(size);
-
-        // Calculate expected results on host
-        std::vector<T> expected = input;
-
-        // Preparing device
-        test_utils::device_ptr<T> device_input(input);
-        test_utils::device_ptr<T> device_output(input.size());
-
-        thread_store_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
-        HIP_CHECK(hipGetLastError());
-
-        // Reading results back
-        output = device_output.load();
-
-        // Verifying results
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+        rocprim::thread_store(device_output + index, device_input[index]);
     }
-}
-
-template<class Type>
-__global__
-void thread_store_volatile_kernel(Type* const device_input, Type* device_output)
-{
-    size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    rocprim::thread_store_volatile(device_output + index, device_input[index]);
-}
-
-TYPED_TEST(RocprimThreadOperationTests, StoreVolatile)
-{
-    using T                              = typename TestFixture::type;
-    static constexpr uint32_t block_size = 256;
-    static constexpr uint32_t grid_size  = 128;
-    static constexpr uint32_t size       = block_size * grid_size;
-
-    for(size_t seed_index = 0; seed_index < number_of_runs; seed_index++)
+    else if(index % 7 == 1)
     {
-        unsigned int seed_value
-            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-
-        // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 200, seed_value);
-        std::vector<T> output(size);
-
-        // Calculate expected results on host
-        std::vector<T> expected = input;
-
-        // Preparing device
-        test_utils::device_ptr<T> device_input(input);
-        test_utils::device_ptr<T> device_output(input.size());
-
-        thread_store_volatile_kernel<T>
-            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
-        HIP_CHECK(hipGetLastError());
-
-        // Reading results back
-        output = device_output.load();
-
-        // Verifying results
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+        rocprim::thread_store<rocprim::store_wb>(device_output + index, device_input[index]);
     }
-}
-
-template<class Type>
-__global__
-void thread_store_nt_kernel(Type* const device_input, Type* device_output)
-{
-    size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    rocprim::thread_store_nontemporal(device_output + index, device_input[index]);
+    else if(index % 7 == 2)
+    {
+        rocprim::thread_store<rocprim::store_cg>(device_output + index, device_input[index]);
+    }
+    else if(index % 7 == 3)
+    {
+        rocprim::thread_store<rocprim::store_nontemporal>(device_output + index,
+                                                          device_input[index]);
+    }
+    else if(index % 7 == 4)
+    {
+        rocprim::thread_store<rocprim::store_wt>(device_output + index, device_input[index]);
+    }
+    else if(index % 7 == 5)
+    {
+        rocprim::thread_store<rocprim::store_volatile>(device_output + index, device_input[index]);
+    }
+    else // index % 7 == 6
+    {
+        rocprim::thread_store<rocprim::store_cs>(device_output + index, device_input[index]);
+    }
 }
 
 TYPED_TEST(RocprimThreadOperationTests, StoreNontemporal)
@@ -369,8 +263,7 @@ TYPED_TEST(RocprimThreadOperationTests, StoreNontemporal)
         test_utils::device_ptr<T> device_input(input);
         test_utils::device_ptr<T> device_output(input.size());
 
-        thread_store_nt_kernel<T>
-            <<<grid_size, block_size>>>(device_input.get(), device_output.get());
+        thread_store_kernel<T><<<grid_size, block_size>>>(device_input.get(), device_output.get());
         HIP_CHECK(hipGetLastError());
 
         // Reading results back

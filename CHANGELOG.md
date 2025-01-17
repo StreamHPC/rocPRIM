@@ -8,11 +8,17 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 
 * Added missing operator `rocprim::key_value_pair::operator==`.
 * Added `rocprim::unrolled_copy` thread function to copy multiple items inside the thread.
+* Added `rocprim::unrolled_thread_load` thread function to load multiple items inside the thread using `rocprim::thread_load`.
 * Added `rocprim::thread_load_volatile_pointer` thread function to load volatile.
 * Added `rocprim::int128_t` and `rocprim::uint128_t` to benchmarks for improved performance evaluation on 128-bit integers.
 * Added `rocprim::int128_t` to autotuning supported types to improve performance for 128-bit integers.
 * Added `rocprim::merge_inplace` function that allows merging in-place.
 * Added initial value support for warp- and block-level inclusive scan.
+
+### Changed
+
+* Undeprecated `rocprim::thread_load` uses dereference as default and updated other cache load modifiers.
+* Undeprecated `rocprim::thread_store` uses dereference as default and updated other cache store modifiers.
 
 ### Resolved issues
 
