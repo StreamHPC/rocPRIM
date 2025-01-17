@@ -207,6 +207,7 @@ build:cmake-minimum-apt:
       - $BUILD_DIR/test/CTestTestfile.cmake
       - $BUILD_DIR/test/rocprim/CTestTestfile.cmake
       - $BUILD_DIR/test/rocprim/test_*
+      - $BUILD_DIR/test/rocprim/libtest_*
       - $BUILD_DIR/test/test_*
     expire_in: 1 day
 

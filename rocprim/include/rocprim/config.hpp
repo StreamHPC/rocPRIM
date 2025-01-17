@@ -21,17 +21,46 @@
 #ifndef ROCPRIM_CONFIG_HPP_
 #define ROCPRIM_CONFIG_HPP_
 
-#define BEGIN_ROCPRIM_NAMESPACE \
-    namespace rocprim {
-
-#define END_ROCPRIM_NAMESPACE \
-    } /* rocprim */
-
 #include <limits>
 
-#include <hip/hip_runtime.h>
-#include <hip/hip_fp16.h>
 #include <hip/hip_bfloat16.h>
+#include <hip/hip_fp16.h>
+#include <hip/hip_runtime.h>
+
+#include "rocprim_version.hpp"
+
+// Inline namespace (e.g. ROCPRIM_300400_NS where 300400 is the rocPRIM version) is used to
+// eliminate issues when shared libraries are built with different versions of rocPRIM so they may
+// have symbols with the same name but different content.
+// ROCPRIM_DISABLE_INLINE_NAMESPACE can be defined to disable inline namespaces (the old behavior).
+// ROCPRIM_INLINE_NAMESPACE can be defined to override the standard inline namespace name.
+// Additionally, all kernels have hidden visibility (see ROCPRIM_KERNEL).
+#if defined(DOXYGEN_DOCUMENTATION_BUILD) || defined(ROCPRIM_DISABLE_INLINE_NAMESPACE)
+    #define ROCPRIM_INLINE_NAMESPACE
+    #define BEGIN_ROCPRIM_INLINE_NAMESPACE
+    #define END_ROCPRIM_INLINE_NAMESPACE
+#else
+    #define ROCPRIM_CONCAT_(SEP, A, B) A##SEP##B
+    #define ROCPRIM_CONCAT(SEP, A, B) ROCPRIM_CONCAT_(SEP, A, B)
+
+    #ifndef ROCPRIM_INLINE_NAMESPACE
+        #define ROCPRIM_INLINE_NAMESPACE \
+            ROCPRIM_CONCAT(_, ROCPRIM, ROCPRIM_CONCAT(_, ROCPRIM_VERSION, NS))
+    #endif
+    #define BEGIN_ROCPRIM_INLINE_NAMESPACE        \
+        inline namespace ROCPRIM_INLINE_NAMESPACE \
+        {
+    #define END_ROCPRIM_INLINE_NAMESPACE } /* inline namespace */
+#endif
+
+#define BEGIN_ROCPRIM_NAMESPACE \
+    namespace rocprim           \
+    {                           \
+    BEGIN_ROCPRIM_INLINE_NAMESPACE
+
+#define END_ROCPRIM_NAMESPACE    \
+    END_ROCPRIM_INLINE_NAMESPACE \
+    } /* namespace rocprim */
 
 #if __cplusplus < 201402L
     #error "rocPRIM requires at least C++14"
@@ -42,11 +71,6 @@
     #define ROCPRIM_HOST __host__
     #define ROCPRIM_HOST_DEVICE __host__ __device__
     #define ROCPRIM_SHARED_MEMORY __shared__
-    #ifdef _WIN32
-        #define ROCPRIM_KERNEL __global__ static
-    #else
-        #define ROCPRIM_KERNEL __global__
-    #endif
     // TODO: These parameters should be tuned for NAVI in the close future.
     #ifndef ROCPRIM_DEFAULT_MAX_BLOCK_SIZE
         #define ROCPRIM_DEFAULT_MAX_BLOCK_SIZE 256
@@ -56,16 +80,18 @@
     #endif
 
     #ifndef DOXYGEN_DOCUMENTATION_BUILD
+        #define ROCPRIM_FORCE_INLINE __attribute__((always_inline))
         #define ROCPRIM_INLINE inline
+        #define ROCPRIM_KERNEL __global__ __attribute__((__visibility__("hidden")))
         #define ROCPRIM_LAUNCH_BOUNDS(...) __launch_bounds__(__VA_ARGS__)
     #else
         // Prefer simpler signatures to let Sphinx/Breathe parse them
         #define ROCPRIM_FORCE_INLINE inline
         #define ROCPRIM_INLINE inline
+        #define ROCPRIM_KERNEL __global__
         // Ignore __launch_bounds__ for doxygen builds
         #define ROCPRIM_LAUNCH_BOUNDS(...)
     #endif
-    #define ROCPRIM_FORCE_INLINE __attribute__((always_inline))
 #endif
 
 #undef ROCPRIM_TARGET_GCN3

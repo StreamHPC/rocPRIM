@@ -19,6 +19,7 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 
 * Undeprecated `rocprim::thread_load` uses dereference as default and updated other cache load modifiers.
 * Undeprecated `rocprim::thread_store` uses dereference as default and updated other cache store modifiers.
+* Changed symbol visibility: all kernels now have hidden visibility, inline namespace with the library version is added, e.g. `rocprim::ROCPRIM_300400_NS::...`. This allows to link multiple libraries built with different versions of rocPRIM.
 
 ### Resolved issues
 
