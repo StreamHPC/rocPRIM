@@ -96,8 +96,8 @@ struct next_type<uint8_t>
 /// type that we try to load with (leave this as the default); if it doesn't apply,
 /// the chain defined by `next_type` is followed until one is found that applies.
 ///
-/// \tparam Alignment - Total alignment of the memory to be copied.
-/// \tparam Size - Total size of the memory to be copied.
+/// \tparam Alignment Total alignment of the memory to be copied.
+/// \tparam Size Total size of the memory to be copied.
 template<size_t Alignment, size_t Size, typename T = uint128_t, typename Enable = void>
 struct fused_copy;
 
@@ -172,12 +172,12 @@ void thread_fused_copy(T* __restrict__ dst, const U* __restrict__ src, F copy_op
 /// of the highest alignment and size possible, depending
 /// on the alignment and size of the input types.
 ///
-/// \tparam T - The destination data type.
-/// \tparam U - The source data type.
-/// \tparam Alignment - If given, explicit alignment of the input types. Both `dst` and `src`
+/// \tparam T The destination data type.
+/// \tparam U The source data type.
+/// \tparam Alignment If given, explicit alignment of the input types. Both `dst` and `src`
 /// must be aligned to this size.
-/// \param dst - Target memory, where the result is written.
-/// \param src - Source memory, where the data is read from.
+/// \param dst Target memory, where the result is written.
+/// \param src Source memory, where the data is read from.
 template<typename T, typename U, size_t Alignment = ::rocprim::min(alignof(T), alignof(U))>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 void thread_fused_copy(T* __restrict__ dst, const U* __restrict__ src)
@@ -194,6 +194,9 @@ template<typename T, typename InputIteratorT, int... Is>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 void unrolled_copy_impl(InputIteratorT src, T* dst, std::integer_sequence<int, Is...>)
 {
+    // Unroll multiple thread loads by unpacking an integer sequence
+    // into a dummy array. We assign the destination values inside the
+    // constructor of this dummy array.
     int dummy[] = {(dst[Is] = src[Is], 0)...};
     (void)dummy;
 }
@@ -204,8 +207,8 @@ void unrolled_copy_impl(InputIteratorT src, T* dst, std::integer_sequence<int, I
 /// \tparam Count number of items to copy
 /// \tparam InputIteratorT the input iterator type
 /// \tparam T Type of Data to be copied to
-/// \param src [in] - Input iterator for data that will be copied
-/// \param dst [out] - The pointer the data will be copied to.
+/// \param src [in] Input iterator for data that will be copied
+/// \param dst [out] The pointer the data will be copied to.
 template<int Count, typename InputIteratorT, typename T>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 void unrolled_copy(InputIteratorT src, T* dst)
