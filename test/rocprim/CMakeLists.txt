@@ -308,3 +308,103 @@ add_rocprim_test("rocprim.warp_scan" test_warp_scan.cpp)
 add_rocprim_test("rocprim.warp_sort" test_warp_sort.cpp)
 add_rocprim_test("rocprim.warp_store" test_warp_store.cpp)
 add_rocprim_test("rocprim.zip_iterator" test_zip_iterator.cpp)
+
+if(NOT WIN32)
+  # Linking tests check if all external rocPRIM symbols are in the inline namespace, kernel are not
+  # visible and if it is possible to link two libraries that use different rocPRIM versions.
+  # See comments in test_linking_new_scan.hpp for more details.
+
+  # For testing how the old behavior (without inline namespace) works set it to ON, the tests will
+  # fail
+  set(WITHOUT_INLINE_NAMESPACE OFF)
+
+  if(WITHOUT_INLINE_NAMESPACE)
+    set(COMMON_DEFINITIONS "ROCPRIM_DISABLE_INLINE_NAMESPACE")
+  endif()
+
+  add_library(test_linking_lib1 SHARED test_linking_lib.cpp)
+  target_include_directories(test_linking_lib1 SYSTEM BEFORE
+    PUBLIC
+      $<BUILD_INTERFACE:${COMMON_TEST_HEADER_DIRECTORY}>
+      $<TARGET_PROPERTY:GTest::GTest,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+  target_link_libraries(test_linking_lib1 PUBLIC rocprim_hip)
+  set_target_properties(test_linking_lib1
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/rocprim"
+      COMPILE_DEFINITIONS "TEST_FUNC=test1;${COMMON_DEFINITIONS};"
+  )
+
+  add_library(test_linking_lib2 SHARED test_linking_lib.cpp)
+  target_include_directories(test_linking_lib2 SYSTEM BEFORE
+    PUBLIC
+      $<BUILD_INTERFACE:${COMMON_TEST_HEADER_DIRECTORY}>
+      $<TARGET_PROPERTY:GTest::GTest,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+  target_link_libraries(test_linking_lib2 PUBLIC rocprim_hip)
+  # Pretend that we build this library with another version of rocPRIM which uses another
+  # implementation of scan
+  if(NOT WITHOUT_INLINE_NAMESPACE)
+    set(LIB2_NAMESPACE_DEFINITION "ROCPRIM_INLINE_NAMESPACE=ROCPRIM_300201_NS")
+  endif()
+  set_target_properties(test_linking_lib2
+    PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/rocprim"
+      COMPILE_DEFINITIONS "TEST_FUNC=test2;TEST_LINKING_EMULATE_ANOTHER_VERSION;${COMMON_DEFINITIONS};${LIB2_NAMESPACE_DEFINITION};"
+  )
+
+  add_rocprim_test_internal("rocprim.linking" "test_linking.cpp;test_linking_lib.cpp" test_linking)
+  target_link_libraries(test_linking PUBLIC test_linking_lib1 test_linking_lib2)
+  set_target_properties(test_linking
+    PROPERTIES
+      COMPILE_DEFINITIONS "TEST_FUNC=test0;${COMMON_DEFINITIONS};"
+  )
+
+  # Check what symbols are exported by the libraries and what their names are
+
+  set(NM_ARGS --demangle --defined-only --extern-only)
+
+  add_custom_command(
+    TARGET test_linking_lib1
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking_lib1> | grep "rocprim::"
+    COMMENT "Printing external symbols of test_linking_lib1"
+  )
+  add_custom_command(
+    TARGET test_linking_lib2
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking_lib2> | grep "rocprim::"
+    COMMENT "Printing external symbols of test_linking_lib2"
+  )
+  add_custom_command(
+    TARGET test_linking
+    POST_BUILD
+    COMMAND ${CMAKE_NM} ${NM_ARGS} $<TARGET_FILE:test_linking> | grep "rocprim::"
+    COMMENT "Printing external symbols of test_linking"
+  )
+
+  # The tests fail if
+  #  * there are symbols in the rocprim namespace but not in the inline namespace with the
+  #    corresponding rocPRIM version;
+  #  * any kernels are visible (usually they have "kernel" in their names).
+  string(REPLACE ";" " " NM_ARGS_STR "${NM_ARGS}")
+  add_test(
+    NAME "rocprim.linking_lib1_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking_lib1> | grep -c -P \"(rocprim::(?!ROCPRIM_${rocprim_VERSION_NUMBER}_NS))|kernel\""
+  )
+  add_test(
+    NAME "rocprim.linking_lib2_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking_lib2> | grep -c -P \"(rocprim::(?!ROCPRIM_300201_NS))|kernel\""
+  )
+  add_test(
+    NAME "rocprim.linking_symbols"
+    COMMAND sh -c "${CMAKE_NM} ${NM_ARGS_STR} $<TARGET_FILE:test_linking> | grep -c -P \"(rocprim::(?!ROCPRIM_${rocprim_VERSION_NUMBER}_NS))|kernel\""
+  )
+  set_tests_properties(
+    "rocprim.linking_lib1_symbols"
+    "rocprim.linking_lib2_symbols"
+    "rocprim.linking_symbols"
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "^0" # no such symbols must be found (grep -c returns 0)
+  )
+endif()

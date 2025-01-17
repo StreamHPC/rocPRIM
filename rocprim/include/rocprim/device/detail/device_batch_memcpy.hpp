@@ -1,6 +1,6 @@
 /******************************************************************************
  * Copyright (c) 2011-2022, NVIDIA CORPORATION. All rights reserved.
- * Modifications Copyright (c) 2023-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2023-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -900,9 +900,10 @@ private:
     };
 
 public:
-    __global__ static void init_tile_state_kernel(blev_buffer_scan_state_type buffer_scan_state,
-                                                  blev_block_scan_state_type  block_scan_state,
-                                                  tile_offset_type            num_tiles)
+    static ROCPRIM_KERNEL
+    void init_tile_state_kernel(blev_buffer_scan_state_type buffer_scan_state,
+                                blev_block_scan_state_type  block_scan_state,
+                                tile_offset_type            num_tiles)
     {
         const uint32_t block_id        = rocprim::detail::block_id<0>();
         const uint32_t block_size      = rocprim::detail::block_size<0>();
@@ -914,12 +915,12 @@ public:
         block_scan_state.initialize_prefix(flat_thread_id, num_tiles);
     }
 
-    __global__ static void
-        non_blev_memcpy_kernel(copyable_buffers            buffers,
-                               buffer_offset_type          num_buffers,
-                               copyable_blev_buffers       blev_buffers,
-                               blev_buffer_scan_state_type blev_buffer_scan_state,
-                               blev_block_scan_state_type  blev_block_scan_state)
+    static ROCPRIM_KERNEL
+    void non_blev_memcpy_kernel(copyable_buffers            buffers,
+                                buffer_offset_type          num_buffers,
+                                copyable_blev_buffers       blev_buffers,
+                                blev_buffer_scan_state_type blev_buffer_scan_state,
+                                blev_block_scan_state_type  blev_block_scan_state)
     {
         ROCPRIM_SHARED_MEMORY typename non_blev_memcpy::storage_type temp_storage;
         non_blev_memcpy{}.copy(temp_storage.get(),
@@ -931,9 +932,10 @@ public:
                                rocprim::flat_block_id());
     }
 
-    __global__ static void blev_memcpy_kernel(copyable_blev_buffers       blev_buffers,
-                                              blev_buffer_scan_state_type buffer_offset_tile,
-                                              tile_offset_type            last_tile_offset)
+    static ROCPRIM_KERNEL
+    void blev_memcpy_kernel(copyable_blev_buffers       blev_buffers,
+                            blev_buffer_scan_state_type buffer_offset_tile,
+                            tile_offset_type            last_tile_offset)
     {
         const auto flat_block_thread_id = ::rocprim::detail::block_thread_id<0>();
         const auto flat_block_id        = ::rocprim::detail::block_id<0>();
