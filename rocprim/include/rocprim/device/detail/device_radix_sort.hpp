@@ -1051,6 +1051,7 @@ struct onesweep_iteration_helper
         = RadixRankAlgorithm == block_radix_rank_algorithm::match;
 
     static constexpr unsigned int digits_per_thread = radix_rank_type::digits_per_thread;
+    static constexpr unsigned int digits_per_warp   = ceiling_div(radix_size, device_warp_size());
 
     union storage_type_
     {
@@ -1058,6 +1059,8 @@ struct onesweep_iteration_helper
         struct
         {
             Offset global_digit_offsets[radix_size];
+            uint32_t digit_counts[radix_size];
+            uint32_t exclusive_digit_prefix[radix_size];
             union
             {
                 Key          ordered_block_keys[items_per_block];
@@ -1075,20 +1078,25 @@ struct onesweep_iteration_helper
              class KeysOutputIterator,
              class ValuesInputIterator,
              class ValuesOutputIterator>
-    ROCPRIM_DEVICE void onesweep(KeysInputIterator        keys_input,
-                                 KeysOutputIterator       keys_output,
-                                 ValuesInputIterator      values_input,
-                                 ValuesOutputIterator     values_output,
-                                 Offset*                  global_digit_offsets_in,
-                                 Offset*                  global_digit_offsets_out,
-                                 onesweep_lookback_state* lookback_states,
-                                 Decomposer               decomposer,
-                                 const unsigned int       bit,
-                                 const unsigned int       current_radix_bits,
-                                 const unsigned int       valid_items,
-                                 storage_type_&           storage)
+    ROCPRIM_DEVICE
+    void onesweep(KeysInputIterator        keys_input,
+                  KeysOutputIterator       keys_output,
+                  ValuesInputIterator      values_input,
+                  ValuesOutputIterator     values_output,
+                  Offset*                  global_digit_offsets_in,
+                  Offset*                  global_digit_offsets_out,
+                  onesweep_lookback_state* lookback_states,
+                  uint32_t*                lookback_flags,
+                  Decomposer               decomposer,
+                  const unsigned int       bit,
+                  const unsigned int       current_radix_bits,
+                  const unsigned int       valid_items,
+                  storage_type_&           storage)
     {
         const unsigned int flat_id      = ::rocprim::detail::block_thread_id<0>();
+        const unsigned int warp_id      = ::rocprim::warp_id();
+        const unsigned int lane_id      = ::rocprim::lane_id();
+        const unsigned int warp_size    = ::rocprim::device_warp_size();
         const unsigned int block_id     = ::rocprim::detail::block_id<0>();
         const unsigned int block_offset = block_id * items_per_block;
 
@@ -1162,56 +1170,259 @@ struct onesweep_iteration_helper
             storage.ordered_block_keys[ranks[i]] = keys[i];
         }
 
-        ::rocprim::syncthreads();
+        // ::rocprim::syncthreads();
 
         // Compute the global prefix for each histogram.
         // At this point `lookback_states` already hold `onesweep_lookback_state::EMPTY`.
+
+        // AAAA
+
+        // Store the digit count to shared memory so the first warp can read it.
+
         ROCPRIM_UNROLL
         for(unsigned int i = 0; i < digits_per_thread; ++i)
         {
             const unsigned int digit = flat_id * digits_per_thread + i;
             if(radix_size % BlockSize == 0 || digit < radix_size)
             {
-                onesweep_lookback_state* block_state
-                    = &lookback_states[block_id * radix_size + digit];
-                onesweep_lookback_state(onesweep_lookback_state::PARTIAL, digit_counts[i])
-                    .store(block_state);
-
-                unsigned int exclusive_prefix  = 0;
-                unsigned int lookback_block_id = block_id;
-                // The main back tracking loop.
-                while(lookback_block_id > 0)
-                {
-                    --lookback_block_id;
-                    onesweep_lookback_state* lookback_state_ptr
-                        = &lookback_states[lookback_block_id * radix_size + digit];
-                    onesweep_lookback_state lookback_state
-                        = onesweep_lookback_state::load(lookback_state_ptr);
-                    while(lookback_state.status() == onesweep_lookback_state::EMPTY)
-                    {
-                        lookback_state = onesweep_lookback_state::load(lookback_state_ptr);
-                    }
-
-                    exclusive_prefix += lookback_state.value();
-                    if(lookback_state.status() == onesweep_lookback_state::COMPLETE)
-                    {
-                        break;
-                    }
-                }
-
-                // Update the state for the current block.
-                const unsigned int inclusive_digit_prefix = exclusive_prefix + digit_counts[i];
-                // Note that this should not deadlock, as HSA guarantees that blocks with a lower block ID launch before
-                // those with a higher block id.
-                onesweep_lookback_state(onesweep_lookback_state::COMPLETE, inclusive_digit_prefix)
-                    .store(block_state);
-
-                // Subtract the exclusive digit prefix from the global offset here, since we already ordered the keys in shared
-                // memory.
-                storage.global_digit_offsets[digit]
-                    = global_digit_offsets_in[digit] - exclusive_digit_prefix[i] + exclusive_prefix;
+                storage.digit_counts[digit]           = digit_counts[i];
+                storage.exclusive_digit_prefix[digit] = exclusive_digit_prefix[i];
             }
         }
+
+        syncthreads();
+
+        if(warp_id == 0)
+        {
+            // TODO(Robin): Clean this up
+            uint32_t* scan_counters = reinterpret_cast<uint32_t*>(lookback_states);
+
+            const auto warp_for_each_digit = [&](auto f)
+            {
+                ROCPRIM_UNROLL
+                for(int digit = lane_id, i = 0; i < digits_per_warp; digit += warp_size, ++i)
+                {
+                    if(radix_size % warp_size == 0 || digit < radix_size)
+                    {
+                        f(digit, i);
+                    }
+                }
+            };
+
+            // First, write all the partial results to the buffer.
+            // TODO: Can we replace this with nontemporal atomics? Or by larger atomic writes?
+            warp_for_each_digit(
+                [&](auto digit, auto /* i */) {
+                    atomic_store(&scan_counters[block_id * radix_size + digit],
+                                 storage.digit_counts[digit]);
+                });
+
+            // Make sure that atomics are written to memory before signaling the flag.
+            // atomic_fence_release_vmem_order_only();
+            memory_fence_device();
+
+            // Signal the flag.
+            // TODO(Robin): Can we make this an atomic OR so that we can pack flags?
+            atomic_store(&lookback_flags[block_id],
+                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::PARTIAL));
+
+            // The main backtracking loop.
+            unsigned int lookback_block_id                 = block_id;
+            unsigned int exclusive_prefix[digits_per_warp] = {0};
+            while(lookback_block_id > 0)
+            {
+                --lookback_block_id;
+                const auto* lookback_flag = &lookback_flags[lookback_block_id];
+
+                // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
+                auto flag
+                    = static_cast<onesweep_lookback_state::prefix_flag>(atomic_load(lookback_flag));
+                while(flag == onesweep_lookback_state::EMPTY)
+                {
+                    // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
+                    flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                        atomic_load(lookback_flag));
+                }
+
+                // Add the prefix to our current exclusive prefix
+                // NOTE: We're going to load non-atomically, so we are going to load
+                // the counters, then check if the flag is the same. If its not.
+                // The only flag change we can see is from PARTIAl->COMPLETE,
+                // so we only have to retry one time at most.
+
+                // NOTE: No acquire fence required, there is a dependency.
+                memory_fence_device();
+
+                unsigned int prefix[digits_per_warp];
+                warp_for_each_digit(
+                    [&](auto digit, auto i)
+                    {
+                        // TODO(Robin): Can we replace this with a regular load? Or nontemporal? Or something?
+                        prefix[i]
+                            = atomic_load(&scan_counters[lookback_block_id * radix_size + digit]);
+                    });
+
+                // Ensure previous loads are complete before checking the flag again.
+                // atomic_fence_acquire_order_only();
+                memory_fence_device();
+
+                // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
+                auto new_flag
+                    = static_cast<onesweep_lookback_state::prefix_flag>(atomic_load(lookback_flag));
+                // If the flag changed to EMPTY, we need to poll until the critical section is done.
+                // The good news is that it will be guaranteed to be COMPLETE after.
+                while(new_flag == onesweep_lookback_state::EMPTY)
+                {
+                    // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
+                    new_flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                        atomic_load(lookback_flag));
+                }
+
+                // NOTE: No acquire fence required, there is a dependency.
+                memory_fence_device();
+
+                if(flag != new_flag)
+                {
+                    // NOTE: new_flag must be COMPLETE.
+                    // There was a race! Yeet & reload all values.
+                    // TODO(Robin): Clean up
+                    warp_for_each_digit(
+                        [&](auto digit, auto i)
+                        {
+                            // TODO(Robin): Can we replace this with a regular load? Or nontemporal? Or something?
+                            // TODO(Robin): We can save some registers here by subtracting the old prefix instead.
+                            prefix[i] = atomic_load(
+                                &scan_counters[lookback_block_id * radix_size + digit]);
+                        });
+
+                    flag = new_flag;
+                }
+
+                // Update our prefix scan.
+                ROCPRIM_UNROLL
+                for(int i = 0; i < digits_per_warp; ++i)
+                {
+                    exclusive_prefix[i] += prefix[i];
+                }
+
+                if(flag == onesweep_lookback_state::COMPLETE)
+                {
+                    break;
+                }
+            }
+
+            syncthreads();
+
+            // Enter critical section - temporarly write EMPTY to indicate
+            // that the global state is being modified
+            atomic_store(&lookback_flags[block_id],
+                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::EMPTY));
+            // atomic_fence_release_vmem_order_only();
+            memory_fence_device();
+            // // Update the global state to COMPLETE.
+            // // ROCPRIM_UNROLL
+            // // for(int digit = lane_id, i = 0; i < digits_per_warp; digit += warp_size, ++i)
+            // // {
+            // //     const auto inclusive_prefix = exclusive_prefix[i] + storage.digit_counts[digit];
+            // //     atomic_store(&scan_counters[block_id * radix_size + digit], inclusive_prefix);
+            // // }
+
+            // Update the global state to COMPLETE.
+            warp_for_each_digit(
+                [&](auto digit, auto i)
+                {
+                    const auto inclusive_prefix = exclusive_prefix[i] + storage.digit_counts[digit];
+                    atomic_store(&scan_counters[block_id * radix_size + digit], inclusive_prefix);
+                });
+            // Make sure that atomics are written to memory before signaling the flag.
+            // atomic_fence_release_vmem_order_only();
+            memory_fence_device();
+            // Signal the flag.
+            // TODO(Robin): Can we make this an atomic OR so that we can pack flags?
+            atomic_store(&lookback_flags[block_id],
+                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::COMPLETE));
+
+            // Update the global digit offsets.
+            warp_for_each_digit(
+                [&](auto digit, auto i)
+                {
+                    storage.global_digit_offsets[digit] = global_digit_offsets_in[digit]
+                                                          - storage.exclusive_digit_prefix[digit]
+                                                          + exclusive_prefix[i];
+                    // printf(
+                    //     "%d --- global offset %d: %zu - %d + %d = %zu -- updated counter: %d\n",
+                    //     block_id, digit, global_digit_offsets_in[digit], storage.exclusive_digit_prefix[digit], exclusive_prefix[i], storage.global_digit_offsets[digit],
+                    //     exclusive_prefix[i] + storage.digit_counts[digit]
+                    //     // aaa[i][0], aaa[i][1], aaa[i][2], aaa[i][3]
+                    // );
+                });
+
+            // ROCPRIM_UNROLL
+            // for(int digit = lane_id, i = 0; i < digits_per_warp; digit += warp_size, ++i)
+            // {
+            //     // storage.global_digit_offsets[digit] = global_digit_offsets_in[digit]
+            //     //                                       - storage.exclusive_digit_prefix[digit]
+            //     //                                       + exclusive_prefix[i];
+            //     // printf(
+            //     //     "%d --- global offset %d: %zu - %d + %d = %zu -- updated counter: %d -- prefixes: %d %d %d %d\n",
+            //     //     block_id, digit, global_digit_offsets_in[digit], storage.exclusive_digit_prefix[digit], exclusive_prefix[i], storage.global_digit_offsets[digit],
+            //     //     exclusive_prefix[i] + storage.digit_counts[digit],
+            //     //     aaa[i][0], aaa[i][1], aaa[i][2], aaa[i][3]
+            //     // );
+            // }
+        }
+
+        syncthreads();
+
+        // AAAA
+
+        // ROCPRIM_UNROLL
+        // for(unsigned int i = 0; i < digits_per_thread; ++i)
+        // {
+        //     const unsigned int digit = flat_id * digits_per_thread + i;
+        //     if(radix_size % BlockSize == 0 || digit < radix_size)
+        //     {
+        //         onesweep_lookback_state* block_state
+        //             = &lookback_states[block_id * radix_size + digit];
+        //         onesweep_lookback_state(onesweep_lookback_state::PARTIAL, digit_counts[i])
+        //             .store(block_state);
+
+        //         unsigned int exclusive_prefix  = 0;
+        //         unsigned int lookback_block_id = block_id;
+        //         // The main back tracking loop.
+        //         while(lookback_block_id > 0)
+        //         {
+        //             --lookback_block_id;
+        //             onesweep_lookback_state* lookback_state_ptr
+        //                 = &lookback_states[lookback_block_id * radix_size + digit];
+        //             onesweep_lookback_state lookback_state
+        //                 = onesweep_lookback_state::load(lookback_state_ptr);
+        //             while(lookback_state.status() == onesweep_lookback_state::EMPTY)
+        //             {
+        //                 lookback_state = onesweep_lookback_state::load(lookback_state_ptr);
+        //             }
+
+        //             exclusive_prefix += lookback_state.value();
+        //             if(lookback_state.status() == onesweep_lookback_state::COMPLETE)
+        //             {
+        //                 break;
+        //             }
+        //         }
+
+        //         // Update the state for the current block.
+        //         const unsigned int inclusive_digit_prefix = exclusive_prefix + digit_counts[i];
+        //         // Note that this should not deadlock, as HSA guarantees that blocks with a lower block ID launch before
+        //         // those with a higher block id.
+        //         onesweep_lookback_state(onesweep_lookback_state::COMPLETE, inclusive_digit_prefix)
+        //             .store(block_state);
+
+        //         // Subtract the exclusive digit prefix from the global offset here, since we already ordered the keys in shared
+        //         // memory.
+        //         storage.global_digit_offsets[digit]
+        //             = global_digit_offsets_in[digit] - exclusive_digit_prefix[i] + exclusive_prefix;
+        //         printf("%d --- global offset %d: %zu - %d + %d = %zu\n", block_id,  digit, global_digit_offsets_in[digit], exclusive_digit_prefix[i], exclusive_prefix, storage.global_digit_offsets[digit]);
+        //     }
+        // }
 
         ::rocprim::syncthreads();
 
@@ -1341,6 +1552,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
                        Offset*                  global_digit_offsets_in,
                        Offset*                  global_digit_offsets_out,
                        onesweep_lookback_state* lookback_states,
+                       uint32_t*                lookback_flags,
                        Decomposer               decomposer,
                        const unsigned int       bit,
                        const unsigned int       current_radix_bits,
@@ -1373,6 +1585,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
                                                                  global_digit_offsets_in,
                                                                  global_digit_offsets_out,
                                                                  lookback_states,
+                                                                 lookback_flags,
                                                                  decomposer,
                                                                  bit,
                                                                  current_radix_bits,
@@ -1389,6 +1602,7 @@ ROCPRIM_DEVICE ROCPRIM_FORCE_INLINE void
                                                                   global_digit_offsets_in,
                                                                   global_digit_offsets_out,
                                                                   lookback_states,
+                                                                  lookback_flags,
                                                                   decomposer,
                                                                   bit,
                                                                   current_radix_bits,
