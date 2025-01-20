@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,12 +33,19 @@ function(add_rocprim_example EXAMPLE_SOURCE)
     PRIVATE
     rocprim
   )
+
   if(USE_HIPCXX)
     target_link_libraries(${EXAMPLE_TARGET}
       PRIVATE
       $<IF:$<LINK_LANGUAGE:HIP>,hip::host,hip::device>
     )
+  else()
+    target_link_libraries(${EXAMPLE_TARGET}
+      PRIVATE
+      hip::device
+    )
   endif()
+
   set_target_properties(${EXAMPLE_TARGET}
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/example"

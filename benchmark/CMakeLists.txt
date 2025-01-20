@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,6 +86,11 @@ function(add_rocprim_benchmark BENCHMARK_SOURCE)
     target_link_libraries(${BENCHMARK_TARGET}
       PRIVATE
       $<IF:$<LINK_LANGUAGE:HIP>,hip::host,hip::device>
+    )
+  else()
+    target_link_libraries(${BENCHMARK_TARGET}
+      PRIVATE
+      hip::device
     )
   endif()
 
