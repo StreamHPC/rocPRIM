@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -111,8 +111,8 @@ struct numeric_limits<rocprim::int128_t> : std::numeric_limits<int>
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /// \brief Used to retrieve a type that can be treated as unsigned version of the template parameter.
-/// \tparam T - The signed type to find an unsigned equivalent for.
-/// \tparam size - the desired size (in bytes) of the unsigned type
+/// \tparam T The signed type to find an unsigned equivalent for.
+/// \tparam size the desired size (in bytes) of the unsigned type
 template<typename T, int size = 0>
 struct get_unsigned_bits_type
 {

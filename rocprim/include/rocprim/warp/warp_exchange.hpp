@@ -1,4 +1,4 @@
-// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,9 +43,9 @@ BEGIN_ROCPRIM_NAMESPACE
 /// \brief The \p warp_exchange class is a warp level parallel primitive which provides
 /// methods for rearranging items partitioned across threads in a warp.
 ///
-/// \tparam T - the input type.
-/// \tparam ItemsPerThread - the number of items contributed by each thread.
-/// \tparam WarpSize - the number of threads in a warp.
+/// \tparam T the input type.
+/// \tparam ItemsPerThread the number of items contributed by each thread.
+/// \tparam WarpSize the number of threads in a warp.
 ///
 /// \par Overview
 /// * The \p warp_exchange class supports the following rearrangement methods:
@@ -746,11 +746,11 @@ public:
     /// \brief Transposes a blocked arrangement of items to a striped arrangement
     /// across the warp, using temporary storage.
     ///
-    /// \tparam U - [inferred] the output type.
+    /// \tparam U [inferred] the output type.
     ///
-    /// \param [in] input - array that data is loaded from.
-    /// \param [out] output - array that data is loaded to.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] input array that data is loaded from.
+    /// \param [out] output array that data is loaded to.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
     ///
     /// \par Storage reusage
     /// Synchronization barrier should be placed before \p storage is reused
@@ -809,10 +809,10 @@ public:
     ///     3. ItemsPerThread is divisible by WarpSize
     ///     4. WarpSize is divisible by ItemsPerThread
     ///
-    /// \tparam U - [inferred] the output type.
+    /// \tparam U [inferred] the output type.
     ///
-    /// \param [in] input - array that data is loaded from.
-    /// \param [out] output - array that data is loaded to.
+    /// \param [in] input array that data is loaded from.
+    /// \param [out] output array that data is loaded to.
     ///
     /// \par Example.
     /// \code{.cpp}
@@ -848,11 +848,11 @@ public:
     /// \brief Transposes a striped arrangement of items to a blocked arrangement
     /// across the warp, using temporary storage.
     ///
-    /// \tparam U - [inferred] the output type.
+    /// \tparam U [inferred] the output type.
     ///
-    /// \param [in] input - array that data is loaded from.
-    /// \param [out] output - array that data is loaded to.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] input array that data is loaded from.
+    /// \param [out] output array that data is loaded to.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
     ///
     /// \par Storage reusage
     /// Synchronization barrier should be placed before \p storage is reused
@@ -912,10 +912,10 @@ public:
     ///     3. ItemsPerThread is divisible by WarpSize
     ///     4. WarpSize is divisible by ItemsPerThread
     ///
-    /// \tparam U - [inferred] the output type.
+    /// \tparam U [inferred] the output type.
     ///
-    /// \param [in] input - array that data is loaded from.
-    /// \param [out] output - array that data is loaded to.
+    /// \param [in] input array that data is loaded from.
+    /// \param [out] output array that data is loaded to.
     ///
     /// \par Example.
     /// \code{.cpp}
@@ -951,12 +951,12 @@ public:
     /// \brief Orders \p input values according to ranks using temporary storage,
     /// then writes the values to \p output in a striped manner.
     /// No values in \p ranks should exists that exceed \p WarpSize*ItemsPerThread-1 .
-    /// \tparam U - [inferred] the output type.
+    /// \tparam U [inferred] the output type.
     ///
-    /// \param [in] input - array that data is loaded from.
-    /// \param [out] output - array that data is loaded to.
-    /// \param [in] ranks - array containing the positions.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] input array that data is loaded from.
+    /// \param [out] output array that data is loaded to.
+    /// \param [in] ranks array containing the positions.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
     ///
     /// \par Storage reusage
     /// Synchronization barrier should be placed before \p storage is reused

@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2018-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -74,8 +74,8 @@ struct kernel_config_params
 
 /// \brief Configuration of particular kernels launched by device-level operation
 ///
-/// \tparam BlockSize - number of threads in a block.
-/// \tparam ItemsPerThread - number of items processed by each thread.
+/// \tparam BlockSize number of threads in a block.
+/// \tparam ItemsPerThread number of items processed by each thread.
 template<unsigned int BlockSize,
          unsigned int ItemsPerThread,
          unsigned int SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
@@ -359,8 +359,8 @@ inline hipError_t host_target_arch(const hipStream_t stream, target_arch& arch)
 
 /// \brief Returns a number of threads in a hardware warp for the actual device.
 /// At host side this constant is available at runtime only.
-/// \param device_id - the device that should be queried.
-/// \param warp_size - out parameter for the warp size.
+/// \param device_id the device that should be queried.
+/// \param warp_size out parameter for the warp size.
 /// \return hipError_t any error that might occur.
 ///
 /// It is constant for a device.
@@ -379,8 +379,8 @@ ROCPRIM_HOST inline hipError_t host_warp_size(const int device_id, unsigned int&
 
 /// \brief Returns the number of threads in a hardware warp for the device associated with the stream.
 /// At host side this constant is available at runtime only.
-/// \param stream - the stream, whose device should be queried.
-/// \param warp_size - out parameter for the warp size.
+/// \param stream the stream, whose device should be queried.
+/// \param warp_size out parameter for the warp size.
 /// \return hipError_t any error that might occur.
 ///
 /// It is constant for a device.

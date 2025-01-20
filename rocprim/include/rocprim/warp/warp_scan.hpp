@@ -59,8 +59,8 @@ struct select_warp_scan_impl
 /// for performing inclusive and exclusive scan operations of items partitioned across
 /// threads in a hardware warp.
 ///
-/// \tparam T - the input/output type.
-/// \tparam WarpSize - the size of logical warp size, which can be equal to or less than
+/// \tparam T the input/output type.
+/// \tparam WarpSize the size of logical warp size, which can be equal to or less than
 /// the size of hardware warp (see rocprim::device_warp_size()). Scan operations are performed
 /// separately within groups determined by WarpSize.
 ///
@@ -132,13 +132,13 @@ public:
 
     /// \brief Performs inclusive scan across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -204,14 +204,14 @@ public:
 
     /// \brief Performs seeded inclusive scan across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] init - initial value to seed the inclusive scan.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] init initial value to seed the inclusive scan.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -280,14 +280,14 @@ public:
 
     /// \brief Performs inclusive scan and reduction across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [out] reduction - result of reducing of all \p input values in logical warp.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [out] reduction result of reducing of all \p input values in logical warp.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -354,15 +354,15 @@ public:
 
     /// \brief Performs seeded inclusive scan and reduction across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [out] reduction - result of reducing of all \p input values in logical warp.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] init - initial value to seed the inclusive scan.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [out] reduction result of reducing of all \p input values in logical warp.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] init initial value to seed the inclusive scan.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -433,15 +433,15 @@ public:
 
     /// \brief Performs exclusive scan across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] init - initial value used to start the exclusive scan. Should be the same
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] init initial value used to start the exclusive scan. Should be the same
     /// for all threads in a logical warp.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -510,17 +510,17 @@ public:
 
     /// \brief Performs exclusive scan and reduction across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] init - initial value used to start the exclusive scan. Should be the same
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] init initial value used to start the exclusive scan. Should be the same
     /// for all threads in a logical warp.
-    /// \param [out] reduction - result of reducing of all \p input values in logical warp.
+    /// \param [out] reduction result of reducing of all \p input values in logical warp.
     /// \p init value is not included in the reduction.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -668,16 +668,16 @@ public:
     /// \brief Performs inclusive and exclusive scan operations across threads
     /// in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] inclusive_output - reference to a thread inclusive-scan output value.
-    /// \param [out] exclusive_output - reference to a thread exclusive-scan output value.
-    /// \param [in] init - initial value used to start the exclusive scan. Should be the same
+    /// \param [in] input thread input value.
+    /// \param [out] inclusive_output reference to a thread inclusive-scan output value.
+    /// \param [out] exclusive_output reference to a thread exclusive-scan output value.
+    /// \param [in] init initial value used to start the exclusive scan. Should be the same
     /// for all threads in a logical warp.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -752,18 +752,18 @@ public:
     /// \brief Performs inclusive and exclusive scan operations, and reduction across
     /// threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for scan. Default type
+    /// \tparam BinaryFunction type of binary function used for scan. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] inclusive_output - reference to a thread inclusive-scan output value.
-    /// \param [out] exclusive_output - reference to a thread exclusive-scan output value.
-    /// \param [in] init - initial value used to start the exclusive scan. Should be the same
+    /// \param [in] input thread input value.
+    /// \param [out] inclusive_output reference to a thread inclusive-scan output value.
+    /// \param [out] exclusive_output reference to a thread exclusive-scan output value.
+    /// \param [in] init initial value used to start the exclusive scan. Should be the same
     /// for all threads in a logical warp.
-    /// \param [out] reduction - result of reducing of all \p input values in logical warp.
+    /// \param [out] reduction result of reducing of all \p input values in logical warp.
     /// \p init value is not included in the reduction.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] scan_op - binary operation function object that will be used for scan.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] scan_op binary operation function object that will be used for scan.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -839,9 +839,9 @@ public:
 
     /// \brief Broadcasts value from one thread to all threads in logical warp.
     ///
-    /// \param [in] input - value to broadcast.
-    /// \param [in] src_lane - id of the thread whose value should be broadcasted
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
+    /// \param [in] input value to broadcast.
+    /// \param [in] src_lane id of the thread whose value should be broadcasted
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
     ///
     /// \par Storage reusage
     /// Synchronization barrier should be placed before \p storage is reused
