@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -59,11 +59,11 @@ struct select_warp_reduce_impl
 /// for performing reduction operations on items partitioned across threads in a hardware
 /// warp.
 ///
-/// \tparam T - the input/output type.
-/// \tparam WarpSize - the size of logical warp size, which can be equal to or less than
+/// \tparam T the input/output type.
+/// \tparam WarpSize the size of logical warp size, which can be equal to or less than
 /// the size of hardware warp (see rocprim::device_warp_size()). Reduce operations are performed
 /// separately within groups determined by WarpSize.
-/// \tparam UseAllReduce - input parameter to determine whether to broadcast final reduction
+/// \tparam UseAllReduce input parameter to determine whether to broadcast final reduction
 /// value to all threads (default is false).
 ///
 /// \par Overview
@@ -135,13 +135,13 @@ public:
 
     /// \brief Performs reduction across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for reduce. Default type
+    /// \tparam BinaryFunction type of binary function used for reduce. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] reduce_op - binary operation function object that will be used for reduce.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] reduce_op binary operation function object that will be used for reduce.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -203,14 +203,14 @@ public:
 
     /// \brief Performs reduction across threads in a logical warp.
     ///
-    /// \tparam BinaryFunction - type of binary function used for reduce. Default type
+    /// \tparam BinaryFunction type of binary function used for reduce. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] valid_items - number of items that will be reduced in the warp.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] reduce_op - binary operation function object that will be used for reduce.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] valid_items number of items that will be reduced in the warp.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] reduce_op binary operation function object that will be used for reduce.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -274,15 +274,15 @@ public:
 
     /// \brief Performs head-segmented reduction across threads in a logical warp.
     ///
-    /// \tparam Flag - type of head flags. Must be contextually convertible to \p bool.
-    /// \tparam BinaryFunction - type of binary function used for reduce. Default type
+    /// \tparam Flag type of head flags. Must be contextually convertible to \p bool.
+    /// \tparam BinaryFunction type of binary function used for reduce. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] flag - thread head flag, \p true flags mark beginnings of segments.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] reduce_op - binary operation function object that will be used for reduce.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] flag thread head flag, \p true flags mark beginnings of segments.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] reduce_op binary operation function object that will be used for reduce.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -322,15 +322,15 @@ public:
 
     /// \brief Performs tail-segmented reduction across threads in a logical warp.
     ///
-    /// \tparam Flag - type of tail flags. Must be contextually convertible to \p bool.
-    /// \tparam BinaryFunction - type of binary function used for reduce. Default type
+    /// \tparam Flag type of tail flags. Must be contextually convertible to \p bool.
+    /// \tparam BinaryFunction type of binary function used for reduce. Default type
     /// is rocprim::plus<T>.
     ///
-    /// \param [in] input - thread input value.
-    /// \param [out] output - reference to a thread output value. May be aliased with \p input.
-    /// \param [in] flag - thread tail flag, \p true flags mark ends of segments.
-    /// \param [in] storage - reference to a temporary storage object of type storage_type.
-    /// \param [in] reduce_op - binary operation function object that will be used for reduce.
+    /// \param [in] input thread input value.
+    /// \param [out] output reference to a thread output value. May be aliased with \p input.
+    /// \param [in] flag thread tail flag, \p true flags mark ends of segments.
+    /// \param [in] storage reference to a temporary storage object of type storage_type.
+    /// \param [in] reduce_op binary operation function object that will be used for reduce.
     /// The signature of the function should be equivalent to the following:
     /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.

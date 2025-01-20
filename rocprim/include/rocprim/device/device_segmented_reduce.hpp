@@ -145,34 +145,34 @@ hipError_t segmented_reduce_impl(void * temporary_storage,
 /// <tt>segments + 1</tt> elements: <tt>offsets</tt> for \p begin_offsets and
 /// <tt>offsets + 1</tt> for \p end_offsets.
 ///
-/// \tparam Config - [optional] Configuration of the primitive, must be `default_config` or `reduce_config`.
-/// \tparam InputIterator - random-access iterator type of the input range. Must meet the
+/// \tparam Config [optional] Configuration of the primitive, must be `default_config` or `reduce_config`.
+/// \tparam InputIterator random-access iterator type of the input range. Must meet the
 /// requirements of a C++ InputIterator concept. It can be a simple pointer type.
-/// \tparam OutputIterator - random-access iterator type of the output range. Must meet the
+/// \tparam OutputIterator random-access iterator type of the output range. Must meet the
 /// requirements of a C++ OutputIterator concept. It can be a simple pointer type.
-/// \tparam OffsetIterator - random-access iterator type of segment offsets. Must meet the
+/// \tparam OffsetIterator random-access iterator type of segment offsets. Must meet the
 /// requirements of a C++ OutputIterator concept. It can be a simple pointer type.
-/// \tparam BinaryFunction - type of binary function used for reduction. Default type
+/// \tparam BinaryFunction type of binary function used for reduction. Default type
 /// is \p rocprim::plus<T>, where \p T is a \p value_type of \p InputIterator.
-/// \tparam InitValueType - type of the initial value.
+/// \tparam InitValueType type of the initial value.
 ///
-/// \param [in] temporary_storage - pointer to a device-accessible temporary storage. When
+/// \param [in] temporary_storage pointer to a device-accessible temporary storage. When
 /// a null pointer is passed, the required allocation size (in bytes) is written to
 /// \p storage_size and function returns without performing the reduction operation.
-/// \param [in,out] storage_size - reference to a size (in bytes) of \p temporary_storage.
-/// \param [in] input - iterator to the first element in the range to reduce.
-/// \param [out] output - iterator to the first element in the output range.
-/// \param [in] segments - number of segments in the input range.
-/// \param [in] begin_offsets - iterator to the first element in the range of beginning offsets.
-/// \param [in] end_offsets - iterator to the first element in the range of ending offsets.
-/// \param [in] initial_value - initial value to start the reduction.
-/// \param [in] reduce_op - binary operation function object that will be used for reduction.
+/// \param [in,out] storage_size reference to a size (in bytes) of \p temporary_storage.
+/// \param [in] input iterator to the first element in the range to reduce.
+/// \param [out] output iterator to the first element in the output range.
+/// \param [in] segments number of segments in the input range.
+/// \param [in] begin_offsets iterator to the first element in the range of beginning offsets.
+/// \param [in] end_offsets iterator to the first element in the range of ending offsets.
+/// \param [in] initial_value initial value to start the reduction.
+/// \param [in] reduce_op binary operation function object that will be used for reduction.
 /// The signature of the function should be equivalent to the following:
 /// <tt>T f(const T &a, const T &b);</tt>. The signature does not need to have
 /// <tt>const &</tt>, but function object must not modify the objects passed to it.
 /// The default value is \p BinaryFunction().
-/// \param [in] stream - [optional] HIP stream object. The default is \p 0 (default stream).
-/// \param [in] debug_synchronous - [optional] If true, synchronization after every kernel
+/// \param [in] stream [optional] HIP stream object. The default is \p 0 (default stream).
+/// \param [in] debug_synchronous [optional] If true, synchronization after every kernel
 /// launch is forced in order to check for errors. The default value is \p false.
 ///
 /// \returns \p hipSuccess (\p 0) after successful reduction; otherwise a HIP runtime error of

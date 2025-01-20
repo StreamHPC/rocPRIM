@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -639,26 +639,26 @@ inline hipError_t merge_sort_impl(
 ///   * op(a, b) and op(b, a) are both false,
 /// then it is \b guaranteed that \p a will precede \p b as well in the output (ordered) keys.
 ///
-/// \tparam Config - [optional] Configuration of the primitive, must be `default_config` or `merge_sort_config`.
-/// \tparam KeysInputIterator - random-access iterator type of the input range. Must meet the
+/// \tparam Config [optional] Configuration of the primitive, must be `default_config` or `merge_sort_config`.
+/// \tparam KeysInputIterator random-access iterator type of the input range. Must meet the
 /// requirements of a C++ InputIterator concept. It can be a simple pointer type.
-/// \tparam KeysOutputIterator - random-access iterator type of the output range. Must meet the
+/// \tparam KeysOutputIterator random-access iterator type of the output range. Must meet the
 /// requirements of a C++ OutputIterator concept. It can be a simple pointer type.
 ///
-/// \param [in] temporary_storage - pointer to a device-accessible temporary storage. When
+/// \param [in] temporary_storage pointer to a device-accessible temporary storage. When
 /// a null pointer is passed, the required allocation size (in bytes) is written to
 /// \p storage_size and function returns without performing the sort operation.
-/// \param [in,out] storage_size - reference to a size (in bytes) of \p temporary_storage.
-/// \param [in] keys_input - pointer to the first element in the range to sort.
-/// \param [out] keys_output - pointer to the first element in the output range.
-/// \param [in] size - number of element in the input range.
-/// \param [in] compare_function - binary operation function object that will be used for comparison.
+/// \param [in,out] storage_size reference to a size (in bytes) of \p temporary_storage.
+/// \param [in] keys_input pointer to the first element in the range to sort.
+/// \param [out] keys_output pointer to the first element in the output range.
+/// \param [in] size number of element in the input range.
+/// \param [in] compare_function binary operation function object that will be used for comparison.
 /// The signature of the function should be equivalent to the following:
 /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
 /// <tt>const &</tt>, but function object must not modify the objects passed to it.
 /// The default value is \p BinaryFunction().
-/// \param [in] stream - [optional] HIP stream object. Default is \p 0 (default stream).
-/// \param [in] debug_synchronous - [optional] If true, synchronization after every kernel
+/// \param [in] stream [optional] HIP stream object. Default is \p 0 (default stream).
+/// \param [in] debug_synchronous [optional] If true, synchronization after every kernel
 /// launch is forced in order to check for errors. Default value is \p false.
 ///
 /// \returns \p hipSuccess (\p 0) after successful sort; otherwise a HIP runtime error of
@@ -738,32 +738,32 @@ hipError_t merge_sort(void * temporary_storage,
 ///   * op(a, b) and op(b, a) are both false,
 /// then it is \b guaranteed that \p a will precede \p b as well in the output (ordered) keys.
 ///
-/// \tparam Config - [optional] Configuration of the primitive, must be `default_config` or `merge_sort_config`.
-/// \tparam KeysInputIterator - random-access iterator type of the input range. Must meet the
+/// \tparam Config [optional] Configuration of the primitive, must be `default_config` or `merge_sort_config`.
+/// \tparam KeysInputIterator random-access iterator type of the input range. Must meet the
 /// requirements of a C++ InputIterator concept. It can be a simple pointer type.
-/// \tparam KeysOutputIterator - random-access iterator type of the output range. Must meet the
+/// \tparam KeysOutputIterator random-access iterator type of the output range. Must meet the
 /// requirements of a C++ OutputIterator concept. It can be a simple pointer type.
-/// \tparam ValuesInputIterator - random-access iterator type of the input range. Must meet the
+/// \tparam ValuesInputIterator random-access iterator type of the input range. Must meet the
 /// requirements of a C++ InputIterator concept. It can be a simple pointer type.
-/// \tparam ValuesOutputIterator - random-access iterator type of the output range. Must meet the
+/// \tparam ValuesOutputIterator random-access iterator type of the output range. Must meet the
 /// requirements of a C++ OutputIterator concept. It can be a simple pointer type.
 ///
-/// \param [in] temporary_storage - pointer to a device-accessible temporary storage. When
+/// \param [in] temporary_storage pointer to a device-accessible temporary storage. When
 /// a null pointer is passed, the required allocation size (in bytes) is written to
 /// \p storage_size and function returns without performing the sort operation.
-/// \param [in,out] storage_size - reference to a size (in bytes) of \p temporary_storage.
-/// \param [in] keys_input - pointer to the first element in the range to sort.
-/// \param [out] keys_output - pointer to the first element in the output range.
-/// \param [in] values_input - pointer to the first element in the range to sort.
-/// \param [out] values_output - pointer to the first element in the output range.
-/// \param [in] size - number of element in the input range.
-/// \param [in] compare_function - binary operation function object that will be used for comparison.
+/// \param [in,out] storage_size reference to a size (in bytes) of \p temporary_storage.
+/// \param [in] keys_input pointer to the first element in the range to sort.
+/// \param [out] keys_output pointer to the first element in the output range.
+/// \param [in] values_input pointer to the first element in the range to sort.
+/// \param [out] values_output pointer to the first element in the output range.
+/// \param [in] size number of element in the input range.
+/// \param [in] compare_function binary operation function object that will be used for comparison.
 /// The signature of the function should be equivalent to the following:
 /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
 /// <tt>const &</tt>, but function object must not modify the objects passed to it.
 /// The default value is \p BinaryFunction().
-/// \param [in] stream - [optional] HIP stream object. Default is \p 0 (default stream).
-/// \param [in] debug_synchronous - [optional] If true, synchronization after every kernel
+/// \param [in] stream [optional] HIP stream object. Default is \p 0 (default stream).
+/// \param [in] debug_synchronous [optional] If true, synchronization after every kernel
 /// launch is forced in order to check for errors. Default value is \p false.
 ///
 /// \returns \p hipSuccess (\p 0) after successful sort; otherwise a HIP runtime error of

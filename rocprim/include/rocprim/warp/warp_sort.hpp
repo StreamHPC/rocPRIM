@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -126,11 +126,11 @@ public:
 
     /// \brief Warp sort for any data type.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_key - input/output to pass to other threads
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_key input/output to pass to other threads
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -157,11 +157,11 @@ public:
 
     /// \brief Warp sort for any data type.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_keys - input/output keys to pass to other threads
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_keys input/output keys to pass to other threads
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -195,12 +195,12 @@ public:
 
     /// \brief Warp sort for any data type using temporary storage.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_key - input/output to pass to other threads
-    /// \param storage - temporary storage for inputs
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_key input/output to pass to other threads
+    /// \param storage temporary storage for inputs
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -248,12 +248,12 @@ public:
 
     /// \brief Warp sort for any data type using temporary storage.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_keys - input/output keys to pass to other threads
-    /// \param storage - temporary storage for inputs
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_keys input/output keys to pass to other threads
+    /// \param storage temporary storage for inputs
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -308,12 +308,12 @@ public:
 
     /// \brief Warp sort by key for any data type.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_key - input/output key to pass to other threads
-    /// \param thread_value - input/output value to pass to other threads
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_key input/output key to pass to other threads
+    /// \param thread_value input/output value to pass to other threads
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -344,12 +344,12 @@ public:
 
     /// \brief Warp sort by key for any data type.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_keys - input/output keys to pass to other threads
-    /// \param thread_values - input/outputs values to pass to other threads
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_keys input/output keys to pass to other threads
+    /// \param thread_values input/outputs values to pass to other threads
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -388,13 +388,13 @@ public:
 
     /// \brief Warp sort by key for any data type using temporary storage.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_key - input/output key to pass to other threads
-    /// \param thread_value - input/output value to pass to other threads
-    /// \param storage - temporary storage for inputs
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_key input/output key to pass to other threads
+    /// \param thread_value input/output value to pass to other threads
+    /// \param storage temporary storage for inputs
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
@@ -443,13 +443,13 @@ public:
 
     /// \brief Warp sort by key for any data type using temporary storage.
     ///
-    /// \tparam BinaryFunction - type of binary function used for sort. Default type
+    /// \tparam BinaryFunction type of binary function used for sort. Default type
     /// is rocprim::less<T>.
     ///
-    /// \param thread_keys - input/output keys to pass to other threads
-    /// \param thread_values - input/output values to pass to other threads
-    /// \param storage - temporary storage for inputs
-    /// \param compare_function - binary operation function object that will be used for sort.
+    /// \param thread_keys input/output keys to pass to other threads
+    /// \param thread_values input/output values to pass to other threads
+    /// \param storage temporary storage for inputs
+    /// \param compare_function binary operation function object that will be used for sort.
     /// The signature of the function should be equivalent to the following:
     /// <tt>bool f(const T &a, const T &b);</tt>. The signature does not need to have
     /// <tt>const &</tt>, but function object must not modify the objects passed to it.
