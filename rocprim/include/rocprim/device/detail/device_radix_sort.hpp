@@ -1219,8 +1219,11 @@ struct onesweep_iteration_helper
 
             // Signal the flag.
             // TODO(Robin): Can we make this an atomic OR so that we can pack flags?
-            atomic_store(&lookback_flags[block_id],
-                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::PARTIAL));
+            if(lane_id == 0)
+            {
+                atomic_store(&lookback_flags[block_id],
+                             static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::PARTIAL));
+            }
 
             // The main backtracking loop.
             unsigned int lookback_block_id                 = block_id;
@@ -1231,13 +1234,22 @@ struct onesweep_iteration_helper
                 const auto* lookback_flag = &lookback_flags[lookback_block_id];
 
                 // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
-                auto flag
-                    = static_cast<onesweep_lookback_state::prefix_flag>(atomic_load(lookback_flag));
+                onesweep_lookback_state::prefix_flag flag;
+                if(lane_id == 0)
+                {
+                    flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                        atomic_load(lookback_flag));
+                }
+                flag = warp_readfirstlane(flag);
                 while(flag == onesweep_lookback_state::EMPTY)
                 {
                     // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
-                    flag = static_cast<onesweep_lookback_state::prefix_flag>(
-                        atomic_load(lookback_flag));
+                    if(lane_id == 0)
+                    {
+                        flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                            atomic_load(lookback_flag));
+                    }
+                    flag = warp_readfirstlane(flag);
                 }
 
                 // Add the prefix to our current exclusive prefix
@@ -1263,15 +1275,24 @@ struct onesweep_iteration_helper
                 // memory_fence_device();
 
                 // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
-                auto new_flag
-                    = static_cast<onesweep_lookback_state::prefix_flag>(atomic_load(lookback_flag));
+                onesweep_lookback_state::prefix_flag new_flag;
+                if(lane_id == 0)
+                {
+                    new_flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                        atomic_load(lookback_flag));
+                }
+                new_flag = warp_readfirstlane(new_flag);
                 // If the flag changed to EMPTY, we need to poll until the critical section is done.
                 // The good news is that it will be guaranteed to be COMPLETE after.
                 while(new_flag == onesweep_lookback_state::EMPTY)
                 {
                     // NOTE: Uniform load, TODO(Robin) check that this is a scalar load.
-                    new_flag = static_cast<onesweep_lookback_state::prefix_flag>(
-                        atomic_load(lookback_flag));
+                    if(lane_id == 0)
+                    {
+                        new_flag = static_cast<onesweep_lookback_state::prefix_flag>(
+                            atomic_load(lookback_flag));
+                    }
+                    new_flag = warp_readfirstlane(new_flag);
                 }
 
                 // NOTE: No acquire fence required, there is a dependency.
@@ -1310,8 +1331,11 @@ struct onesweep_iteration_helper
             // Enter critical section - temporarly write EMPTY to indicate
             // that the global state is being modified
             // NOTE: Uniform load, TODO(Robin) check that this is a scalar operation.
-            atomic_store(&lookback_flags[block_id],
-                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::EMPTY));
+            if(lane_id == 0)
+            {
+                atomic_store(&lookback_flags[block_id],
+                             static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::EMPTY));
+            }
             // atomic_fence_release_vmem_order_only();
             // memory_fence_device();
             asm volatile("s_waitcnt lgkmcnt(0) vmcnt(0)" ::
@@ -1331,8 +1355,11 @@ struct onesweep_iteration_helper
             // Signal the flag.
             // TODO(Robin): Can we make this an atomic OR so that we can pack flags?
             // NOTE: Uniform load, TODO(Robin) check that this is a scalar operation.
-            atomic_store(&lookback_flags[block_id],
-                         static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::COMPLETE));
+            if(lane_id == 0)
+            {
+                atomic_store(&lookback_flags[block_id],
+                             static_cast<uint32_t>(onesweep_lookback_state::prefix_flag::COMPLETE));
+            }
 
             // Update the global digit offsets.
             warp_for_each_digit(
