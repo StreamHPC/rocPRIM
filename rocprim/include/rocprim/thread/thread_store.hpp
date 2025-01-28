@@ -50,8 +50,7 @@ enum cache_store_modifier
     store_cg, ///< Cache at global level
     store_nontemporal, ///< Cache streaming (likely not to be accessed again after storing)
     store_wt, ///< Cache write-through (to system memory)
-    store_volatile, ///< Volatile (any memory space)
-    store_cs = store_nontemporal ///< Alias for store_nontemporal (will be deprecated in 7.0)
+    store_volatile ///< Volatile (any memory space)
 };
 
 /// @}

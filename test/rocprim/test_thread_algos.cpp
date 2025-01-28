@@ -89,38 +89,34 @@ void thread_load_kernel(Type* volatile const device_input, Type* device_output)
 {
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if(index % 8 == 0)
+    if(index % 7 == 0)
     {
         device_output[index] = rocprim::thread_load(device_input + index);
     }
-    else if(index % 8 == 1)
+    else if(index % 7 == 1)
     {
         device_output[index] = rocprim::thread_load<rocprim::load_ca>(device_input + index);
     }
-    else if(index % 8 == 2)
+    else if(index % 7 == 2)
     {
         device_output[index] = rocprim::thread_load<rocprim::load_cg>(device_input + index);
     }
-    else if(index % 8 == 3)
+    else if(index % 7 == 3)
     {
         device_output[index]
             = rocprim::thread_load<rocprim::load_nontemporal>(device_input + index);
     }
-    else if(index % 8 == 4)
+    else if(index % 7 == 4)
     {
         device_output[index] = rocprim::thread_load<rocprim::load_cv>(device_input + index);
     }
-    else if(index % 8 == 5)
+    else if(index % 7 == 5)
     {
         device_output[index] = rocprim::thread_load<rocprim::load_ldg>(device_input + index);
     }
-    else if(index % 8 == 6)
+    else // index % 7 == 6
     {
         device_output[index] = rocprim::thread_load<rocprim::load_volatile>(device_input + index);
-    }
-    else // index % 8 == 7
-    {
-        device_output[index] = rocprim::thread_load<rocprim::load_cs>(device_input + index);
     }
 }
 
@@ -219,34 +215,30 @@ void thread_store_kernel(Type* const device_input, Type* device_output)
 {
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if(index % 7 == 0)
+    if(index % 6 == 0)
     {
         rocprim::thread_store(device_output + index, device_input[index]);
     }
-    else if(index % 7 == 1)
+    else if(index % 6 == 1)
     {
         rocprim::thread_store<rocprim::store_wb>(device_output + index, device_input[index]);
     }
-    else if(index % 7 == 2)
+    else if(index % 6 == 2)
     {
         rocprim::thread_store<rocprim::store_cg>(device_output + index, device_input[index]);
     }
-    else if(index % 7 == 3)
+    else if(index % 6 == 3)
     {
         rocprim::thread_store<rocprim::store_nontemporal>(device_output + index,
                                                           device_input[index]);
     }
-    else if(index % 7 == 4)
+    else if(index % 6 == 4)
     {
         rocprim::thread_store<rocprim::store_wt>(device_output + index, device_input[index]);
     }
-    else if(index % 7 == 5)
+    else // index % 6 == 5
     {
         rocprim::thread_store<rocprim::store_volatile>(device_output + index, device_input[index]);
-    }
-    else // index % 7 == 6
-    {
-        rocprim::thread_store<rocprim::store_cs>(device_output + index, device_input[index]);
     }
 }
 

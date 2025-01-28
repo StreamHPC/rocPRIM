@@ -54,8 +54,7 @@ enum cache_load_modifier : int
     load_nontemporal, ///< Cache streaming (likely not to be accessed again after loading)
     load_cv, ///< Cache as volatile (including cached system lines)
     load_ldg, ///< Cache as texture
-    load_volatile, ///< Volatile (any memory space)
-    load_cs = load_nontemporal ///< Alias for load_nontemporal (will be deprecated in 7.0)
+    load_volatile ///< Volatile (any memory space)
 };
 
 /// @}

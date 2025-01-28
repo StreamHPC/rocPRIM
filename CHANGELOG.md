@@ -10,6 +10,8 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * The deprecated `TwiddleIn` and `TwiddleOut` are removed, use `radix_key_codec` instead.
 * The deprecated flags API of block_adjacent_difference is removed, use `subtract_left()` or `block_discontinuity::flag_heads()` instead.
 * The deprecated `to_exclusive` functions in the warp scans are removed.
+* Removed the `rocprim::load_cs` from `cache_load_modifier` enum, use `rocprim::load_nontemporal`.
+* Removed the `rocprim::store_cs` from `cache_store_modifier` enum, use `rocprim::store_nontemporal`.
 
 ## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
 
