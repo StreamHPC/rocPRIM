@@ -8,7 +8,8 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * The deprecated function `rocprim::warp_size()` is removed, use `rocprim::host_warp_size()` and `rocprim::device_warp_size()` instead.
 * The deprecated `operator<<` is removed from the iterators.
 * The deprecated `TwiddleIn` and `TwiddleOut` are removed, use `radix_key_codec` instead.
-* The deprecated The flags API of block_adjacent_difference is removed, use `subtract_left()` or `block_discontinuity::flag_heads()` instead.
+* The deprecated flags API of block_adjacent_difference is removed, use `subtract_left()` or `block_discontinuity::flag_heads()` instead.
+* The deprecated `to_exclusive` functions in the warp scans are removed.
 
 ## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
 
