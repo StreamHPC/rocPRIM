@@ -5,8 +5,9 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 ## (Unreleased) rocPRIM 3.x.x for ROCm 7.x.x
 
 ### Removed
-* The deprecated function `rocprim::warp_size()` is removed, use host_warp_size() and device_warp_size() instead.
+* The deprecated function `rocprim::warp_size()` is removed, use `rocprim::host_warp_size()` and `rocprim::device_warp_size()` instead.
 * The deprecated `operator<<` is removed from the iterators.
+* The deprecated `TwiddleIn` and `TwiddleOut` are removed, use `radix_key_codec` instead.
 
 ## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
 
