@@ -2,6 +2,11 @@
 
 Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+## (Unreleased) rocPRIM 3.x.x for ROCm 7.x.x
+
+### Removed
+The deprecated function `rocprim::warp_size()` is removed, use host_warp_size() and device_warp_size() instead.
+
 ## (Unreleased) rocPRIM 3.x.x for ROCm 6.x.x
 
 ### Added
