@@ -2,6 +2,16 @@
 
 Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projects/rocPRIM/en/latest/](https://rocm.docs.amd.com/projects/rocPRIM/en/latest/).
 
+
+## (Unreleased) rocPRIM 3.x.x for ROCm 7.x.x
+
+### Changed
+* Added function `is_build_in` into `rocprim::traits::get`.
+
+### Removed
+* Removed `rocprim::detail::float_bit_mask` and relative tests, use `rocprim::traits::float_bit_mask` instead.
+* Removed `rocprim::traits::is_fundamental`, please use `rocprim::traits::get<T>::is_fundamental()` directly.
+
 ## rocPRIM 3.5.0 for ROCm 6.5.0
 
 ### Removed
