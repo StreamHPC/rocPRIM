@@ -33,18 +33,6 @@ BEGIN_ROCPRIM_NAMESPACE
 
 // Sizes
 
-/// \brief [DEPRECATED] Returns a number of threads in a hardware warp.
-///
-/// It is constant for a device.
-/// This function is not supported for gfx1030 and newer architectures and will be removed in a future release.
-/// Please use the new host_warp_size() and device_warp_size() functions.
-[[deprecated("Use host_warp_size() or device_warp_size() "
-             "instead.")]] ROCPRIM_HOST_DEVICE inline constexpr unsigned int
-    warp_size()
-{
-    return ROCPRIM_WAVEFRONT_SIZE;
-}
-
 /// \brief Returns a number of threads in a hardware warp for the actual target.
 /// At device side this constant is available at compile time.
 ///
