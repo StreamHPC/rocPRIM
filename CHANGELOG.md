@@ -6,11 +6,15 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 ## (Unreleased) rocPRIM 3.x.x for ROCm 7.x.x
 
 ### Changed
+
 * Added function `is_build_in` into `rocprim::traits::get`.
+* Changed the parameters `long_radix_bits` and `LongRadixBits` from `segmented_radix_sort` to `radix_bits` and `RadixBits` respectively.
 
 ### Removed
+
 * Removed `rocprim::detail::float_bit_mask` and relative tests, use `rocprim::traits::float_bit_mask` instead.
 * Removed `rocprim::traits::is_fundamental`, please use `rocprim::traits::get<T>::is_fundamental()` directly.
+* Removed the deprecated parameters `short_radix_bits` and `ShortRadixBits` from the `segmented_radix_sort` config. They were unused, it is only an API change.
 
 ## rocPRIM 3.5.0 for ROCm 6.5.0
 

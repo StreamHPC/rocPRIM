@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -721,7 +721,7 @@ void segmented_sort(KeysInputIterator keys_input,
 {
     static constexpr segmented_radix_sort_config_params params = device_params<Config>();
 
-    static constexpr unsigned int long_radix_bits   = params.long_radix_bits;
+    static constexpr unsigned int radix_bits        = params.radix_bits;
     static constexpr unsigned int block_size        = params.kernel_config.block_size;
     static constexpr unsigned int items_per_thread  = params.kernel_config.items_per_thread;
     static constexpr unsigned int items_per_block   = block_size * items_per_thread;
@@ -740,7 +740,7 @@ void segmented_sort(KeysInputIterator keys_input,
                                                                ::rocprim::device_warp_size(),
                                                                block_size,
                                                                items_per_thread,
-                                                               long_radix_bits,
+                                                               radix_bits,
                                                                Descending>;
     using warp_sort_helper_type  = segmented_warp_sort_helper<
         select_warp_sort_helper_config_t<params.warp_sort_config.partitioning_allowed,
@@ -775,7 +775,7 @@ void segmented_sort(KeysInputIterator keys_input,
     if(end_offset - begin_offset > items_per_block)
     {
         // Large segment
-        for(unsigned int bit = begin_bit; bit < end_bit; bit += long_radix_bits)
+        for(unsigned int bit = begin_bit; bit < end_bit; bit += radix_bits)
         {
             long_radix_helper_type().sort(
                 keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,
@@ -849,7 +849,7 @@ void segmented_sort_large(KeysInputIterator keys_input,
 {
     static constexpr segmented_radix_sort_config_params params = device_params<Config>();
 
-    static constexpr unsigned int long_radix_bits  = params.long_radix_bits;
+    static constexpr unsigned int radix_bits       = params.radix_bits;
     static constexpr unsigned int block_size       = params.kernel_config.block_size;
     static constexpr unsigned int items_per_thread = params.kernel_config.items_per_thread;
     static constexpr unsigned int items_per_block  = block_size * items_per_thread;
@@ -867,7 +867,7 @@ void segmented_sort_large(KeysInputIterator keys_input,
                                                                ::rocprim::device_warp_size(),
                                                                block_size,
                                                                items_per_thread,
-                                                               long_radix_bits,
+                                                               radix_bits,
                                                                Descending>;
 
     ROCPRIM_SHARED_MEMORY union
@@ -888,7 +888,7 @@ void segmented_sort_large(KeysInputIterator keys_input,
 
     if(end_offset - begin_offset > items_per_block)
     {
-        for(unsigned int bit = begin_bit; bit < end_bit; bit += long_radix_bits)
+        for(unsigned int bit = begin_bit; bit < end_bit; bit += radix_bits)
         {
             long_radix_helper_type().sort(
                 keys_input, keys_tmp, keys_output, values_input, values_tmp, values_output,

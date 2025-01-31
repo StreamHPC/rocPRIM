@@ -30,7 +30,7 @@ parameter_spaces = {
             ],
         },
         "params": {
-            "LongBits": [6, 7, 8],
+            "RadixBits": [6, 7, 8],
             "BlockSize": [256],
             "ItemsPerThread": [7, 8, 13, 16, 17],
             "WarpSmallLWS": [8, 16, 32, 64],
@@ -62,7 +62,7 @@ parameter_spaces = {
             ],
         },
         "params": {
-            "LongBits": [6, 7, 8],
+            "RadixBits": [6, 7, 8],
             "BlockSize": [256],
             "ItemsPerThread": [7, 8, 13, 16, 17],
             "WarpSmallLWS": [8, 16, 32, 64],
