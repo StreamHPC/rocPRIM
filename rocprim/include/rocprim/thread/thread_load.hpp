@@ -187,8 +187,9 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 std::enable_if_t<CacheLoadModifier == load_volatile || CacheLoadModifier == load_cv, T>
     thread_load(T* ptr)
 {
-    alignas(Alignment) T result;
-    detail::thread_fused_copy<T, T, Alignment>(&result,
+    using decay_type = std::decay_t<T>;
+    alignas(Alignment) decay_type result;
+    detail::thread_fused_copy<decay_type, T, Alignment>(&result,
                                                ptr,
                                                [](auto& dst, const auto& src)
                                                {
@@ -214,8 +215,9 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 std::enable_if_t<CacheLoadModifier == load_nontemporal, T> thread_load(T* ptr)
 {
 #if __has_builtin(__builtin_nontemporal_load)
-    alignas(Alignment) T result;
-    detail::thread_fused_copy<T, T, Alignment>(&result,
+    using decay_type = std::decay_t<T>;
+    alignas(Alignment) decay_type result;
+    detail::thread_fused_copy<decay_type, T, Alignment>(&result,
                                                ptr,
                                                [](auto& dst, const auto& src)
                                                { dst = __builtin_nontemporal_load(&src); });
