@@ -129,7 +129,7 @@ inline hipError_t transform(InputIterator     input,
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using result_type = typename ::rocprim::invoke_result<UnaryFunction, input_type>::type;
 
-    using config = detail::wrapped_transform_config<Config, result_type>;
+    using config = detail::wrapped_transform_config<Config, input_type>;
 
     detail::target_arch target_arch;
     hipError_t          result = detail::host_target_arch(stream, target_arch);

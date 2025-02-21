@@ -92,6 +92,16 @@ auto transform_kernel_impl(InputIterator  input,
 
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
 
+    constexpr unsigned int vectors_per_thread
+        = sizeof(input_type) * ItemsPerThread / sizeof(uint128_t);
+
+    // static_assert(vectors_per_thread > 0, "The input type should have at least number of items that fit in 1 uint128_t");
+    // if (vectors_per_thread == 0) printf("%d %d %d\n", sizeof(input_type), ItemsPerThread, BlockSize);
+    // assert(vectors_per_thread > 0);
+
+    ROCPRIM_SHARED_MEMORY
+    uint128_t shared_values[BlockSize * vectors_per_thread];
+
     const unsigned int flat_id = ::rocprim::detail::block_thread_id<0>();
     const unsigned int flat_block_id = ::rocprim::detail::block_id<0>();
     const unsigned int block_offset = flat_block_id * items_per_block;
@@ -130,11 +140,8 @@ auto transform_kernel_impl(InputIterator  input,
     }
     else
     {
-        input_type* block_input = input + block_offset;
+        input_type*  block_input  = input + block_offset;
         output_type* block_output = output + block_offset;
-
-        constexpr unsigned int vectors_per_thread
-            = (sizeof(input_type) * ItemsPerThread) / sizeof(uint128_t);
 
         constexpr unsigned int warp_size = rocprim::device_warp_size();
 
@@ -148,17 +155,23 @@ auto transform_kernel_impl(InputIterator  input,
         ROCPRIM_UNROLL
         for(unsigned int item = 0; item < vectors_per_thread; item++)
         {
-            const uint128_t input_value = thread_load<load_nontemporal>(vector_ptr + (item * warp_size)); // change this to load in LDS
-            const input_type* values = reinterpret_cast<const input_type*>(&input_value);
-            ROCPRIM_UNROLL
-            for(unsigned int i = 0; i < ItemsPerThread / vectors_per_thread; i++)
-            {
-                output_values[i + vectors_per_thread * item] = transform_op(values[i]); // load from LDS
-            }
+            shared_values[item + flat_id * vectors_per_thread] = thread_load<load_nontemporal>(
+                vector_ptr + (item * warp_size)); // Change this to direct load to LDS
+        }
+
+        const input_type* values
+            = reinterpret_cast<const input_type*>(&shared_values[flat_id * vectors_per_thread]);
+
+        syncthreads(); // Probably less sync needed
+
+        ROCPRIM_UNROLL
+        for(unsigned int item = 0; item < ItemsPerThread; item++)
+        {
+            output_values[item] = transform_op(values[item]);
         }
 
         constexpr unsigned int vectors_per_thread_output
-            = (sizeof(output_type) * ItemsPerThread) / sizeof(rocprim::uint128_t);
+            = rocprim::max((sizeof(output_type) * ItemsPerThread) / sizeof(uint128_t), 1ul);
 
         unsigned int warp_offset_output = warp_id * warp_size * vectors_per_thread_output;
 
