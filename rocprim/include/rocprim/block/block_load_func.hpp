@@ -508,41 +508,42 @@ void block_load_direct_warp_striped(unsigned int  flat_id,
     block_load_direct_warp_striped<WarpSize>(flat_id, block_input, items, valid);
 }
 
-template<
-    unsigned int WarpSize = device_warp_size(),
-    class T,
-    class U,
-    unsigned int ItemsPerThread
->
+template<unsigned int WarpSize = device_warp_size(), class T, class U, unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
-                                    T* block_input,
-                                    U (&items)[ItemsPerThread]) -> typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value>::type
+                                               T*           block_input,
+                                               U (&items)[ItemsPerThread]) ->
+    typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value>::type
 {
     static_assert(detail::is_power_of_two(WarpSize) && WarpSize <= device_warp_size(),
-                 "WarpSize must be a power of two and equal or less"
-                 "than the size of hardware warp.");
+                  "WarpSize must be a power of two and equal or less"
+                  "than the size of hardware warp.");
 
-    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
-    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
-    vector_type vector_items[vectors_per_thread];
+    // using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
+    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(uint128_t);
 
-    unsigned int lane_id = detail::logical_lane_id<WarpSize>();
-    unsigned int warp_id = flat_id / WarpSize;
+    // const unsigned int size = WarpSize * ItemsPerThread * ::rocprim::detail::grid_size<0>();
+    // T* in_end = block_input + size;
+
+    // auto* in_aligned_begin = detail::cast_align_up<T*>(block_input);
+    // auto* in_aligned_end   = detail::cast_align_down<T*>(in_end);
+
+    // std::ptrdiff_t diff = (in_aligned_end - in_end) + (in_aligned_begin - block_input);
+
+    // if (diff > 0) printf("%d\n", diff);
+
+    unsigned int lane_id     = detail::logical_lane_id<WarpSize>();
+    unsigned int warp_id     = flat_id / WarpSize;
     unsigned int warp_offset = warp_id * WarpSize * vectors_per_thread;
 
-    const vector_type* vector_ptr = reinterpret_cast<const vector_type*>(block_input) + warp_offset + lane_id;
-
-    // ROCPRIM_UNROLL
-    // for (unsigned int item = 0; item < vectors_per_thread; item++)
-    // {
-    //     *(reinterpret_cast<vector_type*>(items) + item) = *(vector_ptr + (item * WarpSize));
-    // }
+    const uint128_t* vector_ptr
+        = reinterpret_cast<const uint128_t*>(block_input) + warp_offset + lane_id;
 
     ROCPRIM_UNROLL
-    for (unsigned int item = 0; item < vectors_per_thread; item++)
+    for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        *(reinterpret_cast<vector_type*>(items) + item) = thread_load<load_nontemporal>(vector_ptr + (item * WarpSize));
+        reinterpret_cast<uint128_t*>(items)[item]
+            = thread_load<load_nontemporal>(vector_ptr + (item * WarpSize));
     }
 }
 

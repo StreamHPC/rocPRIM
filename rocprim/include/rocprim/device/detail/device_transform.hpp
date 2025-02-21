@@ -80,9 +80,9 @@ auto transform_kernel_impl(InputIterator input,
                            const size_t input_size,
                            OutputIterator output,
                            UnaryFunction transform_op) -> typename std::enable_if_t<std::is_pointer<InputIterator>::value 
-                                                                                && std::is_pointer<OutputIterator>::value//>
-                                                                                && (sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
-                                                                                && (sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
+                                                                                && std::is_pointer<OutputIterator>::value>
+                                                                                // && (sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
+                                                                                // && (sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;
@@ -130,7 +130,7 @@ auto transform_kernel_impl(InputIterator input,
         );
     }
     else
-    {        
+    {
         block_load_direct_warp_striped_vectorized(
             flat_id,
             input + block_offset,
@@ -183,9 +183,9 @@ auto transform_kernel_impl(InputIterator input,
                            const size_t input_size,
                            OutputIterator output,
                            UnaryFunction transform_op) -> typename std::enable_if_t<!std::is_pointer<InputIterator>::value 
-                                                                                    || !std::is_pointer<OutputIterator>::value//>
-                                                                                    || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
-                                                                                    || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
+                                                                                    || !std::is_pointer<OutputIterator>::value>
+                                                                                    // || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
+                                                                                    // || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;

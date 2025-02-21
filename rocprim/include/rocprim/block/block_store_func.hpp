@@ -29,6 +29,8 @@
 #include "../types.hpp"
 #include "rocprim/intrinsics/arch.hpp"
 
+#include "../thread/thread_store.hpp"
+
 /// \addtogroup blockmodule
 /// @{
 
@@ -400,20 +402,20 @@ auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
     static_assert(std::is_convertible<U, T>::value,
                 "The type U must be such that it can be implicitly converted to T.");
 
-    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
-    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
-    vector_type vector_items[vectors_per_thread];
+    // using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
+    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(rocprim::uint128_t);
+    // vector_type vector_items[vectors_per_thread];
 
     unsigned int lane_id = detail::logical_lane_id<WarpSize>();
     unsigned int warp_id = flat_id / WarpSize;
     unsigned int warp_offset = warp_id * WarpSize * vectors_per_thread;
 
-    vector_type* vector_ptr = reinterpret_cast<vector_type*>(block_output) + warp_offset + lane_id;
+    rocprim::uint128_t* vector_ptr = reinterpret_cast<rocprim::uint128_t*>(block_output) + warp_offset + lane_id;
 
     ROCPRIM_UNROLL
     for (unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        vector_ptr[item * WarpSize] = *(reinterpret_cast<const vector_type*>(items) + item);
+        vector_ptr[item * WarpSize] = *(reinterpret_cast<const rocprim::uint128_t*>(items) + item);
     }
 }
 
