@@ -67,22 +67,21 @@ private:
     BinaryFunction binary_op_;
 };
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    class ResultType,
-    class InputIterator,
-    class OutputIterator,
-    class UnaryFunction
->
+template<unsigned int BlockSize,
+         unsigned int ItemsPerThread,
+         class ResultType,
+         class InputIterator,
+         class OutputIterator,
+         class UnaryFunction>
 ROCPRIM_DEVICE ROCPRIM_INLINE
-auto transform_kernel_impl(InputIterator input,
-                           const size_t input_size,
+auto transform_kernel_impl(InputIterator  input,
+                           const size_t   input_size,
                            OutputIterator output,
-                           UnaryFunction transform_op) -> typename std::enable_if_t<std::is_pointer<InputIterator>::value 
-                                                                                && std::is_pointer<OutputIterator>::value>
-                                                                                // && (sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
-                                                                                // && (sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
+                           UnaryFunction  transform_op) ->
+    typename std::enable_if_t<std::is_pointer<InputIterator>::value
+                              && std::is_pointer<OutputIterator>::value>
+// && (sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
+// && (sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;
@@ -131,61 +130,66 @@ auto transform_kernel_impl(InputIterator input,
     }
     else
     {
-        block_load_direct_warp_striped_vectorized(
-            flat_id,
-            input + block_offset,
-            input_values
-        );
+        input_type* block_input = input + block_offset;
+        output_type* block_output = output + block_offset;
+
+        constexpr unsigned int vectors_per_thread
+            = (sizeof(input_type) * ItemsPerThread) / sizeof(uint128_t);
+
+        constexpr unsigned int warp_size = rocprim::device_warp_size();
+
+        unsigned int lane_id     = detail::logical_lane_id<warp_size>();
+        unsigned int warp_id     = flat_id / warp_size;
+        unsigned int warp_offset = warp_id * warp_size * vectors_per_thread;
+
+        const uint128_t* vector_ptr
+            = reinterpret_cast<const uint128_t*>(block_input) + warp_offset + lane_id;
 
         ROCPRIM_UNROLL
-        for(unsigned int i = 0; i < ItemsPerThread; i++)
+        for(unsigned int item = 0; item < vectors_per_thread; item++)
         {
-            output_values[i] = transform_op(input_values[i]);
+            const uint128_t input_value = thread_load<load_nontemporal>(vector_ptr + (item * warp_size)); // change this to load in LDS
+            const input_type* values = reinterpret_cast<const input_type*>(&input_value);
+            ROCPRIM_UNROLL
+            for(unsigned int i = 0; i < ItemsPerThread / vectors_per_thread; i++)
+            {
+                output_values[i + vectors_per_thread * item] = transform_op(values[i]); // load from LDS
+            }
         }
 
-        block_store_direct_warp_striped_vectorized(
-            flat_id,
-            output + block_offset,
-            output_values
-        );
+        constexpr unsigned int vectors_per_thread_output
+            = (sizeof(output_type) * ItemsPerThread) / sizeof(rocprim::uint128_t);
 
-        // block_load_direct_striped<BlockSize>(
-        //     flat_id,
-        //     input + block_offset,
-        //     input_values
-        // );
+        unsigned int warp_offset_output = warp_id * warp_size * vectors_per_thread_output;
 
-        // ROCPRIM_UNROLL
-        // for(unsigned int i = 0; i < ItemsPerThread; i++)
-        // {
-        //     output_values[i] = transform_op(input_values[i]);
-        // }
+        rocprim::uint128_t* vector_ptr_output
+            = reinterpret_cast<rocprim::uint128_t*>(block_output) + warp_offset + lane_id;
 
-        // block_store_direct_striped<BlockSize>(
-        //     flat_id,
-        //     output + block_offset,
-        //     output_values
-        // );
-
+        ROCPRIM_UNROLL
+        for(unsigned int item = 0; item < vectors_per_thread_output; item++)
+        {
+            vector_ptr_output[item * warp_size]
+                = *(reinterpret_cast<const rocprim::uint128_t*>(output_values) + item);
+        }
     }
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    class ResultType,
-    class InputIterator,
-    class OutputIterator,
-    class UnaryFunction
->
+template<unsigned int BlockSize,
+         unsigned int ItemsPerThread,
+         class ResultType,
+         class InputIterator,
+         class OutputIterator,
+         class UnaryFunction>
 ROCPRIM_DEVICE ROCPRIM_INLINE
-auto transform_kernel_impl(InputIterator input,
-                           const size_t input_size,
+auto transform_kernel_impl(InputIterator  input,
+                           const size_t   input_size,
                            OutputIterator output,
-                           UnaryFunction transform_op) -> typename std::enable_if_t<!std::is_pointer<InputIterator>::value 
-                                                                                    || !std::is_pointer<OutputIterator>::value>
-                                                                                    // || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
-                                                                                    // || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
+                           UnaryFunction  transform_op) ->
+    typename std::enable_if_t<
+        !std::is_pointer<InputIterator>::value
+        || !std::is_pointer<OutputIterator>::value>
+// || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) >= 4)
+// || !(sizeof(typename std::iterator_traits<InputIterator>::value_type) % 4 == 0)>
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;
