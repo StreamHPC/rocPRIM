@@ -95,6 +95,8 @@ auto transform_kernel_impl(InputIterator  input,
     constexpr unsigned int vectors_per_thread
         = sizeof(input_type) * ItemsPerThread / sizeof(uint128_t);
 
+    constexpr unsigned int items_per_vector = vectors_per_thread > 0 ? ItemsPerThread / vectors_per_thread : 0;
+
     // static_assert(vectors_per_thread > 0, "The input type should have at least number of items that fit in 1 uint128_t");
     // if (vectors_per_thread == 0) printf("%d %d %d\n", sizeof(input_type), ItemsPerThread, BlockSize);
     // assert(vectors_per_thread > 0);
@@ -162,27 +164,21 @@ auto transform_kernel_impl(InputIterator  input,
         const input_type* values
             = reinterpret_cast<const input_type*>(&shared_values[flat_id * vectors_per_thread]);
 
+        unsigned int warp_offset_output = warp_id * warp_size * ItemsPerThread;
+
+        output_type* vector_ptr_output = block_output + warp_offset_output + lane_id * items_per_vector;
+
         syncthreads(); // Probably less sync needed
 
         ROCPRIM_UNROLL
-        for(unsigned int item = 0; item < ItemsPerThread; item++)
+        for(unsigned int vec = 0; vec < vectors_per_thread; vec++)
         {
-            output_values[item] = transform_op(values[item]);
-        }
-
-        constexpr unsigned int vectors_per_thread_output
-            = rocprim::max((sizeof(output_type) * ItemsPerThread) / sizeof(uint128_t), 1ul);
-
-        unsigned int warp_offset_output = warp_id * warp_size * vectors_per_thread_output;
-
-        rocprim::uint128_t* vector_ptr_output
-            = reinterpret_cast<rocprim::uint128_t*>(block_output) + warp_offset + lane_id;
-
-        ROCPRIM_UNROLL
-        for(unsigned int item = 0; item < vectors_per_thread_output; item++)
-        {
-            vector_ptr_output[item * warp_size]
-                = *(reinterpret_cast<const rocprim::uint128_t*>(output_values) + item);
+            const unsigned int vec_id = vec * items_per_vector;
+            ROCPRIM_UNROLL
+            for(unsigned int item = 0; item < items_per_vector; item++)
+            {
+                vector_ptr_output[vec_id * warp_size + item] = transform_op(values[vec_id + item]);
+            } 
         }
     }
 }
