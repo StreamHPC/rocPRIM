@@ -67,6 +67,7 @@ private:
     BinaryFunction binary_op_;
 };
 
+
 template<unsigned int BlockSize,
          unsigned int ItemsPerThread,
          class ResultType,
@@ -92,17 +93,9 @@ auto transform_kernel_impl(InputIterator  input,
 
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
 
-    constexpr unsigned int vectors_per_thread
-        = sizeof(input_type) * ItemsPerThread / sizeof(uint128_t);
-
-    constexpr unsigned int items_per_vector = vectors_per_thread > 0 ? ItemsPerThread / vectors_per_thread : 0;
-
-    // static_assert(vectors_per_thread > 0, "The input type should have at least number of items that fit in 1 uint128_t");
+    // static_assert(vectors_per_thread > 0, "The input type should have at least number of items that fit in 1 vector_type");
     // if (vectors_per_thread == 0) printf("%d %d %d\n", sizeof(input_type), ItemsPerThread, BlockSize);
     // assert(vectors_per_thread > 0);
-
-    ROCPRIM_SHARED_MEMORY
-    uint128_t shared_values[BlockSize * vectors_per_thread];
 
     const unsigned int flat_id = ::rocprim::detail::block_thread_id<0>();
     const unsigned int flat_block_id = ::rocprim::detail::block_id<0>();
@@ -113,7 +106,7 @@ auto transform_kernel_impl(InputIterator  input,
     input_type input_values[ItemsPerThread];
     result_type output_values[ItemsPerThread];
 
-    // TODO: Cut off first and last parts, set as blocks 0 and 1, then proceed
+    constexpr bool fallback = (ItemsPerThread * sizeof(input_type)) % sizeof(rocprim::uint128_t) != 0;
 
     if(flat_block_id == (number_of_blocks - 1)) // last block
     {
@@ -142,43 +135,45 @@ auto transform_kernel_impl(InputIterator  input,
     }
     else
     {
-        input_type*  block_input  = input + block_offset;
-        output_type* block_output = output + block_offset;
-
-        constexpr unsigned int warp_size = rocprim::device_warp_size();
-
-        unsigned int lane_id     = detail::logical_lane_id<warp_size>();
-        unsigned int warp_id     = flat_id / warp_size;
-        unsigned int warp_offset = warp_id * warp_size * vectors_per_thread;
-
-        const uint128_t* vector_ptr
-            = reinterpret_cast<const uint128_t*>(block_input) + warp_offset + lane_id;
-
-        ROCPRIM_UNROLL
-        for(unsigned int item = 0; item < vectors_per_thread; item++)
+        if constexpr(fallback)
         {
-            shared_values[item + flat_id * vectors_per_thread] = thread_load<load_nontemporal>(
-                vector_ptr + (item * warp_size)); // Change this to direct load to LDS
-        }
+            block_load_direct_striped<BlockSize>(
+                flat_id,
+                input + block_offset,
+                input_values
+            );
 
-        const input_type* values
-            = reinterpret_cast<const input_type*>(&shared_values[flat_id * vectors_per_thread]);
-
-        unsigned int warp_offset_output = warp_id * warp_size * ItemsPerThread;
-
-        output_type* vector_ptr_output = block_output + warp_offset_output + lane_id * items_per_vector;
-
-        syncthreads(); // Probably less sync needed
-
-        ROCPRIM_UNROLL
-        for(unsigned int vec = 0; vec < vectors_per_thread; vec++)
-        {
-            const unsigned int vec_id = vec * items_per_vector;
             ROCPRIM_UNROLL
-            for(unsigned int item = 0; item < items_per_vector; item++)
+            for(unsigned int i = 0; i < ItemsPerThread; i++)
             {
-                vector_ptr_output[vec_id * warp_size + item] = transform_op(values[vec_id + item]);
-            } 
+                output_values[i] = transform_op(input_values[i]);
+            }
+
+            block_store_direct_striped<BlockSize>(
+                flat_id,
+                output + block_offset,
+                output_values
+            );
+        }
+        else
+        {
+            block_load_direct_warp_striped_vectorized(
+                flat_id,
+                input + block_offset,
+                input_values
+            );
+
+            ROCPRIM_UNROLL
+            for(unsigned int i = 0; i < ItemsPerThread; i++)
+            {
+                output_values[i] = transform_op(input_values[i]);
+            }
+
+            block_store_direct_warp_striped_vectorized(
+                flat_id,
+                output + block_offset,
+                output_values
+            );
         }
     }
 }
