@@ -388,84 +388,49 @@ void block_store_direct_warp_striped(unsigned int   flat_id,
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(), class T, class U, unsigned int ItemsPerThread>
+template<unsigned int WarpSize = device_warp_size(),
+         class T,
+         class U,
+         unsigned int ItemsPerThread,
+         class V = rocprim::uint128_t>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
                                                 T*           block_output,
                                                 U (&items)[ItemsPerThread]) ->
     typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value
-                            && (ItemsPerThread * sizeof(T)) % sizeof(rocprim::uint128_t) == 0>::type
+                            && (ItemsPerThread * sizeof(T)) % sizeof(V) == 0>::type
 {
     static_assert(std::is_convertible<U, T>::value,
                   "The type U must be such that it can be implicitly converted to T.");
 
-    constexpr unsigned int vectors_per_thread
-        = (sizeof(T) * ItemsPerThread) / sizeof(rocprim::uint128_t);
+    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(V);
 
     unsigned int lane_id     = detail::logical_lane_id<WarpSize>();
     unsigned int warp_id     = flat_id / WarpSize;
     unsigned int warp_offset = warp_id * WarpSize * vectors_per_thread;
 
-    rocprim::uint128_t* vector_ptr
-        = reinterpret_cast<rocprim::uint128_t*>(block_output) + warp_offset + lane_id;
+    V* vector_ptr = reinterpret_cast<V*>(block_output) + warp_offset + lane_id;
 
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        vector_ptr[item * WarpSize] = *(reinterpret_cast<const rocprim::uint128_t*>(items) + item);
+        vector_ptr[item * WarpSize] = *(reinterpret_cast<const V*>(items) + item);
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(), class T, class U, unsigned int ItemsPerThread>
+template<unsigned int WarpSize = device_warp_size(),
+         class T,
+         class U,
+         unsigned int ItemsPerThread,
+         class V = rocprim::uint128_t>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
                                                 T*           block_output,
                                                 U (&items)[ItemsPerThread]) ->
     typename std::enable_if<!detail::is_vectorizable<T, ItemsPerThread>::value
-                            || (ItemsPerThread * sizeof(T)) % sizeof(rocprim::uint128_t) != 0>::type
+                            || (ItemsPerThread * sizeof(T)) % sizeof(V) != 0>::type
 {
     block_store_direct_warp_striped(flat_id, block_output, items);
-}
-
-template<
-    unsigned int BlockSize,
-    class T,
-    class U,
-    unsigned int ItemsPerThread
->
-ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_store_direct_striped_vectorized(unsigned int flat_id,
-                                    T* block_output,
-                                    U (&items)[ItemsPerThread]) -> typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value>::type
-{
-    static_assert(std::is_convertible<U, T>::value,
-                "The type U must be such that it can be implicitly converted to T.");
-
-    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
-    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
-    vector_type vector_items[vectors_per_thread];
-
-    vector_type* vector_ptr = reinterpret_cast<vector_type*>(block_output) + flat_id;
-
-    ROCPRIM_UNROLL
-    for (unsigned int item = 0; item < vectors_per_thread; item++)
-    {
-        *(vector_ptr + (item * BlockSize)) = *(reinterpret_cast<vector_type*>(items) + item);
-    }
-}
-
-template<
-    unsigned int BlockSize,
-    class T,
-    class U,
-    unsigned int ItemsPerThread
->
-ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_store_direct_striped_vectorized(unsigned int flat_id,
-                                    T* block_output,
-                                    U (&items)[ItemsPerThread]) -> typename std::enable_if<!detail::is_vectorizable<T, ItemsPerThread>::value>::type
-{
-    block_store_direct_striped<BlockSize>(flat_id, block_output, items); //TODO: is this the right fallback?
 }
 
 END_ROCPRIM_NAMESPACE

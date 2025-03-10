@@ -508,13 +508,17 @@ void block_load_direct_warp_striped(unsigned int  flat_id,
     block_load_direct_warp_striped<WarpSize>(flat_id, block_input, items, valid);
 }
 
-template<unsigned int WarpSize = device_warp_size(), class T, class U, unsigned int ItemsPerThread>
+template<unsigned int WarpSize = device_warp_size(),
+         class T,
+         class U,
+         unsigned int ItemsPerThread,
+         class V = rocprim::uint128_t>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
                                                T*           block_input,
                                                U (&items)[ItemsPerThread]) ->
     typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value
-                            && (ItemsPerThread * sizeof(T)) % sizeof(rocprim::uint128_t) == 0>::type
+                            && (ItemsPerThread * sizeof(T)) % sizeof(V) == 0>::type
 {
     static_assert(detail::is_power_of_two(WarpSize) && WarpSize <= device_warp_size(),
                   "WarpSize must be a power of two and equal or less"
@@ -526,64 +530,29 @@ auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
     unsigned int warp_id     = flat_id / WarpSize;
     unsigned int warp_offset = warp_id * WarpSize * vectors_per_thread;
 
-    const uint128_t* vector_ptr
-        = reinterpret_cast<const uint128_t*>(block_input) + warp_offset + lane_id;
+    const V* vector_ptr = reinterpret_cast<const V*>(block_input) + warp_offset + lane_id;
 
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        reinterpret_cast<uint128_t*>(items)[item]
+        reinterpret_cast<V*>(items)[item]
             = thread_load<load_nontemporal>(vector_ptr + (item * WarpSize));
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(), class T, class U, unsigned int ItemsPerThread>
+template<unsigned int WarpSize = device_warp_size(),
+         class T,
+         class U,
+         unsigned int ItemsPerThread,
+         class V = rocprim::uint128_t>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
                                                T*           block_input,
                                                U (&items)[ItemsPerThread]) ->
     typename std::enable_if<!detail::is_vectorizable<T, ItemsPerThread>::value
-                            || (ItemsPerThread * sizeof(T)) % sizeof(rocprim::uint128_t) != 0>::type
+                            || (ItemsPerThread * sizeof(T)) % sizeof(V) != 0>::type
 {
-     block_load_direct_warp_striped(flat_id, block_input, items); //TODO: is this the right fallback?
-}
-
-template<
-    unsigned int BlockSize,
-    class T,
-    class U,
-    unsigned int ItemsPerThread
->
-ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_load_direct_striped_vectorized(unsigned int flat_id,
-                                    T* block_input,
-                                    U (&items)[ItemsPerThread]) -> typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value>::type
-{
-    using vector_type = typename detail::match_vector_type<T, ItemsPerThread>::type;
-    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(vector_type);
-    vector_type vector_items[vectors_per_thread];
-
-    const vector_type* vector_ptr = reinterpret_cast<const vector_type*>(block_input) + flat_id;
-
-    ROCPRIM_UNROLL
-    for (unsigned int item = 0; item < vectors_per_thread; item++)
-    {
-        *(reinterpret_cast<vector_type*>(items) + item) = *(vector_ptr + (item * BlockSize));
-    }
-}
-
-template<
-    unsigned int BlockSize,
-    class T,
-    class U,
-    unsigned int ItemsPerThread
->
-ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_load_direct_striped_vectorized(unsigned int flat_id,
-                                    T* block_input,
-                                    U (&items)[ItemsPerThread]) -> typename std::enable_if<!detail::is_vectorizable<T, ItemsPerThread>::value>::type
-{
-     block_load_direct_striped<BlockSize>(flat_id, block_input, items); //TODO: is this the right fallback?
+    block_load_direct_warp_striped(flat_id, block_input, items);
 }
 
 END_ROCPRIM_NAMESPACE
