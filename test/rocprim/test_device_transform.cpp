@@ -445,28 +445,39 @@ TEST(RocprimDeviceTransformTests, UnalignedPointer)
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             // Generate data
-            std::vector<T> input = test_utils::get_random_data_wrapped<T>(size, 1, 100, seed_value);
+            std::vector<T> input
+                = test_utils::get_random_data_wrapped<T>(size + 2, 1, 100, seed_value);
 
             uint8_t* d_unaligned;
-            HIP_CHECK(hipMalloc(&d_unaligned, (size + 1) * sizeof(T)));
+            HIP_CHECK(hipMalloc(&d_unaligned, (size + 3) * sizeof(T)));
             T* d_input = reinterpret_cast<T*>(d_unaligned + 1);
-            HIP_CHECK(hipMemcpy(d_input, input.data(), size * sizeof(T), hipMemcpyHostToDevice));
-
-            common::device_ptr<T> d_output(input.size());
+            HIP_CHECK(
+                hipMemcpy(d_input, input.data(), (size + 2) * sizeof(T), hipMemcpyHostToDevice));
 
             // Calculate expected results on host
             std::vector<T> expected(input.size());
-            std::transform(input.begin(), input.end(), expected.begin(), transform<T>());
+            // First and last values should be unchanged.
+            expected[0]                = input[0];
+            expected[input.size() - 1] = input[input.size() - 1];
+            std::transform(input.begin() + 1,
+                           input.end() - 1,
+                           expected.begin() + 1,
+                           transform<T>());
 
             // Run
-            HIP_CHECK(
-                rocprim::transform(d_input, d_output.get(), input.size(), transform<T>(), stream));
+            HIP_CHECK(rocprim::transform(d_input + 1,
+                                         d_input + 1,
+                                         input.size() - 2,
+                                         transform<T>(),
+                                         stream));
 
             HIP_CHECK(hipGetLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
             // Copy output to host
-            const auto output = d_output.load();
+            std::vector<T> output(size + 2);
+            HIP_CHECK(
+                hipMemcpy(output.data(), d_input, (size + 2) * sizeof(T), hipMemcpyDeviceToHost));
 
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(
