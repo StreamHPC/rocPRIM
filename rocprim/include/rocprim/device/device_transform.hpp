@@ -52,7 +52,25 @@ ROCPRIM_KERNEL
     ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void transform_kernel(
     InputIterator input, const size_t size, OutputIterator output, UnaryFunction transform_op)
 {
-    transform_kernel_impl<device_params<Config>().kernel_config.block_size,
+    transform_kernel_impl<false,
+                          device_params<Config>().kernel_config.block_size,
+                          device_params<Config>().kernel_config.items_per_thread,
+                          ResultType>(input, size, output, transform_op);
+}
+
+template<class Config,
+         class ResultType,
+         class InputIterator,
+         class OutputIterator,
+         class UnaryFunction>
+ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
+    transform_vec_load_store_kernel(InputIterator  input,
+                                    const size_t   size,
+                                    OutputIterator output,
+                                    UnaryFunction  transform_op)
+{
+    transform_kernel_impl<true,
+                          device_params<Config>().kernel_config.block_size,
                           device_params<Config>().kernel_config.items_per_thread,
                           ResultType>(input, size, output, transform_op);
 }
@@ -123,11 +141,16 @@ inline hipError_t transform(InputIterator     input,
                             const hipStream_t stream            = 0,
                             bool              debug_synchronous = false)
 {
-    if( size == size_t(0) )
+    if(size == size_t(0))
+    {
         return hipSuccess;
+    }
 
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
     using result_type = typename ::rocprim::invoke_result<UnaryFunction, input_type>::type;
+
+    constexpr bool is_pointer
+        = std::is_pointer<InputIterator>::value && std::is_pointer<OutputIterator>::value;
 
     using config = detail::wrapped_transform_config<Config, input_type>;
 
@@ -168,16 +191,27 @@ inline hipError_t transform(InputIterator     input,
         const auto current_blocks = (current_size + items_per_block - 1) / items_per_block;
 
         if(debug_synchronous)
+        {
             start = std::chrono::steady_clock::now();
-        hipLaunchKernelGGL(HIP_KERNEL_NAME(detail::transform_kernel<config, result_type>),
-                           dim3(current_blocks),
-                           dim3(block_size),
-                           0,
-                           stream,
-                           input + offset,
-                           current_size,
-                           output + offset,
-                           transform_op);
+        }
+
+        if ROCPRIM_IF_CONSTEXPR(is_pointer)
+        {
+            detail::transform_vec_load_store_kernel<config, result_type>
+                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
+                                                                        current_size,
+                                                                        output + offset,
+                                                                        transform_op);
+        }
+        else
+        {
+            detail::transform_kernel<config, result_type>
+                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
+                                                                        current_size,
+                                                                        output + offset,
+                                                                        transform_op);
+        }
+
         ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("transform_kernel", current_size, start);
     }
 
