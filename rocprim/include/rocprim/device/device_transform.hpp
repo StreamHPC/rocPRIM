@@ -64,10 +64,10 @@ template<class Config,
          class OutputIterator,
          class UnaryFunction>
 ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
-    transform_vec_load_store_kernel(InputIterator  input,
-                                    const size_t   size,
-                                    OutputIterator output,
-                                    UnaryFunction  transform_op)
+    transform_pointers_kernel(InputIterator  input,
+                              const size_t   size,
+                              OutputIterator output,
+                              UnaryFunction  transform_op)
 {
     transform_kernel_impl<true,
                           device_params<Config>().kernel_config.block_size,
@@ -152,7 +152,7 @@ inline hipError_t transform(InputIterator     input,
     constexpr bool is_pointer
         = std::is_pointer<InputIterator>::value && std::is_pointer<OutputIterator>::value;
 
-    using config = detail::wrapped_transform_config<Config, input_type>;
+    using config = detail::wrapped_transform_config<Config, input_type, is_pointer>;
 
     detail::target_arch target_arch;
     hipError_t          result = detail::host_target_arch(stream, target_arch);
@@ -197,7 +197,7 @@ inline hipError_t transform(InputIterator     input,
 
         if ROCPRIM_IF_CONSTEXPR(is_pointer)
         {
-            detail::transform_vec_load_store_kernel<config, result_type>
+            detail::transform_pointers_kernel<config, result_type>
                 <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
                                                                         current_size,
                                                                         output + offset,

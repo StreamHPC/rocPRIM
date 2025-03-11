@@ -672,8 +672,47 @@ struct transform_config : public detail::transform_config_params
 #endif
 };
 
+/// \brief Configuration for the device-level transform operation for pointers.
+/// \tparam BlockSize Number of threads in a block.
+/// \tparam ItemsPerThread Number of items processed by each thread.
+/// \tparam SizeLimit Limit on the number of items for a single kernel launch.
+template<unsigned int BlockSize,
+         unsigned int ItemsPerThread,
+         unsigned int SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
+struct transform_pointer_config : public detail::transform_config_params
+{
+    /// \brief Identifies the algorithm associated to the config.
+    using tag = detail::transform_config_tag;
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+    /// \brief Number of threads in a block.
+    static constexpr unsigned int block_size = BlockSize;
+
+    /// \brief Number of items processed by each thread.
+    static constexpr unsigned int items_per_thread = ItemsPerThread;
+
+    /// \brief Limit on the number of items for a single kernel launch.
+    static constexpr unsigned int size_limit = SizeLimit;
+
+    constexpr transform_pointer_config()
+        : detail::transform_config_params{
+              {BlockSize, ItemsPerThread, SizeLimit}
+    }
+    {}
+#endif
+};
+
 namespace detail
 {
+
+template<class Value>
+struct default_transform_pointer_config_base
+{
+    static constexpr unsigned int item_scale
+        = ::rocprim::detail::ceiling_div<unsigned int>(sizeof(uint128_t), sizeof(Value));
+
+    using type = transform_config<256, item_scale>;
+};
 
 template<class Value>
 struct default_transform_config_base
