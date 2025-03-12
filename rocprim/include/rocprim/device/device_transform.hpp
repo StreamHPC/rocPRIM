@@ -26,14 +26,14 @@
 #include <iterator>
 #include <type_traits>
 
-#include "../config.hpp"
 #include "../common.hpp"
+#include "../config.hpp"
 #include "../detail/various.hpp"
 #include "../iterator/zip_iterator.hpp"
 #include "../types/tuple.hpp"
 
-#include "device_transform_config.hpp"
 #include "detail/device_transform.hpp"
+#include "device_transform_config.hpp"
 
 /// \addtogroup devicemodule
 /// @{
@@ -43,7 +43,8 @@ BEGIN_ROCPRIM_NAMESPACE
 namespace detail
 {
 
-template<class Config,
+template<bool IsPointer,
+         class Config,
          class ResultType,
          class InputIterator,
          class OutputIterator,
@@ -52,25 +53,7 @@ ROCPRIM_KERNEL
     ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void transform_kernel(
     InputIterator input, const size_t size, OutputIterator output, UnaryFunction transform_op)
 {
-    transform_kernel_impl<false,
-                          device_params<Config>().kernel_config.block_size,
-                          device_params<Config>().kernel_config.items_per_thread,
-                          device_params<Config>().load_type,
-                          ResultType>(input, size, output, transform_op);
-}
-
-template<class Config,
-         class ResultType,
-         class InputIterator,
-         class OutputIterator,
-         class UnaryFunction>
-ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block_size) void
-    transform_pointers_kernel(InputIterator  input,
-                              const size_t   size,
-                              OutputIterator output,
-                              UnaryFunction  transform_op)
-{
-    transform_kernel_impl<true,
+    transform_kernel_impl<IsPointer,
                           device_params<Config>().kernel_config.block_size,
                           device_params<Config>().kernel_config.items_per_thread,
                           device_params<Config>().load_type,
@@ -141,22 +124,11 @@ inline hipError_t transform_impl(InputIterator     input,
             start = std::chrono::steady_clock::now();
         }
 
-        if ROCPRIM_IF_CONSTEXPR(IsPointer)
-        {
-            detail::transform_pointers_kernel<config, result_type>
-                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
-                                                                        current_size,
-                                                                        output + offset,
-                                                                        transform_op);
-        }
-        else
-        {
-            detail::transform_kernel<config, result_type>
-                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
-                                                                        current_size,
-                                                                        output + offset,
-                                                                        transform_op);
-        }
+        detail::transform_kernel<IsPointer, config, result_type>
+            <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
+                                                                    current_size,
+                                                                    output + offset,
+                                                                    transform_op);
 
         ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("transform_kernel", current_size, start);
     }
@@ -164,7 +136,7 @@ inline hipError_t transform_impl(InputIterator     input,
     return hipSuccess;
 }
 
-} // end of detail namespace
+} // namespace detail
 
 /// \brief Parallel transform primitive for device level.
 ///
@@ -299,32 +271,29 @@ inline hipError_t transform(InputIterator     input,
 /// // output: [2, 4, 6, 8, 10, 12, 14, 16]
 /// \endcode
 /// \endparblock
-template<
-    class Config = default_config,
-    class InputIterator1,
-    class InputIterator2,
-    class OutputIterator,
-    class BinaryFunction
->
-inline
-hipError_t transform(InputIterator1 input1,
-                     InputIterator2 input2,
-                     OutputIterator output,
-                     const size_t size,
-                     BinaryFunction transform_op,
-                     const hipStream_t stream = 0,
-                     bool debug_synchronous = false)
+template<class Config = default_config,
+         class InputIterator1,
+         class InputIterator2,
+         class OutputIterator,
+         class BinaryFunction>
+inline hipError_t transform(InputIterator1    input1,
+                            InputIterator2    input2,
+                            OutputIterator    output,
+                            const size_t      size,
+                            BinaryFunction    transform_op,
+                            const hipStream_t stream            = 0,
+                            bool              debug_synchronous = false)
 {
     using value_type1 = typename std::iterator_traits<InputIterator1>::value_type;
     using value_type2 = typename std::iterator_traits<InputIterator2>::value_type;
     return transform<Config>(
-        ::rocprim::make_zip_iterator(::rocprim::make_tuple(input1, input2)), output,
-        size, detail::unpack_binary_op<value_type1, value_type2, BinaryFunction>(transform_op),
-        stream, debug_synchronous
-    );
+        ::rocprim::make_zip_iterator(::rocprim::make_tuple(input1, input2)),
+        output,
+        size,
+        detail::unpack_binary_op<value_type1, value_type2, BinaryFunction>(transform_op),
+        stream,
+        debug_synchronous);
 }
-
-
 
 END_ROCPRIM_NAMESPACE
 
