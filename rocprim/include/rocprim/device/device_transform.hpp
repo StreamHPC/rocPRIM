@@ -75,6 +75,93 @@ ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block
                           ResultType>(input, size, output, transform_op);
 }
 
+template<bool IsPointer,
+         class Config,
+         class InputIterator,
+         class OutputIterator,
+         class UnaryFunction>
+inline hipError_t transform_impl(InputIterator     input,
+                                 OutputIterator    output,
+                                 const size_t      size,
+                                 UnaryFunction     transform_op,
+                                 const hipStream_t stream,
+                                 bool              debug_synchronous)
+{
+    if(size == size_t(0))
+    {
+        return hipSuccess;
+    }
+
+    using input_type  = typename std::iterator_traits<InputIterator>::value_type;
+    using result_type = typename ::rocprim::invoke_result<UnaryFunction, input_type>::type;
+
+    using config = detail::wrapped_transform_config<Config, input_type, IsPointer>;
+
+    detail::target_arch target_arch;
+    hipError_t          result = detail::host_target_arch(stream, target_arch);
+    if(result != hipSuccess)
+    {
+        return result;
+    }
+    const detail::transform_config_params params
+        = detail::dispatch_target_arch<config>(target_arch);
+
+    const unsigned int block_size       = params.kernel_config.block_size;
+    const unsigned int items_per_thread = params.kernel_config.items_per_thread;
+    const auto         items_per_block  = block_size * items_per_thread;
+
+    // Start point for time measurements
+    std::chrono::steady_clock::time_point start;
+
+    const auto size_limit             = params.kernel_config.size_limit;
+    const auto number_of_blocks_limit = ::rocprim::max<size_t>(size_limit / items_per_block, 1);
+
+    auto number_of_blocks = (size + items_per_block - 1) / items_per_block;
+    if(debug_synchronous)
+    {
+        std::cout << "block_size " << block_size << '\n';
+        std::cout << "number of blocks " << number_of_blocks << '\n';
+        std::cout << "number of blocks limit " << number_of_blocks_limit << '\n';
+        std::cout << "items_per_block " << items_per_block << '\n';
+    }
+
+    const auto aligned_size_limit = number_of_blocks_limit * items_per_block;
+
+    // Launch number_of_blocks_limit blocks while there is still at least as many blocks left as the limit
+    const auto number_of_launch = (size + aligned_size_limit - 1) / aligned_size_limit;
+    for(size_t i = 0, offset = 0; i < number_of_launch; ++i, offset += aligned_size_limit)
+    {
+        const auto current_size   = std::min(size - offset, aligned_size_limit);
+        const auto current_blocks = (current_size + items_per_block - 1) / items_per_block;
+
+        if(debug_synchronous)
+        {
+            start = std::chrono::steady_clock::now();
+        }
+
+        if ROCPRIM_IF_CONSTEXPR(IsPointer)
+        {
+            detail::transform_pointers_kernel<config, result_type>
+                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
+                                                                        current_size,
+                                                                        output + offset,
+                                                                        transform_op);
+        }
+        else
+        {
+            detail::transform_kernel<config, result_type>
+                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
+                                                                        current_size,
+                                                                        output + offset,
+                                                                        transform_op);
+        }
+
+        ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("transform_kernel", current_size, start);
+    }
+
+    return hipSuccess;
+}
+
 } // end of detail namespace
 
 /// \brief Parallel transform primitive for device level.
@@ -141,81 +228,16 @@ inline hipError_t transform(InputIterator     input,
                             const hipStream_t stream            = 0,
                             bool              debug_synchronous = false)
 {
-    if(size == size_t(0))
-    {
-        return hipSuccess;
-    }
-
-    using input_type = typename std::iterator_traits<InputIterator>::value_type;
-    using result_type = typename ::rocprim::invoke_result<UnaryFunction, input_type>::type;
-
     constexpr bool is_pointer
         = std::is_pointer<InputIterator>::value && std::is_pointer<OutputIterator>::value;
 
-    using config = detail::wrapped_transform_config<Config, input_type, is_pointer>;
-
-    detail::target_arch target_arch;
-    hipError_t          result = detail::host_target_arch(stream, target_arch);
-    if(result != hipSuccess)
-    {
-        return result;
-    }
-    const detail::transform_config_params params
-        = detail::dispatch_target_arch<config>(target_arch);
-
-    const unsigned int block_size       = params.kernel_config.block_size;
-    const unsigned int items_per_thread = params.kernel_config.items_per_thread;
-    const auto         items_per_block  = block_size * items_per_thread;
-
-    // Start point for time measurements
-    std::chrono::steady_clock::time_point start;
-
-    const auto size_limit             = params.kernel_config.size_limit;
-    const auto number_of_blocks_limit = ::rocprim::max<size_t>(size_limit / items_per_block, 1);
-
-    auto number_of_blocks = (size + items_per_block - 1)/items_per_block;
-    if(debug_synchronous)
-    {
-        std::cout << "block_size " << block_size << '\n';
-        std::cout << "number of blocks " << number_of_blocks << '\n';
-        std::cout << "number of blocks limit " << number_of_blocks_limit << '\n';
-        std::cout << "items_per_block " << items_per_block << '\n';
-    }
-
-    const auto aligned_size_limit = number_of_blocks_limit * items_per_block;
-
-    // Launch number_of_blocks_limit blocks while there is still at least as many blocks left as the limit
-    const auto number_of_launch = (size + aligned_size_limit - 1) / aligned_size_limit;
-    for(size_t i = 0, offset = 0; i < number_of_launch; ++i, offset += aligned_size_limit) {
-        const auto current_size = std::min(size - offset, aligned_size_limit);
-        const auto current_blocks = (current_size + items_per_block - 1) / items_per_block;
-
-        if(debug_synchronous)
-        {
-            start = std::chrono::steady_clock::now();
-        }
-
-        if ROCPRIM_IF_CONSTEXPR(is_pointer)
-        {
-            detail::transform_pointers_kernel<config, result_type>
-                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
-                                                                        current_size,
-                                                                        output + offset,
-                                                                        transform_op);
-        }
-        else
-        {
-            detail::transform_kernel<config, result_type>
-                <<<dim3(current_blocks), dim3(block_size), 0, stream>>>(input + offset,
-                                                                        current_size,
-                                                                        output + offset,
-                                                                        transform_op);
-        }
-
-        ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("transform_kernel", current_size, start);
-    }
-
-    return hipSuccess;
+    return detail::transform_impl<is_pointer, Config, InputIterator, OutputIterator, UnaryFunction>(
+        input,
+        output,
+        size,
+        transform_op,
+        stream,
+        debug_synchronous);
 }
 
 /// \brief Parallel device-level transform primitive for two inputs.

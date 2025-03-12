@@ -52,10 +52,16 @@
 const size_t DEFAULT_BYTES = 1024 * 1024 * 128 * 4;
 #endif
 
-#define CREATE_BENCHMARK(T)                                            \
+#define CREATE_BENCHMARK(T, IsPointer)                                 \
     {                                                                  \
-        const device_transform_benchmark<T> instance{};                \
+        const device_transform_benchmark<T, IsPointer> instance{};     \
         REGISTER_BENCHMARK(benchmarks, bytes, seed, stream, instance); \
+    }
+
+#define CREATE_BENCHMARKS(T)       \
+    {                              \
+        CREATE_BENCHMARK(T, true)  \
+        CREATE_BENCHMARK(T, false) \
     }
 
 int main(int argc, char* argv[])
@@ -111,21 +117,21 @@ int main(int argc, char* argv[])
 #else // BENCHMARK_CONFIG_TUNING
     using custom_float2  = common::custom_type<float, float>;
     using custom_double2 = common::custom_type<double, double>;
-    CREATE_BENCHMARK(int)
-    CREATE_BENCHMARK(long long)
+    CREATE_BENCHMARKS(int)
+    CREATE_BENCHMARKS(long long)
 
-    CREATE_BENCHMARK(int8_t)
-    CREATE_BENCHMARK(uint8_t)
-    CREATE_BENCHMARK(rocprim::half)
+    CREATE_BENCHMARKS(int8_t)
+    CREATE_BENCHMARKS(uint8_t)
+    CREATE_BENCHMARKS(rocprim::half)
 
-    CREATE_BENCHMARK(float)
-    CREATE_BENCHMARK(double)
+    CREATE_BENCHMARKS(float)
+    CREATE_BENCHMARKS(double)
 
-    CREATE_BENCHMARK(custom_float2)
-    CREATE_BENCHMARK(custom_double2)
+    CREATE_BENCHMARKS(custom_float2)
+    CREATE_BENCHMARKS(custom_double2)
 
-    CREATE_BENCHMARK(rocprim::int128_t)
-    CREATE_BENCHMARK(rocprim::uint128_t)
+    CREATE_BENCHMARKS(rocprim::int128_t)
+    CREATE_BENCHMARKS(rocprim::uint128_t)
 #endif // BENCHMARK_CONFIG_TUNING
 
     // Use manual timing

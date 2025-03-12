@@ -58,7 +58,7 @@ inline std::string transform_config_name<rocprim::default_config>()
     return "default_config";
 }
 
-template<typename T = int, typename Config = rocprim::default_config>
+template<typename T = int, bool IsPointer = false, typename Config = rocprim::default_config>
 struct device_transform_benchmark : public config_autotune_interface
 {
 
@@ -66,7 +66,7 @@ struct device_transform_benchmark : public config_autotune_interface
     {
 
         using namespace std::string_literals;
-        return bench_naming::format_name("{lvl:device,algo:transform,value_type:"
+        return bench_naming::format_name("{lvl:device,algo:transform" + std::string(IsPointer ? "_pointer" : "") + ",value_type:"
                                          + std::string(Traits<T>::name())
                                          + ",cfg:" + transform_config_name<Config>() + "}");
     }
@@ -97,12 +97,12 @@ struct device_transform_benchmark : public config_autotune_interface
         const auto launch = [&]
         {
             auto transform_op = [](T v) { return v + T(5); };
-            return rocprim::transform<Config>(d_input.get(),
-                                              d_output.get(),
-                                              size,
-                                              transform_op,
-                                              stream,
-                                              debug_synchronous);
+            return rocprim::detail::transform_impl<IsPointer, Config>(d_input.get(),
+                                                                      d_output.get(),
+                                                                      size,
+                                                                      transform_op,
+                                                                      stream,
+                                                                      debug_synchronous);
         };
 
         // Warm-up
@@ -146,7 +146,7 @@ struct device_transform_benchmark : public config_autotune_interface
     }
 };
 
-template<typename T, unsigned int BlockSize>
+template<typename T, bool IsPointer, unsigned int BlockSize>
 struct device_transform_benchmark_generator
 {
 
@@ -158,7 +158,7 @@ struct device_transform_benchmark_generator
         void operator()(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
         {
             storage.emplace_back(
-                std::make_unique<device_transform_benchmark<T, generated_config>>());
+                std::make_unique<device_transform_benchmark<T, IsPointer, generated_config>>());
         }
     };
 

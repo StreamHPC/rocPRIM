@@ -30,6 +30,7 @@
 namespace {
     auto benchmarks = config_autotune_register::create_bulk(
         device_transform_benchmark_generator< 
-        @DataType@, 
+        @DataType@,
+        false, 
         @BlockSize@>::create);
 }
