@@ -32,5 +32,6 @@ namespace {
         device_transform_benchmark_generator< 
         @DataType@,
         false, 
-        @BlockSize@>::create);
+        @BlockSize@,
+        rocprim::load_default>::create);
 }

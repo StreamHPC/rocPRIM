@@ -5,7 +5,7 @@ ROCPRIM_DEVICE_DETAIL_CONFIG_DEVICE_TRANSFORM_POINTER_HPP_
 {%- endmacro %}
 
 {% macro kernel_configuration(measurement) -%}
-transform_pointer_config<{{ measurement['cfg']['bs'] }}, {{ measurement['cfg']['ipt'] }}> { };
+transform_pointer_config<{{ measurement['cfg']['bs'] }}, {{ measurement['cfg']['ipt'] }}, ::rocprim::{{ measurement['cfg']['lt'] }}> { };
 {%- endmacro %}
 
 {% macro general_case() -%}

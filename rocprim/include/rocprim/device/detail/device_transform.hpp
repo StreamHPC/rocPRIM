@@ -78,9 +78,10 @@ using dynamic_size_type = std::conditional_t<
                            uint32_t,
                            std::conditional_t<(sizeof(T) * ItemsPerThread <= 8), uint64_t, uint128_t>>>>;
 
-template<bool         VectorLoadStore,
-         unsigned int BlockSize,
-         unsigned int ItemsPerThread,
+template<bool                VectorLoadStore,
+         unsigned int        BlockSize,
+         unsigned int        ItemsPerThread,
+         cache_load_modifier LoadType,
          class ResultType,
          class InputIterator,
          class OutputIterator,
@@ -139,9 +140,10 @@ auto transform_kernel_impl(InputIterator  input,
         if ROCPRIM_IF_CONSTEXPR(VectorLoadStore)
         {
             using vec_input_type = dynamic_size_type<input_type, ItemsPerThread>;
-            block_load_direct_warp_striped_vectorized<vec_input_type>(flat_id,
-                                                                      input + block_offset,
-                                                                      input_values);
+            block_load_direct_warp_striped_vectorized<vec_input_type, LoadType>(flat_id,
+                                                                                input
+                                                                                    + block_offset,
+                                                                                input_values);
 
             ROCPRIM_UNROLL
             for(unsigned int i = 0; i < ItemsPerThread; i++)
@@ -150,9 +152,10 @@ auto transform_kernel_impl(InputIterator  input,
             }
 
             using vec_output_type = dynamic_size_type<output_type, ItemsPerThread>;
-            block_store_direct_warp_striped_vectorized<vec_output_type>(flat_id,
-                                                                        output + block_offset,
-                                                                        output_values);
+            block_store_direct_warp_striped_vectorized<vec_output_type>(
+                flat_id,
+                output + block_offset,
+                output_values);
         }
         else
         {

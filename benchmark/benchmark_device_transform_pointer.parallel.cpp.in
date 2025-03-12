@@ -32,5 +32,6 @@ namespace {
         device_transform_benchmark_generator< 
         @DataType@,
         true, 
-        @BlockSize@>::create);
+        @BlockSize@,
+        @LoadType@>::create);
 }

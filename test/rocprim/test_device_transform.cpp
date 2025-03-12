@@ -107,7 +107,7 @@ using RocprimDeviceTransformTestsParams
 template<unsigned int SizeLimit>
 struct size_limit_config
 {
-    using type = rocprim::transform_config<256, 16, SizeLimit>;
+    using type = rocprim::transform_config<256, 16, rocprim::load_default, SizeLimit>;
 };
 
 template<>

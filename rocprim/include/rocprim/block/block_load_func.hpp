@@ -508,8 +508,9 @@ void block_load_direct_warp_striped(unsigned int  flat_id,
     block_load_direct_warp_striped<WarpSize>(flat_id, block_input, items, valid);
 }
 
-template<class V               = rocprim::uint128_t,
-         unsigned int WarpSize = device_warp_size(),
+template<class V                      = rocprim::uint128_t,
+         cache_load_modifier LoadType = load_default,
+         unsigned int        WarpSize = device_warp_size(),
          class T,
          class U,
          unsigned int ItemsPerThread>
@@ -535,13 +536,13 @@ auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        reinterpret_cast<V*>(items)[item]
-            = thread_load<load_nontemporal>(vector_ptr + (item * WarpSize));
+        reinterpret_cast<V*>(items)[item] = thread_load<LoadType>(vector_ptr + (item * WarpSize));
     }
 }
 
-template<class V               = rocprim::uint128_t,
-         unsigned int WarpSize = device_warp_size(),
+template<class V                      = rocprim::uint128_t,
+         cache_load_modifier LoadType = load_default,
+         unsigned int        WarpSize = device_warp_size(),
          class T,
          class U,
          unsigned int ItemsPerThread>

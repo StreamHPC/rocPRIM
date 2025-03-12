@@ -49,7 +49,8 @@ std::string transform_config_name()
 {
     auto config = Config();
     return "{bs:" + std::to_string(config.block_size)
-           + ",ipt:" + std::to_string(config.items_per_thread) + "}";
+           + ",ipt:" + std::to_string(config.items_per_thread)
+           + ",lt:" + get_thread_load_method_name(config.load_type) + "}";
 }
 
 template<>
@@ -146,14 +147,15 @@ struct device_transform_benchmark : public config_autotune_interface
     }
 };
 
-template<typename T, bool IsPointer, unsigned int BlockSize>
+template<typename T, bool IsPointer, unsigned int BlockSize, rocprim::cache_load_modifier LoadType>
 struct device_transform_benchmark_generator
 {
 
     template<unsigned int ItemsPerThread>
     struct create_ipt
     {
-        using generated_config = rocprim::transform_config<BlockSize, 1 << ItemsPerThread>;
+        using generated_config
+            = rocprim::transform_config<BlockSize, 1 << ItemsPerThread, LoadType>;
 
         void operator()(std::vector<std::unique_ptr<config_autotune_interface>>& storage)
         {

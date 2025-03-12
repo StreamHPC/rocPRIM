@@ -154,10 +154,12 @@ std::enable_if_t<CacheLoadModifier == load_ca || CacheLoadModifier == load_defau
                      || CacheLoadModifier == load_ldg,
                  T> thread_load(T* ptr)
 {
-    alignas(Alignment) T result;
-    detail::thread_fused_copy<T, T, Alignment>(&result,
-                                               ptr,
-                                               [](auto& dst, const auto& src) { dst = src; });
+    using decay_type = std::decay_t<T>;
+    alignas(Alignment) decay_type result;
+    detail::thread_fused_copy<decay_type, T, Alignment>(&result,
+                                                        ptr,
+                                                        [](auto& dst, const auto& src)
+                                                        { dst = src; });
     return result;
 }
 

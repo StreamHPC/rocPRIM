@@ -55,6 +55,7 @@ ROCPRIM_KERNEL
     transform_kernel_impl<false,
                           device_params<Config>().kernel_config.block_size,
                           device_params<Config>().kernel_config.items_per_thread,
+                          device_params<Config>().load_type,
                           ResultType>(input, size, output, transform_op);
 }
 
@@ -72,6 +73,7 @@ ROCPRIM_KERNEL ROCPRIM_LAUNCH_BOUNDS(device_params<Config>().kernel_config.block
     transform_kernel_impl<true,
                           device_params<Config>().kernel_config.block_size,
                           device_params<Config>().kernel_config.items_per_thread,
+                          device_params<Config>().load_type,
                           ResultType>(input, size, output, transform_op);
 }
 
