@@ -388,11 +388,11 @@ void block_store_direct_warp_striped(unsigned int   flat_id,
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(),
+template<class V               = rocprim::uint128_t,
+         unsigned int WarpSize = device_warp_size(),
          class T,
          class U,
-         unsigned int ItemsPerThread,
-         class V = rocprim::uint128_t>
+         unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
                                                 T*           block_output,
@@ -418,11 +418,11 @@ auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(),
+template<class V               = rocprim::uint128_t,
+         unsigned int WarpSize = device_warp_size(),
          class T,
          class U,
-         unsigned int ItemsPerThread,
-         class V = rocprim::uint128_t>
+         unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_store_direct_warp_striped_vectorized(unsigned int flat_id,
                                                 T*           block_output,

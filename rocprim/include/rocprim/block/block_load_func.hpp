@@ -508,11 +508,11 @@ void block_load_direct_warp_striped(unsigned int  flat_id,
     block_load_direct_warp_striped<WarpSize>(flat_id, block_input, items, valid);
 }
 
-template<unsigned int WarpSize = device_warp_size(),
+template<class V               = rocprim::uint128_t,
+         unsigned int WarpSize = device_warp_size(),
          class T,
          class U,
-         unsigned int ItemsPerThread,
-         class V = rocprim::uint128_t>
+         unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
                                                T*           block_input,
@@ -524,7 +524,7 @@ auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
                   "WarpSize must be a power of two and equal or less"
                   "than the size of hardware warp.");
 
-    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(uint128_t);
+    constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(V);
 
     unsigned int lane_id     = detail::logical_lane_id<WarpSize>();
     unsigned int warp_id     = flat_id / WarpSize;
@@ -540,11 +540,11 @@ auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
     }
 }
 
-template<unsigned int WarpSize = device_warp_size(),
+template<class V               = rocprim::uint128_t,
+         unsigned int WarpSize = device_warp_size(),
          class T,
          class U,
-         unsigned int ItemsPerThread,
-         class V = rocprim::uint128_t>
+         unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
 auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
                                                T*           block_input,
