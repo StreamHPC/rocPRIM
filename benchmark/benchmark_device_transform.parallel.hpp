@@ -67,9 +67,9 @@ struct device_transform_benchmark : public config_autotune_interface
     {
 
         using namespace std::string_literals;
-        return bench_naming::format_name("{lvl:device,algo:transform" + std::string(IsPointer ? "_pointer" : "") + ",value_type:"
-                                         + std::string(Traits<T>::name())
-                                         + ",cfg:" + transform_config_name<Config>() + "}");
+        return bench_naming::format_name(
+            "{lvl:device,algo:transform" + std::string(IsPointer ? "_pointer" : "") + ",value_type:"
+            + std::string(Traits<T>::name()) + ",cfg:" + transform_config_name<Config>() + "}");
     }
 
     static constexpr unsigned int batch_size  = 10;

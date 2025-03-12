@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,14 @@
 #ifndef ROCPRIM_DEVICE_DETAIL_DEVICE_TRANSFORM_HPP_
 #define ROCPRIM_DEVICE_DETAIL_DEVICE_TRANSFORM_HPP_
 
-#include <type_traits>
 #include <iterator>
+#include <type_traits>
 
 #include "../../config.hpp"
 #include "../../detail/various.hpp"
 
-#include "../../intrinsics.hpp"
 #include "../../functional.hpp"
+#include "../../intrinsics.hpp"
 #include "../../types.hpp"
 
 #include "../../block/block_load.hpp"
@@ -46,19 +46,21 @@ struct unpack_binary_op
 {
     using result_type = typename ::rocprim::invoke_result<BinaryFunction, T1, T2>::type;
 
-    ROCPRIM_HOST_DEVICE inline
-    unpack_binary_op() = default;
+    ROCPRIM_HOST_DEVICE
+    inline unpack_binary_op()
+        = default;
 
-    ROCPRIM_HOST_DEVICE inline
-    unpack_binary_op(BinaryFunction binary_op) : binary_op_(binary_op)
-    {
-    }
+    ROCPRIM_HOST_DEVICE
+    inline unpack_binary_op(BinaryFunction binary_op)
+        : binary_op_(binary_op)
+    {}
 
-    ROCPRIM_HOST_DEVICE inline
-    ~unpack_binary_op() = default;
+    ROCPRIM_HOST_DEVICE
+    inline ~unpack_binary_op()
+        = default;
 
-    ROCPRIM_HOST_DEVICE inline
-    result_type operator()(const ::rocprim::tuple<T1, T2>& t)
+    ROCPRIM_HOST_DEVICE
+    inline result_type operator()(const ::rocprim::tuple<T1, T2>& t)
     {
         return binary_op_(::rocprim::get<0>(t), ::rocprim::get<1>(t));
     }
@@ -74,9 +76,10 @@ using dynamic_size_type = std::conditional_t<
     std::conditional_t<
         (sizeof(T) * ItemsPerThread <= 2),
         uint16_t,
-        std::conditional_t<(sizeof(T) * ItemsPerThread <= 4),
-                           uint32_t,
-                           std::conditional_t<(sizeof(T) * ItemsPerThread <= 8), uint64_t, uint128_t>>>>;
+        std::conditional_t<
+            (sizeof(T) * ItemsPerThread <= 4),
+            uint32_t,
+            std::conditional_t<(sizeof(T) * ItemsPerThread <= 8), uint64_t, uint128_t>>>>;
 
 template<bool                VectorLoadStore,
          unsigned int        BlockSize,
@@ -90,34 +93,31 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 auto transform_kernel_impl(InputIterator  input,
                            const size_t   input_size,
                            OutputIterator output,
-                           UnaryFunction  transform_op) -> typename std::enable_if<VectorLoadStore, void>::type
+                           UnaryFunction  transform_op) ->
+    typename std::enable_if<VectorLoadStore, void>::type
 {
-    using input_type = typename std::iterator_traits<InputIterator>::value_type;
+    using input_type  = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;
     using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, ResultType, output_type
-        >::type;
+        typename std::conditional<std::is_void<output_type>::value, ResultType, output_type>::type;
 
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
 
-    const unsigned int flat_id = ::rocprim::detail::block_thread_id<0>();
-    const unsigned int flat_block_id = ::rocprim::detail::block_id<0>();
-    const unsigned int block_offset = flat_block_id * items_per_block;
-    const unsigned int number_of_blocks = ::rocprim::detail::grid_size<0>();
+    const unsigned int flat_id             = ::rocprim::detail::block_thread_id<0>();
+    const unsigned int flat_block_id       = ::rocprim::detail::block_id<0>();
+    const unsigned int block_offset        = flat_block_id * items_per_block;
+    const unsigned int number_of_blocks    = ::rocprim::detail::grid_size<0>();
     const unsigned int valid_in_last_block = input_size - block_offset;
 
-    input_type input_values[ItemsPerThread];
+    input_type  input_values[ItemsPerThread];
     result_type output_values[ItemsPerThread];
 
     if(flat_block_id == (number_of_blocks - 1)) // last block
     {
-        block_load_direct_striped<BlockSize>(
-            flat_id,
-            input + block_offset,
-            input_values,
-            valid_in_last_block
-        );
+        block_load_direct_striped<BlockSize>(flat_id,
+                                             input + block_offset,
+                                             input_values,
+                                             valid_in_last_block);
 
         ROCPRIM_UNROLL
         for(unsigned int i = 0; i < ItemsPerThread; i++)
@@ -128,12 +128,10 @@ auto transform_kernel_impl(InputIterator  input,
             }
         }
 
-        block_store_direct_striped<BlockSize>(
-            flat_id,
-            output + block_offset,
-            output_values,
-            valid_in_last_block
-        );
+        block_store_direct_striped<BlockSize>(flat_id,
+                                              output + block_offset,
+                                              output_values,
+                                              valid_in_last_block);
     }
     else
     {
@@ -167,34 +165,31 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 auto transform_kernel_impl(InputIterator  input,
                            const size_t   input_size,
                            OutputIterator output,
-                           UnaryFunction  transform_op) -> typename std::enable_if<!VectorLoadStore, void>::type
+                           UnaryFunction  transform_op) ->
+    typename std::enable_if<!VectorLoadStore, void>::type
 {
-    using input_type = typename std::iterator_traits<InputIterator>::value_type;
+    using input_type  = typename std::iterator_traits<InputIterator>::value_type;
     using output_type = typename std::iterator_traits<OutputIterator>::value_type;
     using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, ResultType, output_type
-        >::type;
+        typename std::conditional<std::is_void<output_type>::value, ResultType, output_type>::type;
 
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
 
-    const unsigned int flat_id = ::rocprim::detail::block_thread_id<0>();
-    const unsigned int flat_block_id = ::rocprim::detail::block_id<0>();
-    const unsigned int block_offset = flat_block_id * items_per_block;
-    const unsigned int number_of_blocks = ::rocprim::detail::grid_size<0>();
+    const unsigned int flat_id             = ::rocprim::detail::block_thread_id<0>();
+    const unsigned int flat_block_id       = ::rocprim::detail::block_id<0>();
+    const unsigned int block_offset        = flat_block_id * items_per_block;
+    const unsigned int number_of_blocks    = ::rocprim::detail::grid_size<0>();
     const unsigned int valid_in_last_block = input_size - block_offset;
 
-    input_type input_values[ItemsPerThread];
+    input_type  input_values[ItemsPerThread];
     result_type output_values[ItemsPerThread];
 
     if(flat_block_id == (number_of_blocks - 1)) // last block
     {
-        block_load_direct_striped<BlockSize>(
-            flat_id,
-            input + block_offset,
-            input_values,
-            valid_in_last_block
-        );
+        block_load_direct_striped<BlockSize>(flat_id,
+                                             input + block_offset,
+                                             input_values,
+                                             valid_in_last_block);
 
         ROCPRIM_UNROLL
         for(unsigned int i = 0; i < ItemsPerThread; i++)
@@ -205,12 +200,10 @@ auto transform_kernel_impl(InputIterator  input,
             }
         }
 
-        block_store_direct_striped<BlockSize>(
-            flat_id,
-            output + block_offset,
-            output_values,
-            valid_in_last_block
-        );
+        block_store_direct_striped<BlockSize>(flat_id,
+                                              output + block_offset,
+                                              output_values,
+                                              valid_in_last_block);
     }
     else
     {
@@ -226,7 +219,7 @@ auto transform_kernel_impl(InputIterator  input,
     }
 }
 
-} // end of detail namespace
+} // namespace detail
 
 END_ROCPRIM_NAMESPACE
 

@@ -445,7 +445,7 @@ struct transform_config_tag
 struct transform_config_params
 {
     kernel_config_params kernel_config{};
-    cache_load_modifier load_type;
+    cache_load_modifier  load_type;
 };
 
 } // namespace detail
@@ -706,7 +706,8 @@ struct transform_pointer_config : public detail::transform_config_params
 
     constexpr transform_pointer_config()
         : detail::transform_config_params{
-              {BlockSize, ItemsPerThread, SizeLimit}, LoadType
+              {BlockSize, ItemsPerThread, SizeLimit},
+              LoadType
     }
     {}
 #endif

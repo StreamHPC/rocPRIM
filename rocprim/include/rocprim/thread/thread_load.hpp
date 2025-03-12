@@ -191,13 +191,14 @@ std::enable_if_t<CacheLoadModifier == load_volatile || CacheLoadModifier == load
 {
     using decay_type = std::decay_t<T>;
     alignas(Alignment) decay_type result;
-    detail::thread_fused_copy<decay_type, T, Alignment>(&result,
-                                               ptr,
-                                               [](auto& dst, const auto& src)
-                                               {
-                                                   using U = std::remove_reference_t<decltype(src)>;
-                                                   dst     = *static_cast<const volatile U*>(&src);
-                                               });
+    detail::thread_fused_copy<decay_type, T, Alignment>(
+        &result,
+        ptr,
+        [](auto& dst, const auto& src)
+        {
+            using U = std::remove_reference_t<decltype(src)>;
+            dst     = *static_cast<const volatile U*>(&src);
+        });
     return result;
 }
 
@@ -219,10 +220,10 @@ std::enable_if_t<CacheLoadModifier == load_nontemporal, T> thread_load(T* ptr)
 #if __has_builtin(__builtin_nontemporal_load)
     using decay_type = std::decay_t<T>;
     alignas(Alignment) decay_type result;
-    detail::thread_fused_copy<decay_type, T, Alignment>(&result,
-                                               ptr,
-                                               [](auto& dst, const auto& src)
-                                               { dst = __builtin_nontemporal_load(&src); });
+    detail::thread_fused_copy<decay_type, T, Alignment>(
+        &result,
+        ptr,
+        [](auto& dst, const auto& src) { dst = __builtin_nontemporal_load(&src); });
     return result;
 #else
     return thread_load(ptr);

@@ -1134,22 +1134,14 @@ inline const char* get_thread_load_method_name(rocprim::cache_load_modifier meth
 {
     switch(method)
     {
-        case rocprim::load_default:
-            return "load_default";
-        case rocprim::load_ca:
-            return "load_ca";
-        case rocprim::load_cg:
-            return "load_cg";
-        case rocprim::load_nontemporal:
-            return "load_nontemporal";
-        case rocprim::load_cv:
-            return "load_cv";
-        case rocprim::load_ldg:
-            return "load_ldg";
-        case rocprim::load_volatile:
-            return "load_volatile";
-        case rocprim::load_count:
-            return "load_count";
+        case rocprim::load_default: return "load_default";
+        case rocprim::load_ca: return "load_ca";
+        case rocprim::load_cg: return "load_cg";
+        case rocprim::load_nontemporal: return "load_nontemporal";
+        case rocprim::load_cv: return "load_cv";
+        case rocprim::load_ldg: return "load_ldg";
+        case rocprim::load_volatile: return "load_volatile";
+        case rocprim::load_count: return "load_count";
     }
     return "load_default";
 }
