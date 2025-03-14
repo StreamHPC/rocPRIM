@@ -515,9 +515,9 @@ template<class V                      = rocprim::uint128_t,
          class U,
          unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
-                                               T*           block_input,
-                                               U (&items)[ItemsPerThread]) ->
+auto block_load_direct_blocked_cast(unsigned int flat_id,
+                                    T*           block_input,
+                                    U (&items)[ItemsPerThread]) ->
     typename std::enable_if<detail::is_vectorizable<T, ItemsPerThread>::value
                             && (ItemsPerThread * sizeof(T)) % sizeof(V) == 0>::type
 {
@@ -527,16 +527,12 @@ auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
 
     constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(V);
 
-    unsigned int lane_id     = detail::logical_lane_id<WarpSize>();
-    unsigned int warp_id     = flat_id / WarpSize;
-    unsigned int warp_offset = warp_id * WarpSize * vectors_per_thread;
-
-    const V* vector_ptr = reinterpret_cast<const V*>(block_input) + warp_offset + lane_id;
+    const V* vector_ptr = reinterpret_cast<const V*>(block_input) + flat_id * vectors_per_thread;
 
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        reinterpret_cast<V*>(items)[item] = thread_load<LoadType>(vector_ptr + (item * WarpSize));
+        reinterpret_cast<V*>(items)[item] = thread_load<LoadType>(vector_ptr + (item));
     }
 }
 
@@ -547,13 +543,13 @@ template<class V                      = rocprim::uint128_t,
          class U,
          unsigned int ItemsPerThread>
 ROCPRIM_DEVICE ROCPRIM_INLINE
-auto block_load_direct_warp_striped_vectorized(unsigned int flat_id,
-                                               T*           block_input,
-                                               U (&items)[ItemsPerThread]) ->
+auto block_load_direct_blocked_cast(unsigned int flat_id,
+                                    T*           block_input,
+                                    U (&items)[ItemsPerThread]) ->
     typename std::enable_if<!detail::is_vectorizable<T, ItemsPerThread>::value
                             || (ItemsPerThread * sizeof(T)) % sizeof(V) != 0>::type
 {
-    block_load_direct_warp_striped(flat_id, block_input, items);
+    block_load_direct_blocked(flat_id, block_input, items);
 }
 
 END_ROCPRIM_NAMESPACE

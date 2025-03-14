@@ -70,7 +70,7 @@ hipError_t binary_search(void * temporary_storage,
         return hipSuccess;
     }
 
-    return transform<Config>(
+    return detail::transform_impl<false, Config>(
         needles, output,
         needles_size,
         [haystack, haystack_size, search_op, compare_op]

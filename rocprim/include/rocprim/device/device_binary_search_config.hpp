@@ -50,8 +50,8 @@ template<class Value, class Output>
 struct default_config_for_lower_bound
 {};
 
-template<class Unused, bool is_pointer, class Value, class Output>
-struct wrapped_transform_config<default_config_for_binary_search<Value, Output>, Unused, is_pointer>
+template<class Unused, bool IsPointer, class Value, class Output>
+struct wrapped_transform_config<default_config_for_binary_search<Value, Output>, Unused, IsPointer>
 {
     template<target_arch Arch>
     struct architecture_config
@@ -61,8 +61,8 @@ struct wrapped_transform_config<default_config_for_binary_search<Value, Output>,
     };
 };
 
-template<class Unused, bool is_pointer, class Value, class Output>
-struct wrapped_transform_config<default_config_for_upper_bound<Value, Output>, Unused, is_pointer>
+template<class Unused, bool IsPointer, class Value, class Output>
+struct wrapped_transform_config<default_config_for_upper_bound<Value, Output>, Unused, IsPointer>
 {
     template<target_arch Arch>
     struct architecture_config
@@ -72,8 +72,8 @@ struct wrapped_transform_config<default_config_for_upper_bound<Value, Output>, U
     };
 };
 
-template<class Unused, bool is_pointer, class Value, class Output>
-struct wrapped_transform_config<default_config_for_lower_bound<Value, Output>, Unused, is_pointer>
+template<class Unused, bool IsPointer, class Value, class Output>
+struct wrapped_transform_config<default_config_for_lower_bound<Value, Output>, Unused, IsPointer>
 {
     template<target_arch Arch>
     struct architecture_config
@@ -84,20 +84,20 @@ struct wrapped_transform_config<default_config_for_lower_bound<Value, Output>, U
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-template<class Unused, bool is_pointer, class Value, class Output>
+template<class Unused, bool IsPointer, class Value, class Output>
 template<target_arch Arch>
 constexpr transform_config_params
-    wrapped_transform_config<default_config_for_binary_search<Value, Output>, Unused, is_pointer>::
+    wrapped_transform_config<default_config_for_binary_search<Value, Output>, Unused, IsPointer>::
         architecture_config<Arch>::params;
-template<class Unused, bool is_pointer, class Value, class Output>
+template<class Unused, bool IsPointer, class Value, class Output>
 template<target_arch Arch>
 constexpr transform_config_params
-    wrapped_transform_config<default_config_for_upper_bound<Value, Output>, Unused, is_pointer>::
+    wrapped_transform_config<default_config_for_upper_bound<Value, Output>, Unused, IsPointer>::
         architecture_config<Arch>::params;
-template<class Unused, bool is_pointer, class Value, class Output>
+template<class Unused, bool IsPointer, class Value, class Output>
 template<target_arch Arch>
 constexpr transform_config_params
-    wrapped_transform_config<default_config_for_lower_bound<Value, Output>, Unused, is_pointer>::
+    wrapped_transform_config<default_config_for_lower_bound<Value, Output>, Unused, IsPointer>::
         architecture_config<Arch>::params;
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
