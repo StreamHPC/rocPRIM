@@ -354,7 +354,7 @@ struct default_transform_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_config<1024, 4>
+    : transform_config<1024, 2>
 {};
 
 // Based on value_type = rocprim::half
@@ -393,7 +393,7 @@ struct default_transform_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_config<1024, 4>
+    : transform_config<1024, 2>
 {};
 
 // Based on value_type = short
@@ -656,7 +656,7 @@ struct default_transform_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_config<1024, 4>
+    : transform_config<512, 4>
 {};
 
 // Based on value_type = float
@@ -666,7 +666,7 @@ struct default_transform_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_config<128, 8>
+    : transform_config<256, 4>
 {};
 
 // Based on value_type = rocprim::half
