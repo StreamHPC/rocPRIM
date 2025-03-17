@@ -52,7 +52,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 4>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = float
@@ -62,7 +62,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<256, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = rocprim::half
@@ -71,7 +71,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 2))>> : transform_pointer_config<1024, 1>
+                      && (sizeof(value_type) <= 2))>>
+    : transform_pointer_config<1024, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = rocprim::int128_t
@@ -81,7 +82,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
-    : transform_pointer_config<1024, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int64_t
@@ -91,7 +92,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 4>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int
@@ -101,7 +102,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<256, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = short
@@ -111,7 +112,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : transform_pointer_config<256, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int8_t
@@ -120,7 +121,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx1030),
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 1))>> : transform_pointer_config<128, 2>
+                      && (sizeof(value_type) <= 1))>>
+    : transform_pointer_config<1024, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = double
@@ -130,7 +132,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 1>
+    : transform_pointer_config<512, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = float
@@ -140,7 +142,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<1024, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::half
@@ -149,7 +151,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 2))>> : transform_pointer_config<1024, 2>
+                      && (sizeof(value_type) <= 2))>>
+    : transform_pointer_config<1024, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::int128_t
@@ -159,7 +162,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
-    : transform_pointer_config<1024, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = int64_t
@@ -169,7 +172,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 1>
+    : transform_pointer_config<512, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = int
@@ -179,7 +182,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<256, 16>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = short
@@ -189,7 +192,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : transform_pointer_config<1024, 2>
+    : transform_pointer_config<1024, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = int8_t
@@ -198,7 +201,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx1100),
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 1))>> : transform_pointer_config<1024, 4>
+                      && (sizeof(value_type) <= 1))>>
+    : transform_pointer_config<1024, 4, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = double
@@ -208,7 +212,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<1024, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = float
@@ -218,7 +222,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<1024, 2>
+    : transform_pointer_config<1024, 4, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::half
@@ -227,7 +231,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx906),
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 2))>> : transform_pointer_config<512, 4>
+                      && (sizeof(value_type) <= 2))>>
+    : transform_pointer_config<512, 4, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = rocprim::int128_t
@@ -237,7 +242,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
-    : transform_pointer_config<1024, 1>
+    : transform_pointer_config<1024, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int64_t
@@ -247,7 +252,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 1>
+    : transform_pointer_config<512, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int
@@ -257,7 +262,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<1024, 2>
+    : transform_pointer_config<1024, 4, ::rocprim::load_default>
 {};
 
 // Based on value_type = short
@@ -267,7 +272,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : transform_pointer_config<512, 4>
+    : transform_pointer_config<1024, 8, ::rocprim::load_default>
 {};
 
 // Based on value_type = int8_t
@@ -276,7 +281,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx906),
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 1))>> : transform_pointer_config<64, 16>
+                      && (sizeof(value_type) <= 1))>>
+    : transform_pointer_config<512, 8, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = double
@@ -286,7 +292,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = float
@@ -296,7 +302,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<128, 2>
+    : transform_pointer_config<128, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::half
@@ -305,7 +311,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx908),
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 2))>> : transform_pointer_config<128, 4>
+                      && (sizeof(value_type) <= 2))>>
+    : transform_pointer_config<128, 4, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = rocprim::int128_t
@@ -315,7 +322,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int64_t
@@ -325,7 +332,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int
@@ -335,7 +342,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<128, 2>
+    : transform_pointer_config<128, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = short
@@ -345,7 +352,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : transform_pointer_config<128, 4>
+    : transform_pointer_config<128, 4, ::rocprim::load_default>
 {};
 
 // Based on value_type = int8_t
@@ -354,7 +361,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::gfx908),
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 1))>> : transform_pointer_config<128, 8>
+                      && (sizeof(value_type) <= 1))>>
+    : transform_pointer_config<128, 8, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = double
@@ -364,7 +372,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 2, ::rocprim::load_default>
+    : transform_pointer_config<1024, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = float
@@ -374,7 +382,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<512, 4, ::rocprim::load_default>
+    : transform_pointer_config<1024, 4, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::half
@@ -404,7 +412,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<512, 2, ::rocprim::load_default>
+    : transform_pointer_config<1024, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = int
@@ -444,7 +452,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = float
@@ -454,7 +462,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<128, 2>
+    : transform_pointer_config<128, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = rocprim::half
@@ -463,7 +471,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::unknown),
     value_type,
     std::enable_if_t<(bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 2))>> : transform_pointer_config<128, 4>
+                      && (sizeof(value_type) <= 2))>>
+    : transform_pointer_config<128, 4, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = rocprim::int128_t
@@ -473,7 +482,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 16) && (sizeof(value_type) > 8))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int64_t
@@ -483,7 +492,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : transform_pointer_config<128, 1>
+    : transform_pointer_config<128, 1, ::rocprim::load_default>
 {};
 
 // Based on value_type = int
@@ -493,7 +502,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
-    : transform_pointer_config<128, 2>
+    : transform_pointer_config<128, 2, ::rocprim::load_default>
 {};
 
 // Based on value_type = short
@@ -503,7 +512,7 @@ struct default_transform_pointer_config<
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 2) && (sizeof(value_type) > 1))>>
-    : transform_pointer_config<128, 4>
+    : transform_pointer_config<128, 4, ::rocprim::load_default>
 {};
 
 // Based on value_type = int8_t
@@ -512,7 +521,8 @@ struct default_transform_pointer_config<
     static_cast<unsigned int>(target_arch::unknown),
     value_type,
     std::enable_if_t<(!bool(rocprim::is_floating_point<value_type>::value)
-                      && (sizeof(value_type) <= 1))>> : transform_pointer_config<128, 8>
+                      && (sizeof(value_type) <= 1))>>
+    : transform_pointer_config<128, 8, ::rocprim::load_nontemporal>
 {};
 
 // Based on value_type = double
