@@ -405,7 +405,7 @@ auto block_store_direct_blocked_cast(unsigned int flat_id,
 
     constexpr unsigned int vectors_per_thread = (sizeof(T) * ItemsPerThread) / sizeof(V);
 
-    V* vector_ptr = reinterpret_cast<V*>(block_output) + flat_id * vectors_per_thread;
+    V* vector_ptr = ::rocprim::detail::bit_cast<V*>(block_output) + flat_id * vectors_per_thread;
 
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
