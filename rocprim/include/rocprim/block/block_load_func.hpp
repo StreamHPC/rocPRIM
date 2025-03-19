@@ -532,7 +532,7 @@ auto block_load_direct_blocked_cast(unsigned int flat_id,
     ROCPRIM_UNROLL
     for(unsigned int item = 0; item < vectors_per_thread; item++)
     {
-        reinterpret_cast<V*>(items)[item] = thread_load<LoadType>(vector_ptr + (item));
+        reinterpret_cast<V*>(items)[item] = thread_load<LoadType>(vector_ptr + item);
     }
 }
 

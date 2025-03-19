@@ -59,7 +59,7 @@ inline std::string transform_config_name<rocprim::default_config>()
     return "default_config";
 }
 
-template<typename T = int, bool IsPointer = false, typename Config = rocprim::default_config>
+template<typename T, bool IsPointer, typename Config = rocprim::default_config>
 struct device_transform_benchmark : public config_autotune_interface
 {
 

@@ -698,7 +698,7 @@ struct transform_pointer_config : public detail::transform_config_params
     /// \brief Number of items processed by each thread.
     static constexpr unsigned int items_per_thread = ItemsPerThread;
 
-    /// \brief The type of thread_load being used
+    /// \brief The type of thread_load being used.
     static constexpr cache_load_modifier load_type = LoadType;
 
     /// \brief Limit on the number of items for a single kernel launch.

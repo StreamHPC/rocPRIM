@@ -154,7 +154,7 @@ std::enable_if_t<CacheLoadModifier == load_ca || CacheLoadModifier == load_defau
                      || CacheLoadModifier == load_ldg,
                  T> thread_load(T* ptr)
 {
-    using decay_type = std::decay_t<T>;
+    using decay_type = typename std::remove_const_t<T>;
     alignas(Alignment) decay_type result;
     detail::thread_fused_copy<decay_type, T, Alignment>(&result,
                                                         ptr,
@@ -189,7 +189,7 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 std::enable_if_t<CacheLoadModifier == load_volatile || CacheLoadModifier == load_cv, T>
     thread_load(T* ptr)
 {
-    using decay_type = std::decay_t<T>;
+    using decay_type = typename std::remove_const_t<T>;
     alignas(Alignment) decay_type result;
     detail::thread_fused_copy<decay_type, T, Alignment>(
         &result,
@@ -218,7 +218,7 @@ ROCPRIM_DEVICE ROCPRIM_INLINE
 std::enable_if_t<CacheLoadModifier == load_nontemporal, T> thread_load(T* ptr)
 {
 #if __has_builtin(__builtin_nontemporal_load)
-    using decay_type = std::decay_t<T>;
+    using decay_type = typename std::remove_const_t<T>;
     alignas(Alignment) decay_type result;
     detail::thread_fused_copy<decay_type, T, Alignment>(
         &result,
