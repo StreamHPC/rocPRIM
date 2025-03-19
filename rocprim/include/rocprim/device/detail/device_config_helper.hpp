@@ -647,10 +647,11 @@ struct default_segmented_radix_sort_config_base
 /// \tparam BlockSize Number of threads in a block.
 /// \tparam ItemsPerThread Number of items processed by each thread.
 /// \tparam SizeLimit Limit on the number of items for a single kernel launch.
+/// \tparam LoadType The type of thread_load used.
 template<unsigned int        BlockSize,
          unsigned int        ItemsPerThread,
-         cache_load_modifier LoadType  = load_default,
-         unsigned int        SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
+         unsigned int        SizeLimit = ROCPRIM_GRID_SIZE_LIMIT,
+         cache_load_modifier LoadType  = load_default>
 struct transform_config : public detail::transform_config_params
 {
     /// \brief Identifies the algorithm associated to the config.
@@ -684,8 +685,8 @@ struct transform_config : public detail::transform_config_params
 /// \tparam SizeLimit Limit on the number of items for a single kernel launch.
 template<unsigned int        BlockSize,
          unsigned int        ItemsPerThread,
-         cache_load_modifier LoadType  = load_default,
-         unsigned int        SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
+         unsigned int        SizeLimit = ROCPRIM_GRID_SIZE_LIMIT,
+         cache_load_modifier LoadType  = load_default>
 struct transform_pointer_config : public detail::transform_config_params
 {
     /// \brief Identifies the algorithm associated to the config.
@@ -750,7 +751,7 @@ struct lower_bound_config_tag : public transform_config_tag
 template<unsigned int BlockSize,
          unsigned int ItemsPerThread,
          unsigned int SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
-struct binary_search_config : transform_config<BlockSize, ItemsPerThread, load_default, SizeLimit>
+struct binary_search_config : transform_config<BlockSize, ItemsPerThread, SizeLimit, load_default>
 {
     /// \brief Identifies the algorithm associated to the config.
     using tag = detail::binary_search_config_tag;
@@ -763,7 +764,7 @@ struct binary_search_config : transform_config<BlockSize, ItemsPerThread, load_d
 template<unsigned int BlockSize,
          unsigned int ItemsPerThread,
          unsigned int SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
-struct upper_bound_config : transform_config<BlockSize, ItemsPerThread, load_default, SizeLimit>
+struct upper_bound_config : transform_config<BlockSize, ItemsPerThread, SizeLimit, load_default>
 {
     /// \brief Identifies the algorithm associated to the config.
     using tag = detail::upper_bound_config_tag;
@@ -776,7 +777,7 @@ struct upper_bound_config : transform_config<BlockSize, ItemsPerThread, load_def
 template<unsigned int BlockSize,
          unsigned int ItemsPerThread,
          unsigned int SizeLimit = ROCPRIM_GRID_SIZE_LIMIT>
-struct lower_bound_config : transform_config<BlockSize, ItemsPerThread, load_default, SizeLimit>
+struct lower_bound_config : transform_config<BlockSize, ItemsPerThread, SizeLimit, load_default>
 {
     /// \brief Identifies the algorithm associated to the config.
     using tag = detail::lower_bound_config_tag;
