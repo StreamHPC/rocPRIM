@@ -24,6 +24,7 @@
 #include "config_types.hpp"
 #include "detail/config/device_search_n.hpp"
 #include "detail/device_config_helper.hpp"
+#include "detail/config/device_search_n_config.hpp"
 
 BEGIN_ROCPRIM_NAMESPACE
 
