@@ -231,6 +231,9 @@ struct check_wave_size
             // If we are on device, we do want to statically assert, if possible!
             static_assert(predicate(::rocprim::arch::wavefront::size_from_target<target>()));
 #endif
+            // On release builds, assert is no-op so it will complain
+            // about unused parameters...
+            (void)predicate;
         }
 };
 
@@ -244,6 +247,10 @@ struct check_wave_size<::rocprim::arch::wavefront::target_t::dynamic>
             // Since we don't know the wavefront size, we have to
             // do a runtime query.
             assert(predicate(::rocprim::arch::wavefront::size()));
+
+            // On release builds, assert is no-op so it will complain
+            // about unused parameters...
+            (void)predicate;
         }
 };
 
