@@ -80,7 +80,7 @@ enum class warp_load_method
 /// \tparam T the input/output type.
 /// \tparam ItemsPerThread the number of items to be processed by
 /// each thread.
-/// \tparam VirtalWaveSize the number of threads in the warp. It must be a divisor of the
+/// \tparam VirtualWaveSize the number of threads in the warp. It must be a divisor of the
 /// kernel block size.
 /// \tparam Method the method to load data.
 /// \tparam TargetWaveSize The hardware wavefront size. It can be used to specialize
