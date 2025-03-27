@@ -157,6 +157,12 @@ constexpr unsigned int size_from_target<target_t::size64>()
 namespace detail
 {
 
+/// \brief Utility to quickly enable specialization for dynamic
+/// wavefront targets.
+template<::rocprim::arch::wavefront::target_t target>
+using wave_target_guard_t
+    = std::enable_if_t<target != ::rocprim::arch::wavefront::target_t::dynamic>;
+
 template<typename Impl32, typename Impl64>
 struct dispatch_wave_size
 {
