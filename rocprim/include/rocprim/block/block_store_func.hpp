@@ -389,7 +389,7 @@ void block_store_direct_warp_striped(unsigned int   flat_id,
 }
 
 template<class V               = rocprim::uint128_t,
-         unsigned int WarpSize = device_warp_size(),
+         unsigned int WarpSize = arch::wavefront::min_size(),
          class T,
          class U,
          unsigned int ItemsPerThread>
@@ -415,7 +415,7 @@ auto block_store_direct_blocked_cast(unsigned int flat_id,
 }
 
 template<class V               = rocprim::uint128_t,
-         unsigned int WarpSize = device_warp_size(),
+         unsigned int WarpSize = arch::wavefront::min_size(),
          class T,
          class U,
          unsigned int ItemsPerThread>
