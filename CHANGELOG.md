@@ -15,6 +15,7 @@ Full documentation for rocPRIM is available at [https://rocm.docs.amd.com/projec
 * Renamed `type_traits_interface.hpp` to `type_traits.hpp`, rename the original `type_traits.hpp` to `type_traits_functions.hpp`.
 * Removed `radix_sort.hpp`
 * Added virtual shared memory as a fallback option in `rocprim::device_merge` when it exceeds shared memory capacity, similar to `rocprim::device_select`, `rocprim::device_partition`, and `rocprim::device_merge_sort`, which already include this feature.
+* Added initial value support to device level inclusive scans.
 
 ### Removed
 
