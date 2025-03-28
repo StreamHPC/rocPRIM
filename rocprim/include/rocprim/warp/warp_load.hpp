@@ -244,6 +244,7 @@ public:
     }
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template<class T, unsigned int ItemsPerThread, unsigned int VirtalWaveSize, warp_load_method Method>
 class warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target_t::dynamic>
 {
@@ -264,8 +265,6 @@ public:
         dispatch{}([](auto impl, auto&&... args) { impl.load(args...); }, args...);
     }
 };
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 template<class T,
          unsigned int              ItemsPerThread,

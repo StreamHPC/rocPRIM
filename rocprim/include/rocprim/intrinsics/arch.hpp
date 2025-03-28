@@ -102,23 +102,30 @@ constexpr unsigned int max_size()
 #endif
 }
 
+/// \brief Enumeration of possible wavefront hardware targets.
 enum class target_t
 {
+    /// Target hardware wavefront of size 32.
     size32,
+    /// Target hardware wavefront of size 64.
     size64,
+    /// Target hardware wavefront of unknown size. This is
+    /// the case when targeting SPIR-V. Use \p target_t::size32
+    /// and \p target_t::size64 to target a specific hardware
+    /// wavefront size.
     dynamic,
 };
 
 /// \brief Returns the hardware wavefront size of the current
 /// compile target.
 ///
-/// On host this will return \p target_t::dynamic . On device
-/// this return \p target_t::size32 , \p target_t::size64 , or
-/// when targeting SPIR-V \p target::dynamic .
+/// On host this will return \p target_t::dynamic. On device
+/// this return \p target_t::size32, \p target_t::size64, or
+/// when targeting SPIR-V \p target_t::dynamic.
 constexpr target_t target() noexcept
 {
 #if !defined(__HIP_DEVICE_COMPILE__) || defined(__SPIRV__)
-    // SPIR-V and host compile both have unknown compile size.
+    // SPIR-V and host both have unknown compile size.
     return target_t::dynamic;
 #else
     // The wavefront size is exactly known.
@@ -133,12 +140,15 @@ constexpr target_t target() noexcept
 }
 
 /// \brief Returns the numerical wavefront size from a
-/// given \p target_t .
+/// given \p rocprim::arch::wavefront::target_t.
 ///
 /// This function has no implementation for
-/// \p target_t::dynamic .
+/// \p target_t::dynamic.
 template<target_t target>
 constexpr unsigned int size_from_target() = delete;
+
+// Doxygen should ignore the specializations.
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template<>
 constexpr unsigned int size_from_target<target_t::size32>()
 {
@@ -149,6 +159,7 @@ constexpr unsigned int size_from_target<target_t::size64>()
 {
     return ROCPRIM_WARP_SIZE_64;
 }
+#endif
 
 }; // namespace wavefront
 
@@ -218,7 +229,7 @@ struct dispatch_wave_size
 
 /// \brief Utility function to assert the wavefront size.
 ///
-/// Assertion is done either at run time if we are curenntly
+/// Assertion is done either at runtime if we are curenntly
 /// compiling for SPIR-V, or if the target is dynamic.
 /// Otherwise, we use a static assert.
 template<::rocprim::arch::wavefront::target_t target>
@@ -237,7 +248,7 @@ struct check_wave_size
             // If we are on device, we do want to statically assert, if possible!
             static_assert(predicate(::rocprim::arch::wavefront::size_from_target<target>()));
 #endif
-            // On release builds, assert is no-op so it will complain
+            // On release builds, assert is no-op, so it will complain
             // about unused parameters...
             (void)predicate;
         }
@@ -254,7 +265,7 @@ struct check_wave_size<::rocprim::arch::wavefront::target_t::dynamic>
             // do a runtime query.
             assert(predicate(::rocprim::arch::wavefront::size()));
 
-            // On release builds, assert is no-op so it will complain
+            // On release builds, assert is no-op, so it will complain
             // about unused parameters...
             (void)predicate;
         }
