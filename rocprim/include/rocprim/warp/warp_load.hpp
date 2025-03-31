@@ -116,11 +116,11 @@ enum class warp_load_method
 /// \endcode
 /// \endparblock
 template<class T,
-         unsigned int              ItemsPerThread,
-         unsigned int              VirtualWaveSize = ::rocprim::arch::wavefront::min_size(),
-         warp_load_method          Method          = warp_load_method::warp_load_direct,
-         arch::wavefront::target_t TargetWaveSize  = arch::wavefront::target(),
-         typename Enabled                          = void>
+         unsigned int            ItemsPerThread,
+         unsigned int            VirtualWaveSize = ::rocprim::arch::wavefront::min_size(),
+         warp_load_method        Method          = warp_load_method::warp_load_direct,
+         arch::wavefront::target TargetWaveSize  = arch::wavefront::get_target(),
+         typename Enabled                        = void>
 class warp_load
 {
     static_assert(::rocprim::detail::is_power_of_two(VirtualWaveSize),
@@ -246,13 +246,13 @@ public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template<class T, unsigned int ItemsPerThread, unsigned int VirtalWaveSize, warp_load_method Method>
-class warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target_t::dynamic>
+class warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target::dynamic>
 {
 private:
     using warp_load_wave64
-        = warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target_t::size64>;
+        = warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target::size64>;
     using warp_load_wave32
-        = warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target_t::size32>;
+        = warp_load<T, ItemsPerThread, VirtalWaveSize, Method, arch::wavefront::target::size32>;
     using dispatch = detail::dispatch_wave_size<warp_load_wave32, warp_load_wave64>;
 
 public:
@@ -267,9 +267,9 @@ public:
 };
 
 template<class T,
-         unsigned int              ItemsPerThread,
-         unsigned int              VirtualWaveSize,
-         arch::wavefront::target_t TargetWaveSize>
+         unsigned int            ItemsPerThread,
+         unsigned int            VirtualWaveSize,
+         arch::wavefront::target TargetWaveSize>
 class warp_load<T,
                 ItemsPerThread,
                 VirtualWaveSize,
@@ -344,9 +344,9 @@ public:
 };
 
 template<class T,
-         unsigned int              ItemsPerThread,
-         unsigned int              VirtualWaveSize,
-         arch::wavefront::target_t TargetWaveSize>
+         unsigned int            ItemsPerThread,
+         unsigned int            VirtualWaveSize,
+         arch::wavefront::target TargetWaveSize>
 class warp_load<T,
                 ItemsPerThread,
                 VirtualWaveSize,
@@ -427,9 +427,9 @@ public:
 };
 
 template<class T,
-         unsigned int              ItemsPerThread,
-         unsigned int              VirtualWaveSize,
-         arch::wavefront::target_t TargetWaveSize>
+         unsigned int            ItemsPerThread,
+         unsigned int            VirtualWaveSize,
+         arch::wavefront::target TargetWaveSize>
 class warp_load<T,
                 ItemsPerThread,
                 VirtualWaveSize,

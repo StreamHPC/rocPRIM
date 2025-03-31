@@ -15,7 +15,7 @@ Hardware Architecture
 .. doxygenfunction:: rocprim::arch::wavefront::min_size()
 .. doxygenfunction:: rocprim::arch::wavefront::max_size()
 
-.. doxygenenum:: rocprim::arch::wavefront::target_t
+.. doxygenenum:: rocprim::arch::wavefront::target
 .. doxygenfunction:: rocprim::arch::wavefront::target()
 .. doxygenfunction:: rocprim::arch::wavefront::size_from_target()
 

@@ -103,15 +103,15 @@ constexpr unsigned int max_size()
 }
 
 /// \brief Enumeration of possible wavefront hardware targets.
-enum class target_t
+enum class target
 {
     /// Target hardware wavefront of size 32.
     size32,
     /// Target hardware wavefront of size 64.
     size64,
     /// Target hardware wavefront of unknown size. This is
-    /// the case when targeting SPIR-V. Use \p target_t::size32
-    /// and \p target_t::size64 to target a specific hardware
+    /// the case when targeting SPIR-V. Use \p target::size32
+    /// and \p target::size64 to target a specific hardware
     /// wavefront size.
     dynamic,
 };
@@ -119,43 +119,43 @@ enum class target_t
 /// \brief Returns the hardware wavefront size of the current
 /// compile target.
 ///
-/// On host this will return \p target_t::dynamic. On device
-/// this return \p target_t::size32, \p target_t::size64, or
-/// when targeting SPIR-V \p target_t::dynamic.
-constexpr target_t target() noexcept
+/// On host this will return \p target::dynamic. On device
+/// this return \p target::size32, \p target::size64, or
+/// when targeting SPIR-V \p target::dynamic.
+constexpr target get_target() noexcept
 {
 #if !defined(__HIP_DEVICE_COMPILE__) || defined(__SPIRV__)
     // SPIR-V and host both have unknown compile size.
-    return target_t::dynamic;
+    return target::dynamic;
 #else
     // The wavefront size is exactly known.
     static_assert(min_size() == max_size());
 
     if constexpr(min_size() == ROCPRIM_WARP_SIZE_32)
     {
-        return target_t::size32;
+        return target::size32;
     }
-    return target_t::size64;
+    return target::size64;
 #endif
 }
 
 /// \brief Returns the numerical wavefront size from a
-/// given \p rocprim::arch::wavefront::target_t.
+/// given \p rocprim::arch::wavefront::target.
 ///
 /// This function has no implementation for
-/// \p target_t::dynamic.
-template<target_t target>
+/// \p target::dynamic.
+template<target>
 constexpr unsigned int size_from_target() = delete;
 
 // Doxygen should ignore the specializations.
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template<>
-constexpr unsigned int size_from_target<target_t::size32>()
+constexpr unsigned int size_from_target<target::size32>()
 {
     return ROCPRIM_WARP_SIZE_32;
 }
 template<>
-constexpr unsigned int size_from_target<target_t::size64>()
+constexpr unsigned int size_from_target<target::size64>()
 {
     return ROCPRIM_WARP_SIZE_64;
 }
@@ -170,9 +170,8 @@ namespace detail
 
 /// \brief Utility to quickly enable specialization for dynamic
 /// wavefront targets.
-template<::rocprim::arch::wavefront::target_t target>
-using wave_target_guard_t
-    = std::enable_if_t<target != ::rocprim::arch::wavefront::target_t::dynamic>;
+template<::rocprim::arch::wavefront::target Target>
+using wave_target_guard_t = std::enable_if_t<Target != ::rocprim::arch::wavefront::target::dynamic>;
 
 template<typename Impl32, typename Impl64>
 struct dispatch_wave_size
@@ -232,7 +231,7 @@ struct dispatch_wave_size
 /// Assertion is done either at runtime if we are curenntly
 /// compiling for SPIR-V, or if the target is dynamic.
 /// Otherwise, we use a static assert.
-template<::rocprim::arch::wavefront::target_t target>
+template<::rocprim::arch::wavefront::target Target>
 struct check_wave_size
 {
     /// \brief The assertion to do.
@@ -246,7 +245,7 @@ struct check_wave_size
             assert(predicate(::rocprim::arch::wavefront::size()));
 #else
             // If we are on device, we do want to statically assert, if possible!
-            static_assert(predicate(::rocprim::arch::wavefront::size_from_target<target>()));
+            static_assert(predicate(::rocprim::arch::wavefront::size_from_target<Target>()));
 #endif
             // On release builds, assert is no-op, so it will complain
             // about unused parameters...
@@ -255,7 +254,7 @@ struct check_wave_size
 };
 
 template<>
-struct check_wave_size<::rocprim::arch::wavefront::target_t::dynamic>
+struct check_wave_size<::rocprim::arch::wavefront::target::dynamic>
 {
         template<typename P>
     ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
