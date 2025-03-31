@@ -200,7 +200,10 @@ struct dispatch_wave_size
                 [](auto&& arg) -> decltype(auto)
                 {
                     // If the argument is 'storage_type'...
-                    if constexpr(std::is_same_v<decltype(arg), storage_type&>)
+                    if constexpr(std::is_same_v<
+                                     // std::remove_cvref is C++20
+                                     std::remove_cv_t<std::remove_reference_t<decltype(arg)>>,
+                                     storage_type>)
                     { // And we have a wave32 implementation...
                         if constexpr(std::is_same_v<decltype(impl), Impl32>)
                         { // We return the wave32 backing storage!
@@ -235,10 +238,10 @@ template<::rocprim::arch::wavefront::target Target>
 struct check_wave_size
 {
     /// \brief The assertion to do.
-        template<typename P>
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
-        constexpr void operator()(P predicate) const
-        {
+    template<typename P>
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
+    constexpr void operator()(P predicate) const
+    {
 #if !defined(__HIP_DEVICE_COMPILE__) || ROCPRIM_TARGET_SPIRV
             // When a dynamic wavefront size specializes, we actually
             // don't know if the type is valid or not.
@@ -250,24 +253,34 @@ struct check_wave_size
             // On release builds, assert is no-op, so it will complain
             // about unused parameters...
             (void)predicate;
-        }
+    }
 };
+
+/// \brief Short alias to check if the virtual wavefront size fits on
+/// the current or specified target.
+template<int                                VirtualWaveSize,
+         ::rocprim::arch::wavefront::target Target = ::rocprim::arch::wavefront::get_target()>
+ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
+void check_virtual_wave_size()
+{
+    check_wave_size<Target>{}([](unsigned int size) constexpr { return VirtualWaveSize <= size; });
+}
 
 template<>
 struct check_wave_size<::rocprim::arch::wavefront::target::dynamic>
 {
-        template<typename P>
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
-        void operator()(P predicate) const
-        {
-            // Since we don't know the wavefront size, we have to
-            // do a runtime query.
-            assert(predicate(::rocprim::arch::wavefront::size()));
+    template<typename P>
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
+    void operator()(P predicate) const
+    {
+        // Since we don't know the wavefront size, we have to
+        // do a runtime query.
+        assert(predicate(::rocprim::arch::wavefront::size()));
 
-            // On release builds, assert is no-op, so it will complain
-            // about unused parameters...
-            (void)predicate;
-        }
+        // On release builds, assert is no-op, so it will complain
+        // about unused parameters...
+        (void)predicate;
+    }
 };
 
 } // namespace detail

@@ -127,11 +127,10 @@ class warp_load
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
     warp_load()
     {
-        detail::check_wave_size<TargetWaveSize>{}([](unsigned int size) constexpr
-                                                  { return VirtualWaveSize <= size; });
+        detail::check_virtual_wave_size<VirtualWaveSize>();
     }
 
 private:
@@ -281,11 +280,10 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
     warp_load()
     {
-        detail::check_wave_size<TargetWaveSize>{}([](unsigned int size) constexpr
-                                                  { return VirtualWaveSize <= size; });
+        detail::check_virtual_wave_size<VirtualWaveSize>();
     }
 
     using storage_type = typename ::rocprim::detail::empty_storage_type;
@@ -358,11 +356,10 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
     warp_load()
     {
-        detail::check_wave_size<TargetWaveSize>{}([](unsigned int size) constexpr
-                                                  { return VirtualWaveSize <= size; });
+        detail::check_virtual_wave_size<VirtualWaveSize>();
     }
 
     using storage_type = typename ::rocprim::detail::empty_storage_type;
@@ -441,11 +438,10 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_FORCE_INLINE ROCPRIM_HOST_DEVICE
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
     warp_load()
     {
-        detail::check_wave_size<TargetWaveSize>{}([](unsigned int size) constexpr
-                                                  { return VirtualWaveSize <= size; });
+        detail::check_virtual_wave_size<VirtualWaveSize>();
     }
 
 private:
