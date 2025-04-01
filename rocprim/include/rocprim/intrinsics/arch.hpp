@@ -240,19 +240,20 @@ struct check_wave_size
     /// \brief The assertion to do.
     template<typename P>
     ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
-    constexpr void operator()(P predicate) const
+    constexpr void
+        operator()(P predicate) const
     {
 #if !defined(__HIP_DEVICE_COMPILE__) || ROCPRIM_TARGET_SPIRV
-            // When a dynamic wavefront size specializes, we actually
-            // don't know if the type is valid or not.
-            assert(predicate(::rocprim::arch::wavefront::size()));
+        // When a dynamic wavefront size specializes, we actually
+        // don't know if the type is valid or not.
+        assert(predicate(::rocprim::arch::wavefront::size()));
 #else
-            // If we are on device, we do want to statically assert, if possible!
-            static_assert(predicate(::rocprim::arch::wavefront::size_from_target<Target>()));
+        // If we are on device, we do want to statically assert, if possible!
+        static_assert(predicate(::rocprim::arch::wavefront::size_from_target<Target>()));
 #endif
-            // On release builds, assert is no-op, so it will complain
-            // about unused parameters...
-            (void)predicate;
+        // On release builds, assert is no-op, so it will complain
+        // about unused parameters...
+        (void)predicate;
     }
 };
 

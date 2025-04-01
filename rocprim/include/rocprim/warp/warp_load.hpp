@@ -127,8 +127,7 @@ class warp_load
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
-    warp_load()
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE warp_load()
     {
         detail::check_virtual_wave_size<VirtualWaveSize>();
     }
@@ -280,8 +279,7 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
-    warp_load()
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE warp_load()
     {
         detail::check_virtual_wave_size<VirtualWaveSize>();
     }
@@ -356,8 +354,7 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
-    warp_load()
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE warp_load()
     {
         detail::check_virtual_wave_size<VirtualWaveSize>();
     }
@@ -438,8 +435,7 @@ class warp_load<T,
                   "Logical warp size must be a power of two.");
 
 public:
-    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE
-    warp_load()
+    ROCPRIM_INLINE ROCPRIM_HOST_DEVICE warp_load()
     {
         detail::check_virtual_wave_size<VirtualWaveSize>();
     }
